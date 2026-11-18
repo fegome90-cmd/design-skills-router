@@ -37,10 +37,31 @@ Las fuentes IBM Plex Sans y Fraunces vienen del paquete local de la pizarra bajo
 ## Verificar
 
 ```sh
+npm run lint
 npm run typecheck
 npm run build
 npx playwright install chromium
 npm test
 ```
 
+Oxlint revisa JavaScript, TypeScript y TSX del prototipo. Las reglas de Hooks y sus dependencias se comprueban como errores. `npm run typecheck` comprueba los tipos.
+
 Las pruebas abren el puerto 4183. `DESKTOP_TEST_PORT` permite usar otro puerto. `DESKTOP_SCREENSHOTS` indica una carpeta donde se guardan capturas de Chat y Dashboard en ambos temas.
+
+## Verificaciones antes de un commit
+
+Desde la raíz del repositorio, instala las dependencias del prototipo, el navegador de Playwright CLI y el hook con `pre-commit` 4.4 o posterior:
+
+```sh
+npm ci --prefix board/desktop-demo
+npm --prefix board/desktop-demo exec -- playwright-cli install-browser chrome-for-testing
+pre-commit install --config board/desktop-demo/.pre-commit-config.yaml --allow-missing-config
+```
+
+Al hacer un commit con archivos de `board/desktop-demo` en el índice, el hook ejecuta Oxlint, Impeccable sobre el código de `src` y una prueba de humo con Playwright CLI. Los errores del detector bloquean el commit y los avisos se muestran. La prueba abre el dashboard en un servidor local temporal y comprueba el cambio al período semanal. La suite completa sigue disponible con `npm test`.
+
+Para ejecutar los tres controles manualmente desde la raíz:
+
+```sh
+pre-commit run --config board/desktop-demo/.pre-commit-config.yaml --all-files
+```

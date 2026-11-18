@@ -156,8 +156,9 @@ function WorkspaceLayout({
   children: ReactNode
 }) {
   const { isMobile, open } = useSidebar()
-  const [initialWidth] = useState(readSidebarWidth)
-  const sidebarWidth = useRef(initialWidth)
+  const [sidebarWidth, setSidebarWidth] = useState(readSidebarWidth)
+  const panelGroup = useRef<HTMLDivElement>(null)
+  const sidebarHandle = useRef<HTMLDivElement>(null)
   const contextualPanel = <ContextContents section={section}>{context}</ContextContents>
 
   return (
@@ -168,27 +169,31 @@ function WorkspaceLayout({
         className="shell-panels"
         orientation="horizontal"
         resizeTargetMinimumSize={{ fine: 12, coarse: 24 }}
+        elementRef={panelGroup}
+        onLayoutChanged={(layout, { isUserInteraction }) => {
+          if (!isUserInteraction || !panelGroup.current || !sidebarHandle.current) return
+          const panelSpace = panelGroup.current.clientWidth - sidebarHandle.current.offsetWidth
+          const pixels = Math.round(panelSpace * layout["resizable-context"] / 100)
+          const width = Math.min(sidebarRange.maximum, Math.max(sidebarRange.minimum, pixels))
+          setSidebarWidth(width)
+          writePreference("sidebar-width", String(width))
+        }}
       >
         {!isMobile && open && (
           <ResizablePanel
             key="context"
             id="resizable-context"
-            defaultSize={sidebarWidth.current}
+            defaultSize={sidebarWidth}
             minSize={sidebarRange.minimum}
             maxSize={sidebarRange.maximum}
             groupResizeBehavior="preserve-pixel-size"
-            onResize={(size, _id, previous) => {
-              if (previous && size.inPixels >= sidebarRange.minimum - 0.5 && size.inPixels <= sidebarRange.maximum + 0.5) {
-                const width = Math.min(sidebarRange.maximum, Math.max(sidebarRange.minimum, Math.round(size.inPixels)))
-                sidebarWidth.current = width
-                writePreference("sidebar-width", String(width))
-              }
-            }}
           >
             <Sidebar collapsible="none" className="desktop-context">{contextualPanel}</Sidebar>
           </ResizablePanel>
         )}
-        {!isMobile && open && <ResizableHandle key="handle" aria-label="Redimensionar panel contextual" className="context-separator" />}
+        {!isMobile && open && (
+          <ResizableHandle key="handle" elementRef={sidebarHandle} aria-label="Redimensionar panel contextual" className="context-separator" />
+        )}
         <ResizablePanel key="workspace" id="resizable-workspace">
           <SidebarInset className="workspace">
             <header className="workspace-toolbar">

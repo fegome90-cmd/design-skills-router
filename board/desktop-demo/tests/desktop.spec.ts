@@ -53,6 +53,22 @@ test("the sidebar resizes with pointer and keyboard and restores its width", asy
   await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - savedWidth)).toBeLessThan(2)
 })
 
+test("the sidebar keeps its width when browser storage cannot be written", async ({ page }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => { throw new DOMException("Storage is read-only", "QuotaExceededError") }
+  })
+  await page.goto("/")
+  const panel = page.getByRole("complementary", { name: "Panel contextual" })
+  const width = async () => (await panel.boundingBox())!.width
+  const before = await width()
+  await page.getByRole("separator", { name: "Redimensionar panel contextual" }).press("ArrowRight")
+  await expect.poll(width).toBeGreaterThan(before)
+  const resized = await width()
+  await page.getByRole("button", { name: "Ocultar panel contextual" }).click()
+  await page.getByRole("button", { name: "Mostrar panel contextual" }).click()
+  await expect.poll(async () => Math.abs(await width() - resized)).toBeLessThan(2)
+})
+
 test("Chat can search, create a conversation and keep its local messages across views", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByText("Conversación de ejemplo", { exact: true })).toBeVisible()
@@ -78,16 +94,33 @@ test("Chat can search, create a conversation and keep its local messages across 
 test("Dashboard updates metrics and the chart when the period changes", async ({ page }) => {
   await page.goto("/#dashboard")
   await expect(page.getByRole("heading", { name: "Resumen del espacio" })).toBeVisible()
-  const conversations = page.getByTestId("metric-conversations")
+  const expectedMetrics = {
+    conversations: { label: "Conversaciones", totals: { 7: 36, 30: 128, 90: 346 } },
+    projects: { label: "Proyectos", totals: { 7: 4, 30: 12, 90: 23 } },
+    resources: { label: "Recursos", totals: { 7: 12, 30: 48, 90: 114 } },
+    reviews: { label: "Revisiones", totals: { 7: 8, 30: 24, 90: 63 } },
+  } as const
+
+  async function expectTotals(period: 7 | 30 | 90) {
+    for (const [key, { label, totals }] of Object.entries(expectedMetrics)) {
+      const card = page.locator(".metric-card").filter({ has: page.getByText(label, { exact: true }) })
+      const total = expect(card.getByTestId(`metric-${key}`), `${label} total for ${period} days`)
+      await total.toBeVisible()
+      await total.toHaveText(String(totals[period]))
+    }
+  }
+
   const chart = page.locator("#actividad")
   const monthlyTick = chart.getByText("20 oct", { exact: true })
-  await expect(conversations).toHaveText("128")
+  await expectTotals(30)
   await expect(monthlyTick).toBeVisible()
   await page.getByRole("button", { name: "7 días" }).click()
-  await expect(conversations).toHaveText("36")
+  await expectTotals(7)
   await expect(page.getByRole("heading", { name: "Actividad semanal" })).toBeVisible()
   await expect(chart.getByText("Lun", { exact: true })).toBeVisible()
   await expect(monthlyTick).toHaveCount(0)
+  await page.getByRole("button", { name: "90 días" }).click()
+  await expectTotals(90)
 })
 
 test("Dashboard opens the details for the selected project row", async ({ page }) => {
@@ -128,6 +161,14 @@ test("at narrow widths the contextual dialog can be opened and escaped", async (
   expect(await documentWidth()).toBe(390)
   await page.setViewportSize({ width: 320, height: 680 })
   expect(await documentWidth()).toBe(320)
+
+  const panel = page.getByRole("complementary", { name: "Panel contextual" })
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await expect(panel.getByRole("heading", { name: "Analítica" })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(panel).not.toBeVisible()
+  await trigger.click()
+  await expect(dialog.getByRole("heading", { name: "Analítica" })).toBeVisible()
 })
 
 test("rendered views have no runtime errors", async ({ page }) => {

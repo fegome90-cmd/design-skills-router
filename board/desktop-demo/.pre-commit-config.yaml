@@ -1,0 +1,20 @@
+files: ^board/desktop-demo/
+repos:
+  - repo: local
+    hooks:
+      - id: desktop-oxlint
+        name: Desktop demo · Oxlint
+        entry: npm --prefix board/desktop-demo run lint
+        language: unsupported
+        pass_filenames: false
+      - id: desktop-impeccable
+        name: Desktop demo · Impeccable
+        entry: npm --prefix board/desktop-demo run check:design
+        language: unsupported
+        pass_filenames: false
+        verbose: true
+      - id: desktop-playwright-cli
+        name: Desktop demo · Playwright CLI
+        entry: npm --prefix board/desktop-demo run check:browser
+        language: unsupported
+        pass_filenames: false
