@@ -30,6 +30,8 @@ const checkDashboard = `async (page) => {
 }`
 
 let server
+let browserOpenAttempted = false
+let smokeFailure
 try {
   server = await createServer({
     root: project,
@@ -39,20 +41,32 @@ try {
   })
   await server.listen()
   const { port } = server.httpServer.address()
+  browserOpenAttempted = true
   await runCli("open", `http://127.0.0.1:${port}/#dashboard`, "--browser=chromium", "--idle-timeout=20000")
   const reply = await runCli("run-code", checkDashboard)
   if (reply.result !== JSON.stringify("desktop-dashboard-ready")) {
     throw new Error("The dashboard smoke check did not report success.")
   }
-  console.log("Playwright CLI: opened the dashboard and switched to the weekly period.")
-} finally {
+} catch (error) {
+  smokeFailure = { error }
+}
+
+const cleanupErrors = []
+for (const cleanup of [
+  () => browserOpenAttempted ? runCli("close") : undefined,
+  () => server?.close(),
+  () => rm(workspace, { recursive: true, force: true }),
+]) {
   try {
-    await runCli("close")
-  } finally {
-    try {
-      await server?.close()
-    } finally {
-      await rm(workspace, { recursive: true, force: true })
-    }
+    await cleanup()
+  } catch (error) {
+    cleanupErrors.push(error)
   }
 }
+
+if (smokeFailure) {
+  if (cleanupErrors.length) console.error("Additional smoke check cleanup failures:", ...cleanupErrors)
+  throw smokeFailure.error
+}
+if (cleanupErrors.length) throw new AggregateError(cleanupErrors, "Smoke check cleanup failed.")
+console.log("Playwright CLI: opened the dashboard and switched to the weekly period.")
