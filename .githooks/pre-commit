@@ -3,7 +3,7 @@ set -eu
 
 ./scripts/check-secrets.sh staged
 
-desktop_changes=$(git diff --cached --name-only --no-ext-diff -- board/desktop-demo/)
+desktop_changes=$(git diff --cached --name-only --no-ext-diff --no-renames --diff-filter=d -- board/desktop-demo/)
 if [ -n "$desktop_changes" ]; then
     exec pre-commit run --config board/desktop-demo/.pre-commit-config.yaml
 fi

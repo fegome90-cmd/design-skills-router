@@ -127,6 +127,21 @@ class SecurityChecks(unittest.TestCase):
         )
         self.assertEqual(self.git("rev-parse", "HEAD").stdout, original_head)
 
+    def test_hook_allows_removing_the_desktop_prototype(self):
+        config = "board/desktop-demo/.pre-commit-config.yaml"
+        self.write(config, "repos: []\n")
+        self.git("add", config)
+        self.commit_fixture()
+        self.write("bin/pre-commit", "#!/bin/sh\nexit 7\n")
+        runner = self.repo / "bin/pre-commit"
+        runner.chmod(0o755)
+        self.env["PATH"] = str(runner.parent) + os.pathsep + self.env["PATH"]
+
+        self.git("rm", "--quiet", config)
+        commit = self.git("commit", "--quiet", "-m", "remove desktop fixture")
+        self.assertIn("Security check passed (staged).", commit.stdout + commit.stderr)
+        self.assertEqual(self.git("ls-tree", "HEAD", "--", config).stdout, "")
+
     def test_staged_filenames_are_rejected_even_when_empty_and_forced(self):
         blocked_names = [
             ".env", "sample paths/.env.local", "account/credentials.json",
