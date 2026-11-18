@@ -58,7 +58,7 @@ npm --prefix board/desktop-demo exec -- playwright-cli install-browser chrome-fo
 git config --local core.hooksPath .githooks
 ```
 
-El hook ejecuta el escáner de seguridad en cada commit. Si hay archivos añadidos o modificados en `board/desktop-demo` en el índice, después ejecuta Oxlint, Impeccable sobre el código de `src` y una prueba de humo con Playwright CLI. Los errores del detector bloquean el commit y los avisos se muestran. La prueba abre el dashboard en un servidor local temporal y comprueba el cambio al período semanal. La suite completa sigue disponible con `npm test`.
+El hook ejecuta el escáner de seguridad en cada commit. Si el commit cambia `board/desktop-demo` y quedan archivos del prototipo en el índice, invoca `pre-commit` y exige que su configuración siga en el índice. Cuando hay archivos aplicables, se ejecutan Oxlint, Impeccable sobre el código de `src` y una prueba de humo con Playwright CLI. Los errores del detector bloquean el commit y los avisos se muestran. La prueba abre el dashboard en un servidor local temporal y comprueba el cambio al período semanal. La suite completa sigue disponible con `npm test`.
 
 Para ejecutar los tres controles manualmente desde la raíz:
 

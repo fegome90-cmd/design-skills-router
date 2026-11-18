@@ -3,7 +3,16 @@ set -eu
 
 ./scripts/check-secrets.sh staged
 
-desktop_changes=$(git diff --cached --name-only --no-ext-diff --no-renames --diff-filter=d -- board/desktop-demo/)
-if [ -n "$desktop_changes" ]; then
-    exec pre-commit run --config board/desktop-demo/.pre-commit-config.yaml
+desktop_changes=$(git diff --cached --name-only --no-ext-diff --no-renames -- board/desktop-demo/)
+[ -n "$desktop_changes" ] || exit 0
+
+desktop_files=$(git ls-files --cached -- board/desktop-demo/)
+[ -n "$desktop_files" ] || exit 0
+
+desktop_config=board/desktop-demo/.pre-commit-config.yaml
+if ! git ls-files --cached --error-unmatch -- "$desktop_config" >/dev/null 2>&1; then
+    printf '%s\n' 'Keep the desktop pre-commit configuration while prototype files remain in the index.' >&2
+    exit 1
 fi
+
+exec pre-commit run --config "$desktop_config"
