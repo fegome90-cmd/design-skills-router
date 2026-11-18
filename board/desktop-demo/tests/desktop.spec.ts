@@ -1,0 +1,153 @@
+import { expect, test } from "@playwright/test"
+import { mkdir } from "node:fs/promises"
+import { join } from "node:path"
+
+test("the rail stays in place while the contextual panel changes and collapses", async ({ page }) => {
+  await page.goto("/")
+  const rail = page.getByRole("navigation", { name: "Navegación principal" })
+  const context = page.getByRole("complementary", { name: "Panel contextual" })
+  const railWidth = async () => (await page.locator(".navigation-rail").boundingBox())?.width
+  await expect.poll(railWidth).toBe(64)
+  await expect(rail.getByRole("link", { name: "Chat" })).toHaveAttribute("aria-current", "page")
+  await expect(context.getByRole("heading", { name: "Conversaciones" })).toBeVisible()
+  await rail.getByRole("link", { name: "Dashboard" }).click()
+  await expect(context.getByRole("heading", { name: "Analítica" })).toBeVisible()
+  await page.getByRole("button", { name: "Ocultar panel contextual" }).click()
+  await expect(context).not.toBeVisible()
+  await expect(rail).toBeVisible()
+  await expect.poll(railWidth).toBe(64)
+  await rail.getByRole("link", { name: "Proyectos" }).click()
+  await expect(context).not.toBeVisible()
+  await page.reload()
+  await expect(context).not.toBeVisible()
+  await page.getByRole("button", { name: "Mostrar panel contextual" }).click()
+  await expect(context.getByRole("heading", { name: "Proyectos" })).toBeVisible()
+  await rail.getByRole("link", { name: "Biblioteca" }).click()
+  await expect(context.getByRole("heading", { name: "Biblioteca" })).toBeVisible()
+  await rail.getByRole("link", { name: "Configuración" }).click()
+  await expect(page.getByRole("heading", { name: "Preferencias del espacio" })).toBeVisible()
+})
+
+test("the sidebar resizes with pointer and keyboard and restores its width", async ({ page }) => {
+  await page.goto("/")
+  const panel = page.getByRole("complementary", { name: "Panel contextual" })
+  const separator = page.getByRole("separator", { name: "Redimensionar panel contextual" })
+  const before = (await panel.boundingBox())!.width
+  const handle = (await separator.boundingBox())!
+  const x = handle.x + handle.width / 2
+  await page.mouse.move(x, 350)
+  await page.mouse.down()
+  await page.mouse.move(x + 34, 350, { steps: 8 })
+  await page.mouse.up()
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeGreaterThan(before + 20)
+  await separator.focus()
+  await expect(separator).toBeFocused()
+  const pointerWidth = (await panel.boundingBox())!.width
+  await page.keyboard.press("ArrowLeft")
+  await expect.poll(async () => (await panel.boundingBox())!.width).toBeLessThan(pointerWidth)
+  const savedWidth = (await panel.boundingBox())!.width
+  await page.getByRole("button", { name: "Ocultar panel contextual" }).click()
+  await page.getByRole("button", { name: "Mostrar panel contextual" }).click()
+  await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - savedWidth)).toBeLessThan(2)
+  await page.reload()
+  await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - savedWidth)).toBeLessThan(2)
+})
+
+test("Chat can search, create a conversation and keep its local messages across views", async ({ page }) => {
+  await page.goto("/")
+  await page.getByRole("searchbox", { name: "Buscar conversaciones" }).fill("referencias")
+  await expect(page.getByRole("button", { name: "Lectura de referencias" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Diseño de la pizarra" })).not.toBeVisible()
+  await page.getByRole("button", { name: "Nueva conversación" }).click()
+  await expect(page.getByRole("heading", { name: "Una conversación nueva" })).toBeVisible()
+  const input = page.getByRole("textbox", { name: "Escribe un mensaje" })
+  const send = page.getByRole("button", { name: "Enviar mensaje" })
+  await expect(send).toBeDisabled()
+  await expect(page.locator(".composer")).toHaveCSS("opacity", "1")
+  await input.fill("Comprobación local del prototipo")
+  await input.press("Enter")
+  await expect(page.getByRole("log").getByText("Comprobación local del prototipo")).toBeVisible()
+  await expect(page.getByRole("log").getByText("Asistente", { exact: true })).toHaveCount(0)
+  await page.getByRole("link", { name: "Dashboard" }).click()
+  await page.getByRole("link", { name: "Chat" }).click()
+  await expect(page.getByRole("log").getByText("Comprobación local del prototipo")).toBeVisible()
+})
+
+test("Dashboard changes period and shows a chart, table and project details", async ({ page }) => {
+  await page.goto("/#dashboard")
+  await expect(page.getByRole("heading", { name: "Resumen del espacio" })).toBeVisible()
+  const conversations = page.getByTestId("metric-conversations")
+  await expect(conversations).toHaveText("128")
+  await page.getByRole("button", { name: "7 días" }).click()
+  await expect(conversations).toHaveText("36")
+  await expect(page.getByRole("heading", { name: "Actividad semanal" })).toBeVisible()
+  await expect(page.getByRole("table")).toBeVisible()
+  await page.getByRole("button", { name: "Abrir proyecto Pizarra React" }).click()
+  await expect(page.getByRole("heading", { name: "Pizarra React", exact: true })).toBeVisible()
+})
+
+test("the theme works with keyboard and persists after reload", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" })
+  await page.goto("/")
+  const root = page.locator("html")
+  const theme = page.getByRole("button", { name: "Activar tema oscuro" })
+  await theme.focus()
+  await page.keyboard.press("Enter")
+  await expect(root).toHaveClass(/dark/)
+  await page.reload()
+  await expect(root).toHaveClass(/dark/)
+  await page.getByRole("button", { name: "Activar tema claro" }).click()
+  await expect(root).not.toHaveClass(/dark/)
+})
+
+test("at narrow widths the contextual dialog can be opened and escaped", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto("/")
+  const trigger = page.getByRole("button", { name: "Mostrar panel contextual" })
+  const dialog = page.getByRole("dialog")
+  await trigger.click()
+  await expect(dialog.getByRole("heading", { name: "Conversaciones" })).toBeVisible()
+  await page.keyboard.press("Escape")
+  await expect(dialog).not.toBeVisible()
+  await expect(trigger).toBeFocused()
+  await page.getByRole("link", { name: "Dashboard" }).click()
+  await expect(page.getByRole("heading", { name: "Resumen del espacio" })).toBeVisible()
+  const documentWidth = () => page.evaluate(() => document.documentElement.scrollWidth)
+  expect(await documentWidth()).toBe(390)
+  await page.setViewportSize({ width: 320, height: 680 })
+  expect(await documentWidth()).toBe(320)
+})
+
+test("rendered views have no runtime errors", async ({ page }) => {
+  const screenshots = process.env.DESKTOP_SCREENSHOTS
+  const messages: string[] = []
+  page.on("pageerror", error => messages.push(error.message))
+  page.on("console", message => {
+    if (message.type() === "error" || message.type() === "warning") messages.push(message.text())
+  })
+  if (screenshots) await mkdir(screenshots, { recursive: true })
+  for (const theme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" })
+    for (const view of ["chat", "dashboard"] as const) {
+      await page.goto(`/#${view}`)
+      await expect(page).toHaveTitle("Pizarra · Design Skills Router")
+      await expect(page.getByRole("heading", { name: view === "chat" ? "Diseño de la pizarra" : "Resumen del espacio" })).toBeVisible()
+      const root = page.locator("html")
+      if ((await root.evaluate(el => el.classList.contains("dark"))) !== (theme === "dark")) {
+        await page.getByRole("button", { name: theme === "dark" ? "Activar tema oscuro" : "Activar tema claro" }).click()
+      }
+      if (theme === "dark") await expect(root).toHaveClass(/dark/)
+      else await expect(root).not.toHaveClass(/dark/)
+      if (view === "dashboard") await expect(page.locator(".recharts-surface").first()).toBeVisible()
+      await expect.poll(() => page.evaluate(async () => {
+        await document.fonts.ready
+        return [...document.fonts].filter(font => font.status === "loaded").length
+      })).toBeGreaterThanOrEqual(2)
+      await expect(page.locator("vite-error-overlay")).toHaveCount(0)
+      if (screenshots) {
+        await page.screenshot({ path: join(screenshots, `${view}-${theme}.png`), animations: "disabled" })
+      }
+    }
+  }
+  expect(messages).toEqual([])
+})
