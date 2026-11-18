@@ -1,6 +1,18 @@
 # Design Skills Router
 
-Design Skills Router ayuda a elegir qué skills consultar para una tarea de diseño y a explicar por qué se propone cada una. Por ejemplo, en una auditoría de layout, la pregunta inicial es qué parte de la interfaz se quiere revisar. Esa decisión orienta la selección de especialistas y las comprobaciones pertinentes.
+Design Skills Router ayuda a elegir qué skills consultar para una tarea de diseño y a explicar por qué se propone cada una.
+
+## Ejemplo de selección
+
+«Quiero auditar cómo se distribuye el contenido de una pantalla y si se entiende qué elemento es el más importante».
+
+Para una auditoría con ese alcance, el router propone **G5**, el especialista en composición, cuadrícula y jerarquía visual. La selección reúne tres tareas en modo de **solo lectura**:
+
+- Revisar la coherencia visual de la pantalla.
+- Comprobar la accesibilidad de la interfaz.
+- Examinar cómo responde el diseño ante casos extremos, como un título demasiado largo.
+
+El resultado es una propuesta de revisión. La persona a cargo decide qué comprobaciones llevar a cabo.
 
 ## Cómo colaborar
 
