@@ -1,0 +1,29 @@
+title = "Design Skills Router public repository policy"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "router-api-key-assignment"
+description = "A literal value assigned to an API key setting"
+regex = '''(?im)\b[\w.-]*api[_-]?key["']?[ \t]*[=:][ \t]*["']?([A-Za-z0-9][A-Za-z0-9_.+/=-]{11,})(?:["' \t,;}]|$)'''
+secretGroup = 1
+keywords = ["api"]
+
+[[rules.allowlists]]
+description = "Unquoted JavaScript environment variable references"
+regexTarget = "match"
+regexes = ['''^[\w.-]+[ \t]*[=:][ \t]*process\.env\.[A-Za-z_]\w*(?:[ \t;]|$)''']
+
+[[rules]]
+id = "router-macos-home-path"
+description = "An absolute macOS user home path"
+regex = '''/Users/[A-Za-z0-9._-]+'''
+keywords = ["/users/"]
+
+[[rules]]
+id = "router-macos-temporary-path"
+description = "An absolute macOS per-user temporary path"
+regex = '''(?:/private)?/var(/folders/[A-Za-z0-9_]{2}/[A-Za-z0-9_.-]+)'''
+secretGroup = 1
+keywords = ["/var/folders/"]
