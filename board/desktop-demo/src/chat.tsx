@@ -140,7 +140,7 @@ export function ChatView({
       <div className="thread-scroll" ref={thread}>
         <div className="reading-column">
           <header className="thread-header">
-            <p className="eyebrow">{conversation.date === "Ahora" ? "Conversación local" : "Conversación de ejemplo"}</p>
+            <p className="eyebrow">{conversation.origin === "local" ? "Conversación local" : "Conversación de ejemplo"}</p>
             <h1>{conversation.title}</h1>
           </header>
           <div className="thread-log" role="log" aria-label="Historial de mensajes">

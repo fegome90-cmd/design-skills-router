@@ -55,11 +55,13 @@ test("the sidebar resizes with pointer and keyboard and restores its width", asy
 
 test("Chat can search, create a conversation and keep its local messages across views", async ({ page }) => {
   await page.goto("/")
+  await expect(page.getByText("Conversación de ejemplo", { exact: true })).toBeVisible()
   await page.getByRole("searchbox", { name: "Buscar conversaciones" }).fill("referencias")
   await expect(page.getByRole("button", { name: "Lectura de referencias" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Diseño de la pizarra" })).not.toBeVisible()
   await page.getByRole("button", { name: "Nueva conversación" }).click()
   await expect(page.getByRole("heading", { name: "Una conversación nueva" })).toBeVisible()
+  await expect(page.getByText("Conversación local", { exact: true })).toBeVisible()
   const input = page.getByRole("textbox", { name: "Escribe un mensaje" })
   const send = page.getByRole("button", { name: "Enviar mensaje" })
   await expect(send).toBeDisabled()
@@ -73,17 +75,27 @@ test("Chat can search, create a conversation and keep its local messages across 
   await expect(page.getByRole("log").getByText("Comprobación local del prototipo")).toBeVisible()
 })
 
-test("Dashboard changes period and shows a chart, table and project details", async ({ page }) => {
+test("Dashboard updates metrics and the chart when the period changes", async ({ page }) => {
   await page.goto("/#dashboard")
   await expect(page.getByRole("heading", { name: "Resumen del espacio" })).toBeVisible()
   const conversations = page.getByTestId("metric-conversations")
+  const chart = page.locator("#actividad")
+  const monthlyTick = chart.getByText("20 oct", { exact: true })
   await expect(conversations).toHaveText("128")
+  await expect(monthlyTick).toBeVisible()
   await page.getByRole("button", { name: "7 días" }).click()
   await expect(conversations).toHaveText("36")
   await expect(page.getByRole("heading", { name: "Actividad semanal" })).toBeVisible()
-  await expect(page.getByRole("table")).toBeVisible()
-  await page.getByRole("button", { name: "Abrir proyecto Pizarra React" }).click()
-  await expect(page.getByRole("heading", { name: "Pizarra React", exact: true })).toBeVisible()
+  await expect(chart.getByText("Lun", { exact: true })).toBeVisible()
+  await expect(monthlyTick).toHaveCount(0)
+})
+
+test("Dashboard opens the details for the selected project row", async ({ page }) => {
+  await page.goto("/#dashboard")
+  const projects = page.getByRole("table", { name: "Proyectos recientes" })
+  const row = projects.getByRole("row", { name: /Archivo de referencias/ })
+  await row.getByRole("button", { name: "Abrir proyecto Archivo de referencias" }).click()
+  await expect(page.getByRole("heading", { name: "Archivo de referencias", exact: true })).toBeVisible()
 })
 
 test("the theme works with keyboard and persists after reload", async ({ page }) => {

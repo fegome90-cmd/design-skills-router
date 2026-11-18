@@ -7,6 +7,7 @@ export type Message = {
 
 export type Conversation = {
   id: string
+  origin: "demo" | "local"
   title: string
   date: string
   messages: Message[]
@@ -15,6 +16,7 @@ export type Conversation = {
 export const demoConversations: Conversation[] = [
   {
     id: "pizarra",
+    origin: "demo",
     title: "Diseño de la pizarra",
     date: "Hoy",
     messages: [
@@ -33,6 +35,7 @@ export const demoConversations: Conversation[] = [
   },
   {
     id: "referencias",
+    origin: "demo",
     title: "Lectura de referencias",
     date: "Ayer",
     messages: [
@@ -42,6 +45,7 @@ export const demoConversations: Conversation[] = [
   },
   {
     id: "navegacion",
+    origin: "demo",
     title: "Navegación y recursos",
     date: "Lunes",
     messages: [
@@ -67,11 +71,13 @@ export const documents = [
 export const periods = [7, 30, 90] as const
 export type Period = typeof periods[number]
 
+type MetricKey = "conversations" | "projects" | "resources" | "reviews"
+
 export const metrics = {
-  7: [36, 4, 12, 8],
-  30: [128, 12, 48, 24],
-  90: [346, 23, 114, 63],
-} satisfies Record<Period, readonly number[]>
+  7: { conversations: 36, projects: 4, resources: 12, reviews: 8 },
+  30: { conversations: 128, projects: 12, resources: 48, reviews: 24 },
+  90: { conversations: 346, projects: 23, resources: 114, reviews: 63 },
+} satisfies Record<Period, Record<MetricKey, number>>
 
 export const activity = {
   7: [

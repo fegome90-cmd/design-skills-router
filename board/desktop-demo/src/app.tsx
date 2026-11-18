@@ -305,7 +305,13 @@ function DesktopApplication({
   }
 
   function createThread() {
-    const next: Conversation = { id: crypto.randomUUID(), title: "Nueva conversación", date: "Ahora", messages: [] }
+    const next: Conversation = {
+      id: crypto.randomUUID(),
+      origin: "local",
+      title: "Nueva conversación",
+      date: "Ahora",
+      messages: [],
+    }
     setThreads(items => [next, ...items])
     selectThread(next.id)
     setSearch("")

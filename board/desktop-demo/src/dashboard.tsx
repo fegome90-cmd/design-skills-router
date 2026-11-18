@@ -13,7 +13,7 @@ const metricLabels = [
   { name: "Proyectos", key: "projects", icon: FolderKanban, note: "Con actividad" },
   { name: "Recursos", key: "resources", icon: FileStack, note: "Añadidos a la biblioteca" },
   { name: "Revisiones", key: "reviews", icon: ListChecks, note: "Completadas" },
-]
+] as const
 
 const chartConfig = {
   conversations: { label: "Conversaciones", color: "var(--chart-1)" },
@@ -54,12 +54,12 @@ export default function DashboardView({
       </header>
 
       <div className="metric-grid">
-        {metricLabels.map(({ key, name, icon: Icon, note }, i) => (
+        {metricLabels.map(({ key, name, icon: Icon, note }) => (
           <Card className="metric-card" key={key}>
             <CardHeader>
               <CardDescription>{name}</CardDescription>
               <CardAction className="metric-icon"><Icon aria-hidden="true" /></CardAction>
-              <CardTitle data-testid={`metric-${key}`}>{metrics[period][i]}</CardTitle>
+              <CardTitle data-testid={`metric-${key}`}>{metrics[period][key]}</CardTitle>
             </CardHeader>
             <CardContent className="metric-note">{note}</CardContent>
           </Card>
