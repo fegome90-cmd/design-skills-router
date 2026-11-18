@@ -1,0 +1,671 @@
+{
+  "nodes": [
+    {
+      "id": "py-runner-start",
+      "title": "Entrada CLI: iniciar o continuar",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "main",
+      "summary": "Interpreta el comando, construye Router y comprueba que el expediente esté fuera del plugin. Cada comando es una llamada explícita del host."
+    },
+    {
+      "id": "py-router-load",
+      "title": "Cargar baseline y contratos",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.__init__",
+      "summary": "Lee el árbol, inventario y reglas del baseline v0.4, comprueba el lock, indexa el árbol expandido y valida la estructura de los contratos y el hash del árbol."
+    },
+    {
+      "id": "py-model-expand",
+      "title": "Expandir instancias del árbol",
+      "path": "skills/design-tree/scripts/tree_model.py",
+      "symbol": "expand_model",
+      "summary": "Resuelve plantillas por referencia y prefijo, conserva definition_id y contexto, y rechaza referencias ausentes o cíclicas."
+    },
+    {
+      "id": "py-model-index",
+      "title": "Recorrer nodos expandidos",
+      "path": "skills/design-tree/scripts/tree_model.py",
+      "symbol": "flatten",
+      "summary": "Produce cada nodo y sus descendientes; el constructor usa el recorrido para indexar los IDs de instancia."
+    },
+    {
+      "id": "py-contracts-validate",
+      "title": "Validar contratos del paquete",
+      "path": "skills/design-tree/scripts/contracts.py",
+      "symbol": "validate_contracts",
+      "summary": "Revisa los contratos suplementarios contra los nodos e inventario, incluidas relaciones, recursos y requisitos de verificación."
+    },
+    {
+      "id": "py-runner-init",
+      "title": "Crear expediente local",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.new_state",
+      "summary": "Inicia expediente de un proyecto web en modo design o audit, con asistencia manual y registros, fuentes y fases vacíos."
+    },
+    {
+      "id": "py-ledger-load",
+      "title": "Leer expediente",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "load_state",
+      "summary": "Rechaza archivo ausente o enlace simbólico y verifica el hash de integridad y esquema antes del despacho."
+    },
+    {
+      "id": "py-ledger-save",
+      "title": "Guardar revisión del expediente",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "save_state",
+      "summary": "Usa un lock exclusivo, comprueba revisión esperada, recalcula integridad y reemplaza el archivo de forma atómica fuera del plugin."
+    },
+    {
+      "id": "py-runner-status",
+      "title": "Mostrar estado y frontera",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.status",
+      "summary": "Resume frontera, bloqueos, etapas, inventario y comprobaciones. Solo marca listo para entrega humana si pasan todas las condiciones de estado."
+    },
+    {
+      "id": "py-runner-frontier",
+      "title": "Derivar recorrido activo",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.active",
+      "summary": "Parte en la raíz; con registro vigente, decision sigue la alternativa registrada y all recorre todas sus ramas. Sin registro vigente se detiene en ese punto."
+    },
+    {
+      "id": "py-runner-current",
+      "title": "Comprobar vigencia de decisión",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.record_current",
+      "summary": "Revalida datos, recibos o mandato correspondiente para APPROVED, DECIDED_DELEGATED y RATIFIED_IN_PHASE. También comprueba dependencias de fase."
+    },
+    {
+      "id": "py-runner-blocked",
+      "title": "Interrumpir operación bloqueada",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "require",
+      "summary": "Lanza GateError cuando una condición obligatoria falla. El punto de entrada informa BLOCKED y sale con código 2 antes de guardar una mutación fallida."
+    },
+    {
+      "id": "py-runner-show-node",
+      "title": "Mostrar paquete de nodo",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.packet",
+      "summary": "Expone alternativas, criterios, requisitos, fuentes fijadas, relaciones, fase y estado. El host presenta la información; la CLI emite JSON."
+    },
+    {
+      "id": "py-contracts-evaluate",
+      "title": "Evaluar condiciones y obligaciones",
+      "path": "skills/design-tree/scripts/contracts.py",
+      "symbol": "evaluate_contracts",
+      "summary": "Aplica relaciones por nodo, operación y hechos. Distingue opcionales sin seleccionar y condiciones desconocidas; devuelve obligaciones exigibles y pendientes."
+    },
+    {
+      "id": "py-runner-record-source",
+      "title": "Registrar recepción de fuente",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.register_source",
+      "summary": "Comprueba commit, Git blob y hash local de bytes completos. Registra evidencia de recepción. Si cambian bytes ya vinculados, invalida los registros afectados."
+    },
+    {
+      "id": "py-runner-structure-one",
+      "title": "Confirmar estructura individual",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.confirm_structure",
+      "summary": "Exige nodo abierto y recibo humano structure ligado al hash de estructura. La confirmación habilita propuestas, sin decidir el proyecto."
+    },
+    {
+      "id": "py-runner-structure-set",
+      "title": "Confirmar conjunto de estructuras",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.confirm_structure_set",
+      "summary": "Admite un recibo structure_set para un conjunto exacto de nodos, con hash del manifiesto."
+    },
+    {
+      "id": "py-runner-open-gate",
+      "title": "Comprobar nodo abierto",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.check_open",
+      "summary": "Exige nodo activo y ruta habilitada, prerrequisitos completos y, cuando hay mapa de fases, fase activa con dependencias vigentes."
+    },
+    {
+      "id": "py-runner-configure-phases",
+      "title": "Confirmar mapa de fases",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.configure_phases",
+      "summary": "Valida el mapa y su recibo exacto. La plantilla distingue bases, visual, componentes y revisión. El mapa confirmado crea fases PLANNED."
+    },
+    {
+      "id": "py-assistance-validate",
+      "title": "Validar mandato de asistencia",
+      "path": "skills/design-tree/scripts/assistance.py",
+      "symbol": "validate_assistance",
+      "summary": "Revisa nivel manual, guided o phase_auto, acciones permitidas, reservas y límite de etapa."
+    },
+    {
+      "id": "py-runner-grant-phase",
+      "title": "Activar fase y mandato",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.grant_assistance",
+      "summary": "Exige recibo delegation con hash del mandato, alcance y mapa, además de dependencias aceptadas. Activa fase y nivel solicitados."
+    },
+    {
+      "id": "py-assistance-gate",
+      "title": "Comprobar autorización delegada",
+      "path": "skills/design-tree/scripts/assistance.py",
+      "symbol": "assistance_action",
+      "summary": "Permite acciones bajo mandato activo, dentro de fase y fuera de reservas. El nivel manual exige decisión humana."
+    },
+    {
+      "id": "py-runner-propose",
+      "title": "Registrar respuesta propuesta",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.propose",
+      "summary": "Exige estructura confirmada y nodo abierto. Valida y conserva la propuesta, la vincula a contexto, política y fuentes, y registra AWAITING_HUMAN."
+    },
+    {
+      "id": "py-runner-validate-response",
+      "title": "Validar contenido de la propuesta",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.validate_proposal",
+      "summary": "Exige razones y cobertura de alternativas, skills y criterios, evidencia y relaciones exigibles. Bloquea escrituras en auditoría y mantiene identidad de candidato cuando aplica."
+    },
+    {
+      "id": "py-runner-human-receipt",
+      "title": "Comprobar recibo humano exacto",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "human_receipt",
+      "summary": "Verifica role user, tipo de recibo, hash esperado y presencia de referencia y cita. El operador aporta el mensaje observado."
+    },
+    {
+      "id": "py-runner-confirm",
+      "title": "Confirmar decisión humana",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.confirm_decision",
+      "summary": "Revalida propuesta, evidencia y verificaciones, exige recibo project del hash propuesto y registra APPROVED."
+    },
+    {
+      "id": "py-runner-delegate",
+      "title": "Registrar decisión delegada",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.delegate_decision",
+      "summary": "Revalida la delegación, autoridad y vigencia de la propuesta. Registra DECIDED_DELEGATED; la fase todavía requiere aceptación humana."
+    },
+    {
+      "id": "py-runner-check-gate",
+      "title": "Comprobar verificaciones exigibles",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.check_gate",
+      "summary": "Bloquea cierre con NOT_VERIFIED o comprobaciones obligatorias pendientes. Evalúa resultados declarados y evidencias ligadas al expediente."
+    },
+    {
+      "id": "py-runner-prepare-phase",
+      "title": "Preparar paquete de fase",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.prepare_phase",
+      "summary": "Exige fase activa, registros vigentes, comprobaciones completas y entregables con evidencia. Devuelve paquete exacto y hash; la fase pasa a AWAITING_HUMAN."
+    },
+    {
+      "id": "py-runner-accept-phase",
+      "title": "Aceptar fase con recibo humano",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.accept_phase",
+      "summary": "Valida el recibo phase y revalida el paquete. Cambia decisiones delegadas a RATIFIED_IN_PHASE, marca fase ACCEPTED, consume el mandato y puede ratificar inventario."
+    },
+    {
+      "id": "py-runner-phase-current",
+      "title": "Comprobar fase aceptada",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.phase_current",
+      "summary": "Revalida recibo, paquete, contexto, evidencia, decisiones requeridas y dependencias de una fase aceptada."
+    },
+    {
+      "id": "py-runner-reopen-phase",
+      "title": "Reabrir fase y dependientes",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.reopen_phase",
+      "summary": "Exige razón y recibo reopen ligado al paquete vigente. Archiva revisiones previas, revoca mandato y marca fase, dependientes y decisiones STALE."
+    },
+    {
+      "id": "py-runner-revoke",
+      "title": "Revocar mandato",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.revoke_delegation",
+      "summary": "Revoca el mandato activo con razón, pasa a asistencia manual y conserva historial."
+    },
+    {
+      "id": "py-runner-set-fact",
+      "title": "Registrar o actualizar hecho",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.set_fact",
+      "summary": "Exige identidad, alcance, estado, revisión y evidencia cuando aplica. Invalida decisiones cuyo contexto normativo cambió."
+    },
+    {
+      "id": "py-runner-invalidate",
+      "title": "Invalidar decisiones afectadas",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.invalidate",
+      "summary": "Marca STALE el nodo, sus descendientes y dependientes por prerrequisito; elimina candidatos vinculados y conserva historial y paquetes anteriores."
+    },
+    {
+      "id": "py-runner-inventory",
+      "title": "Proponer disposiciones de inventario",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.propose_inventory",
+      "summary": "Valida disposiciones y evidencia del inventario y genera hash exacto para confirmación o inclusión en un gate de fase."
+    },
+    {
+      "id": "py-runner-inventory-confirm",
+      "title": "Confirmar disposiciones de inventario",
+      "path": "skills/design-tree/scripts/runner.py",
+      "symbol": "Router.confirm_inventory",
+      "summary": "Valida y liga el recibo inventory al inventario propuesto. Confirma disposiciones; las fuentes siguen sujetas a revisión."
+    },
+    {
+      "id": "py-ledger-export",
+      "title": "Exportar expediente portable",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "export_bundle",
+      "summary": "Escribe copia del estado y evidencia portátil fuera del plugin para traslado. Conserva el estado de la sesión original."
+    },
+    {
+      "id": "py-ledger-resume",
+      "title": "Reanudar expediente portable",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "inspect_portable_bundle",
+      "summary": "Valida el bundle y reubica evidencias. El comando resume crea un expediente nuevo y vuelve a asistencia manual mediante la CLI."
+    },
+    {
+      "id": "py-ledger-upgrade",
+      "title": "Migrar expediente anterior",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "upgrade_bundle",
+      "summary": "Inspecciona o migra un bundle anterior a otra copia; conserva la historia sin importar aprobaciones."
+    }
+  ],
+  "edges": [
+    {
+      "from": "py-runner-start",
+      "to": "py-router-load",
+      "condition": "Al despachar cualquier comando."
+    },
+    {
+      "from": "py-router-load",
+      "to": "py-model-expand",
+      "condition": "Una vez verificado el baseline."
+    },
+    {
+      "from": "py-router-load",
+      "to": "py-model-index",
+      "condition": "Tras expandir el árbol."
+    },
+    {
+      "from": "py-router-load",
+      "to": "py-contracts-validate",
+      "condition": "Con nodos e inventario indexados."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-init",
+      "condition": "init: proyecto web, alcance y modo."
+    },
+    {
+      "from": "py-runner-init",
+      "to": "py-ledger-save",
+      "condition": "CLI: crea el expediente si la ruta de destino está disponible."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-ledger-load",
+      "condition": "Comando sobre expediente existente, salvo resume."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-status",
+      "condition": "status: devuelve estado y frontera."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-show-node",
+      "condition": "node ID: devuelve el paquete para mostrar."
+    },
+    {
+      "from": "py-runner-status",
+      "to": "py-runner-frontier",
+      "condition": "Calcula el conjunto activo y la frontera."
+    },
+    {
+      "from": "py-runner-show-node",
+      "to": "py-runner-frontier",
+      "condition": "Indica si el nodo forma parte del recorrido activo."
+    },
+    {
+      "from": "py-runner-frontier",
+      "to": "py-runner-current",
+      "condition": "Antes de seguir una rama de decisión o todas las de all."
+    },
+    {
+      "from": "py-runner-show-node",
+      "to": "py-contracts-evaluate",
+      "condition": "Evalúa relaciones del paquete en operación de referencia."
+    },
+    {
+      "from": "py-runner-show-node",
+      "to": "py-assistance-gate",
+      "condition": "Muestra si se podría delegar el nodo con el mandato actual."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-record-source",
+      "condition": "source: se presentan bytes locales, commit, blob y referencia."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-structure-one",
+      "condition": "structure: llega recibo exacto de un nodo."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-structure-set",
+      "condition": "structure-set: llega recibo exacto del conjunto."
+    },
+    {
+      "from": "py-runner-structure-one",
+      "to": "py-runner-open-gate",
+      "condition": "Antes de registrar la confirmación individual."
+    },
+    {
+      "from": "py-runner-structure-one",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba el recibo de estructura individual."
+    },
+    {
+      "from": "py-runner-structure-set",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba el recibo del manifiesto de estructuras."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-configure-phases",
+      "condition": "configure: llega mapa acompañado de recibo."
+    },
+    {
+      "from": "py-runner-configure-phases",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba hash exacto del mapa de fases."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-grant-phase",
+      "condition": "grant: llega mandato explícito ligado a una fase."
+    },
+    {
+      "from": "py-runner-grant-phase",
+      "to": "py-assistance-validate",
+      "condition": "Valida el mandato antes de activarlo."
+    },
+    {
+      "from": "py-runner-grant-phase",
+      "to": "py-runner-phase-current",
+      "condition": "Comprueba dependencias y fase previa al cambiar de fase."
+    },
+    {
+      "from": "py-runner-grant-phase",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba hash exacto de la autorización."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-propose",
+      "condition": "propose: el host presenta la respuesta y evidencia."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-runner-open-gate",
+      "condition": "Antes de escribir la propuesta."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-runner-validate-response",
+      "condition": "Antes de registrar AWAITING_HUMAN."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-assistance-gate",
+      "condition": "Determina si la autoridad se liga a un mandato delegado."
+    },
+    {
+      "from": "py-runner-validate-response",
+      "to": "py-contracts-evaluate",
+      "condition": "Calcula obligaciones y rechaza condiciones requeridas desconocidas."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-confirm",
+      "condition": "confirm: llega recibo humano de la propuesta manual o delegada."
+    },
+    {
+      "from": "py-runner-confirm",
+      "to": "py-runner-open-gate",
+      "condition": "Revalida que se puede operar sobre el nodo."
+    },
+    {
+      "from": "py-runner-confirm",
+      "to": "py-runner-validate-response",
+      "condition": "Revalida el contenido antes de confirmar."
+    },
+    {
+      "from": "py-runner-confirm",
+      "to": "py-runner-check-gate",
+      "condition": "Exige verificación suficiente antes de aprobar."
+    },
+    {
+      "from": "py-runner-confirm",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba hash exacto de la propuesta."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-delegate",
+      "condition": "delegate: existe propuesta ligada a un mandato vigente."
+    },
+    {
+      "from": "py-runner-delegate",
+      "to": "py-runner-open-gate",
+      "condition": "Revalida que se puede operar sobre el nodo."
+    },
+    {
+      "from": "py-runner-delegate",
+      "to": "py-assistance-gate",
+      "condition": "Exige permiso delegado y respeta las reservas."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-prepare-phase",
+      "condition": "phase-prepare: se presentan evidencias de entregables."
+    },
+    {
+      "from": "py-runner-prepare-phase",
+      "to": "py-runner-current",
+      "condition": "Exige decisiones vigentes en todo nodo activo de la fase."
+    },
+    {
+      "from": "py-runner-prepare-phase",
+      "to": "py-runner-check-gate",
+      "condition": "Verifica obligaciones antes de producir el paquete."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-accept-phase",
+      "condition": "phase-accept: llega recibo del paquete exacto mostrado."
+    },
+    {
+      "from": "py-runner-accept-phase",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba el hash de aceptación."
+    },
+    {
+      "from": "py-runner-accept-phase",
+      "to": "py-runner-check-gate",
+      "condition": "Revalida verificaciones antes de ratificar las decisiones delegadas."
+    },
+    {
+      "from": "py-runner-status",
+      "to": "py-runner-phase-current",
+      "condition": "La entrega humana exige fases activas en el recorrido aceptadas y vigentes."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-reopen-phase",
+      "condition": "phase-reopen: llega recibo explícito y razón."
+    },
+    {
+      "from": "py-runner-reopen-phase",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba el hash que liga fase, paquete previo y razón."
+    },
+    {
+      "from": "py-runner-reopen-phase",
+      "to": "py-runner-revoke",
+      "condition": "Revoca el mandato antes de marcar fases y decisiones STALE."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-revoke",
+      "condition": "revoke: el operador presenta razón de revocación."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-set-fact",
+      "condition": "fact: cambio de hecho con revisión superior y evidencia cuando corresponde."
+    },
+    {
+      "from": "py-runner-set-fact",
+      "to": "py-runner-invalidate",
+      "condition": "Si varía el hash de contexto de una decisión."
+    },
+    {
+      "from": "py-runner-record-source",
+      "to": "py-runner-invalidate",
+      "condition": "Si los bytes de la fuente vinculada cambiaron."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-runner-invalidate",
+      "condition": "Si la nueva propuesta sustituye un registro existente."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-invalidate",
+      "condition": "invalidate: el operador especifica el nodo y la razón."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-inventory",
+      "condition": "inventory --file: llegan las disposiciones con evidencia."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-runner-inventory-confirm",
+      "condition": "confirm-inventory: llega el recibo explícito."
+    },
+    {
+      "from": "py-runner-inventory-confirm",
+      "to": "py-runner-human-receipt",
+      "condition": "Comprueba el hash exacto de inventario."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-ledger-save",
+      "condition": "Después de cualquier mutación completada sin error, con la revisión que se leyó."
+    },
+    {
+      "from": "py-ledger-save",
+      "to": "py-ledger-load",
+      "condition": "Si el expediente ya existe, valida la revisión antes de reemplazarlo."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-ledger-export",
+      "condition": "export: el operador declara un destino externo al plugin."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-ledger-resume",
+      "condition": "resume: el operador declara el bundle y la ruta de un expediente nuevo."
+    },
+    {
+      "from": "py-ledger-resume",
+      "to": "py-runner-revoke",
+      "condition": "CLI: si el bundle conserva un mandato activo, lo revoca al reanudar."
+    },
+    {
+      "from": "py-ledger-resume",
+      "to": "py-ledger-save",
+      "condition": "CLI: persiste el estado validado y con artefactos reubicados en un archivo nuevo."
+    },
+    {
+      "from": "py-runner-start",
+      "to": "py-ledger-upgrade",
+      "condition": "upgrade-state: inspección o migración explícita de un bundle anterior."
+    },
+    {
+      "from": "py-runner-show-node",
+      "to": "py-runner-propose",
+      "condition": "Siguiente invocación del host: tras revisar el nodo, aportar una respuesta con evidencia."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-runner-confirm",
+      "condition": "Siguiente invocación: confirmación humana con el hash de la propuesta."
+    },
+    {
+      "from": "py-runner-propose",
+      "to": "py-runner-delegate",
+      "condition": "Siguiente invocación: el mandato vigente cubre el nodo y la propuesta delegada."
+    },
+    {
+      "from": "py-runner-confirm",
+      "to": "py-runner-status",
+      "condition": "Nueva lectura del host: la decisión vigente permite recalcular la frontera."
+    },
+    {
+      "from": "py-runner-delegate",
+      "to": "py-runner-status",
+      "condition": "Nueva lectura del host: la decisión delegada vigente permite recalcular la frontera."
+    },
+    {
+      "from": "py-runner-prepare-phase",
+      "to": "py-runner-accept-phase",
+      "condition": "Nueva invocación: tras presentar el paquete, llega aceptación humana exacta."
+    },
+    {
+      "from": "py-runner-accept-phase",
+      "to": "py-runner-grant-phase",
+      "condition": "Fase siguiente: se necesita un mandato explícito nuevo; la aceptación previa no lo crea."
+    },
+    {
+      "from": "py-runner-reopen-phase",
+      "to": "py-runner-grant-phase",
+      "condition": "Para seguir tras reapertura: presentar un mandato nuevo."
+    },
+    {
+      "from": "py-runner-open-gate",
+      "to": "py-runner-blocked",
+      "condition": "Nodo inactivo, ruta bloqueada, fase no habilitada o prerrequisito pendiente."
+    },
+    {
+      "from": "py-runner-check-gate",
+      "to": "py-runner-blocked",
+      "condition": "Verificación pendiente o comprobación obligatoria bloqueante."
+    },
+    {
+      "from": "py-runner-human-receipt",
+      "to": "py-runner-blocked",
+      "condition": "Recibo ausente, no ligado al objeto exacto o con campos inválidos."
+    },
+    {
+      "from": "py-ledger-save",
+      "to": "py-runner-blocked",
+      "condition": "Lock ocupado, revisión incompatible, enlace simbólico o destino inicial existente."
+    }
+  ]
+}

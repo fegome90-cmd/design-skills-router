@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Design Skills Router · Telemetría global</title>
+<style>
+  :root { --ink:#23262f; --muted:#5e6372; --line:#dcd8d1; --paper:#f7f4ee; --card:#fffdf9; --accent:#3d446d; --warn:#8a4b12; --ok:#21624b; --bad:#8a2432; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:16px; align-items:end; justify-content:space-between; padding:28px clamp(16px,4vw,48px) 18px; border-bottom:1px solid var(--line); background:var(--card); }
+  h1 { margin:0; font-family:Georgia,"Times New Roman",serif; font-size:clamp(1.5rem,3vw,2rem); letter-spacing:-.02em; }
+  h2 { margin:0 0 10px; font-size:1rem; letter-spacing:.02em; }
+  p { margin:4px 0; color:var(--muted); }
+  .eyebrow { font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  button { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:7px; padding:7px 11px; font:inherit; cursor:pointer; }
+  button[aria-pressed="true"] { border-color:var(--accent); background:var(--accent); color:#fff; }
+  button:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  main { padding:20px clamp(16px,4vw,48px) 56px; display:grid; gap:18px; }
+  .status { border-left:3px solid var(--accent); padding:9px 12px; background:#efedf5; border-radius:0 7px 7px 0; color:var(--ink); }
+  .status[data-kind="error"] { border-color:var(--bad); background:#f9e9eb; }
+  .status[data-kind="warn"] { border-color:var(--warn); background:#f8efe4; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:13px 14px; }
+  .kpi b { display:block; font-size:1.65rem; line-height:1.15; font-variant-numeric:tabular-nums; }
+  .kpi span { color:var(--muted); font-size:.82rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:15px 16px; min-width:0; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th,td { text-align:left; padding:7px 6px; border-bottom:1px solid #ece8e1; vertical-align:top; }
+  th { font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:650; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .empty { color:var(--muted); font-style:italic; padding:10px 4px; }
+  .unobservable { color:var(--warn); font-weight:650; }
+  .note { font-size:.82rem; color:var(--muted); }
+  code { font-size:.84em; background:#efebe4; padding:1px 4px; border-radius:4px; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px){ .two{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">Design Skills Router · infraestructura mínima</div>
+    <h1>Telemetría global</h1>
+    <p>Conteos exactos desde eventos aceptados. Sin muestreo, sin prompts, sin identidad de usuario.</p>
+  </div>
+  <div class="controls" role="group" aria-label="Ventana temporal">
+    <button type="button" data-window="7d" aria-pressed="false">7 días</button>
+    <button type="button" data-window="30d" aria-pressed="false">30 días</button>
+    <button type="button" data-window="all" aria-pressed="true">Todo</button>
+    <button type="button" id="refresh">Actualizar</button>
+  </div>
+</header>
+<main>
+  <div id="status" class="status" role="status" aria-live="polite">Cargando métricas…</div>
+
+  <div class="kpis" aria-label="Totales">
+    <div class="kpi"><b id="k-invocations">—</b><span>invocaciones del router</span></div>
+    <div class="kpi"><b id="k-evals">—</b><span>evaluaciones del árbol</span></div>
+    <div class="kpi"><b id="k-skills">—</b><span>selecciones de skill</span></div>
+    <div class="kpi"><b id="k-nodes">—</b><span>visitas de nodo</span></div>
+    <div class="kpi"><b id="k-branches">—</b><span>ramas elegidas</span></div>
+    <div class="kpi"><b id="k-started">—</b><span>ejecuciones iniciadas</span></div>
+    <div class="kpi"><b id="k-completed">—</b><span>ejecuciones completadas</span></div>
+    <div class="kpi"><b id="k-failed">—</b><span>ejecuciones fallidas</span></div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Skills más seleccionadas</h2>
+      <p class="note">Sólo tablero: apoyos elegidos por <code>resolveSelection</code>. No incluye candidatas de <code>packet.skills</code> ni ejecución.</p>
+      <div id="skills-selected"></div>
+    </section>
+    <section class="card">
+      <h2>Skills más ejecutadas</h2>
+      <p class="note">Sólo cuenta lo que un host reporta como invocación real. El router no observa la ejecución.</p>
+      <div id="skills-executed"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <h2>Nodos más recorridos</h2>
+      <p class="note">Sólo CLI <code>node</code>: packet inspeccionado. El tablero no infiere visitas desde la selección.</p>
+      <div id="nodes"></div>
+    </section>
+    <section class="card">
+      <h2>Ramas elegidas</h2>
+      <div id="branches"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <h2>Evaluaciones por ruta</h2>
+      <div id="routes"></div>
+    </section>
+    <section class="card">
+      <h2>Contrato de eventos</h2>
+      <div id="observability"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Actividad diaria</h2>
+    <p class="note">Conteos exactos por fecha de ocurrencia. Últimos 90 días con datos.</p>
+    <div id="daily"></div>
+  </section>
+
+  <section class="card">
+    <h2>Procedencia y límites</h2>
+    <div id="bounds"></div>
+    <p class="note">Fuente de verdad: eventos aceptados en la base global. Los duplicados se descartan por <code>event_id</code> y por clave semántica. Las ejecuciones sin <code>skill.execution_started</code> previo se rechazan. No se registran prompts, rutas, correos, IPs ni identificadores de usuario.</p>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const byId = id => document.getElementById(id);
+  let currentWindow = 'all';
+
+  const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  const table = (rows, columns, emptyText) => {
+    if (!rows.length) return `<p class="empty">${escapeHtml(emptyText)}</p>`;
+    const head = columns.map(c => `<th class="${c.num ? 'num' : ''}">${escapeHtml(c.label)}</th>`).join('');
+    const body = rows.map(row => `<tr>${columns.map(c => {
+      const value = c.render ? c.render(row) : row[c.key];
+      return `<td class="${c.num ? 'num' : ''}">${value}</td>`;
+    }).join('')}</tr>`).join('');
+    return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  };
+
+  const setStatus = (message, kind = 'info') => {
+    const node = byId('status');
+    node.textContent = message;
+    node.dataset.kind = kind;
+  };
+
+  const fill = (id, value) => { byId(id).textContent = value; };
+
+  const render = data => {
+    const totals = data.totals;
+    fill('k-invocations', totals.invocations);
+    fill('k-evals', totals.evaluations);
+    fill('k-skills', totals.skills_selected);
+    fill('k-nodes', totals.nodes_visited);
+    fill('k-branches', totals.branches_selected);
+    fill('k-started', totals.executions_started);
+    fill('k-completed', totals.executions_completed);
+    fill('k-failed', totals.executions_failed);
+
+    byId('skills-selected').innerHTML = table(data.skills.filter(s => s.selected > 0), [
+      { label: 'Skill', render: s => `<code>${escapeHtml(s.skill_id)}</code>` },
+      { label: 'Selecciones', key: 'selected', num: true }
+    ], 'Sin selecciones registradas en esta ventana.');
+
+    const executionState = data.observability['skill.execution_started'];
+    const executedSkills = Array.isArray(data.skills_executed)
+      ? data.skills_executed
+      : data.skills.filter(s => s.executions_started + s.executions_completed + s.executions_failed > 0);
+    byId('skills-executed').innerHTML = table(
+      executedSkills,
+      [
+        { label: 'Skill', render: s => `<code>${escapeHtml(s.skill_id)}</code>` },
+        { label: 'Iniciadas', key: 'executions_started', num: true },
+        { label: 'Completadas', key: 'executions_completed', num: true },
+        { label: 'Fallidas', key: 'executions_failed', num: true }
+      ],
+      executionState === 'schema_supported_no_emitter'
+        ? 'No observable: no existe un emisor de ejecuciones conectado al host.'
+        : 'Sin ejecuciones registradas en esta ventana.'
+    );
+
+    byId('nodes').innerHTML = table(data.nodes, [
+      { label: 'Nodo', render: n => `<code>${escapeHtml(n.node_id)}</code>` },
+      { label: 'Visitas', key: 'visits', num: true }
+    ], 'Sin visitas de nodo registradas.');
+
+    byId('branches').innerHTML = table(data.branches, [
+      { label: 'Nodo', render: b => `<code>${escapeHtml(b.node_id)}</code>` },
+      { label: 'Rama', render: b => `<code>${escapeHtml(b.branch_id)}</code>` },
+      { label: 'Veces', key: 'selected', num: true }
+    ], 'Sin ramas elegidas registradas.');
+
+    byId('routes').innerHTML = table(data.routes, [
+      { label: 'Ruta', render: r => `<code>${escapeHtml(r.route)}</code>` },
+      { label: 'Evaluaciones', key: 'evaluations', num: true }
+    ], 'Sin rutas registradas.');
+
+    const labels = {
+      'router.invoked': 'Invocación exitosa registrada',
+      'decision.node_visited': 'Nodo visitado',
+      'decision.branch_selected': 'Rama elegida',
+      'skill.selected': 'Skill seleccionada',
+      'skill.execution_started': 'Ejecución iniciada',
+      'skill.execution_completed': 'Ejecución completada',
+      'skill.execution_failed': 'Ejecución fallida'
+    };
+    byId('observability').innerHTML = table(
+      Object.entries(data.observability).map(([name, state]) => ({ name, state, count: (data.event_counts[name] || 0) })),
+      [
+        { label: 'Evento', render: r => `<code>${escapeHtml(r.name)}</code><br><span class="note">${escapeHtml(labels[r.name] || '')}</span>` },
+        { label: 'Estado', render: r => `<span class="${r.state === 'schema_supported_no_emitter' ? 'unobservable' : ''}">${escapeHtml(r.state)}</span>` },
+        { label: 'Eventos', key: 'count', num: true }
+      ],
+      'Sin eventos.'
+    );
+
+    byId('daily').innerHTML = table(
+      (data.daily || []).slice().reverse(),
+      [
+        { label: 'Fecha (UTC)', render: d => escapeHtml(d.date) },
+        { label: 'Invocaciones', key: 'invocations', num: true },
+        { label: 'Evaluaciones', key: 'evaluations', num: true },
+        { label: 'Selecciones', key: 'selections', num: true },
+        { label: 'Nodos', key: 'nodes', num: true },
+        { label: 'Iniciadas', key: 'started', num: true },
+        { label: 'Completadas', key: 'completed', num: true },
+        { label: 'Fallidas', key: 'failed', num: true }
+      ],
+      'Sin actividad diaria en esta ventana.'
+    );
+
+    const bounds = data.bounds || {};
+    const sourceList = data.sources.map(s => `${s.source}: ${s.events}`).join(' · ') || 'sin fuentes';
+    const quality = data.data_quality || {};
+    const inflation = quality.possibly_inflated == null
+      ? ''
+      : ` · <b>Posible inflado por concentración:</b> ${quality.possibly_inflated
+          ? `sí · una sola instalación aporta ${quality.max_events_per_instance} de los eventos de la ventana`
+          : 'no'}`;
+    byId('bounds').innerHTML = `
+      <p><b>Ventana:</b> ${escapeHtml(data.window.since || 'desde el inicio')} → ${escapeHtml(data.window.until || 'ahora')}</p>
+      <p><b>Primer evento:</b> ${escapeHtml(bounds.first_event_at || 'sin datos')} · <b>Último:</b> ${escapeHtml(bounds.last_event_at || 'sin datos')}</p>
+      <p><b>Entrega al colector:</b> ${escapeHtml(bounds.first_received_at || 'sin datos')} → ${escapeHtml(bounds.last_received_at || 'sin datos')} · el desfase frente al evento revela entrega diferida por outbox</p>
+      <p><b>Fuentes:</b> ${escapeHtml(sourceList)}</p>
+      <p><b>Muestreo:</b> ${quality.sampling ? 'sí' : 'no'} · <b>Conteo exacto:</b> ${quality.exact_event_counts ? 'sí' : 'no'}${inflation}</p>
+      <p><b>Semántica:</b> <code>router.invoked</code> cuenta invocaciones exitosas; <code>evaluations</code> es el subconjunto del tablero o CLI <code>node</code>/<code>status</code>. <code>skill.selected</code> sólo lo emite el tablero; las ejecuciones sólo las emite un host.</p>`;
+
+    setStatus(
+      data.totals.events === 0
+        ? 'Sin datos reales en esta ventana. El panel no muestra valores simulados.'
+        : `Datos reales: ${data.totals.events} eventos aceptados.`,
+      data.totals.events === 0 ? 'warn' : 'info'
+    );
+  };
+
+  const load = async () => {
+    setStatus('Cargando métricas…');
+    try {
+      const response = await fetch(`/v1/metrics?window=${encodeURIComponent(currentWindow)}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      render(data);
+    } catch (error) {
+      setStatus(`No se pudo consultar el colector: ${error.message}. No se muestran datos simulados.`, 'error');
+      for (const id of ['k-invocations','k-evals','k-skills','k-nodes','k-branches','k-started','k-completed','k-failed']) fill(id, '—');
+      byId('skills-selected').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('skills-executed').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('nodes').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('branches').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('routes').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('observability').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('daily').innerHTML = '<p class="empty">Sin conexión.</p>';
+      byId('bounds').innerHTML = '';
+    }
+  };
+
+  for (const button of document.querySelectorAll('[data-window]')) {
+    button.addEventListener('click', () => {
+      currentWindow = button.dataset.window;
+      for (const peer of document.querySelectorAll('[data-window]')) {
+        peer.setAttribute('aria-pressed', String(peer === button));
+      }
+      load();
+    });
+  }
+  byId('refresh').addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>

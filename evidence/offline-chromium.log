@@ -1,0 +1,6 @@
+9596085be6a2bd6e005f6fb7e20bac5c0a0c66518c6231133c7ad7421e74dc74  design-router-pizarra-v1.3-offline.html
+Darwin arm64
+Google Chrome for Testing 159.0.8154.6
+Node v24.22.2 Playwright 1.64.1
+Chromium 159.0.8154.6, cero solicitudes HTTP(S).
+PASS: archivo local, componentes, fuentes, fallback SVG, exportación y mapa de nodos sin solicitudes HTTP.

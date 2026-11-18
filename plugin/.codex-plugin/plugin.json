@@ -1,0 +1,36 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Productivity",
+    "composerIcon": "./assets/flor-negro-512.png",
+    "composerIconDark": "./assets/flor-blanco-512.png",
+    "defaultPrompt": "Usa el \u00e1rbol v0.4 para iniciar o continuar un dise\u00f1o web supervisado. Conserva el proyecto existente y mu\u00e9strame la pr\u00f3xima pregunta con sus alternativas, skills y evidencia antes de avanzar.",
+    "developerName": "Felipe Gonzalez",
+    "displayName": "Design Skills Router",
+    "logo": "./assets/flor-color-512.png",
+    "logoDark": "./assets/flor-color-512.png",
+    "longDescription": "Piloto supervisado de dise\u00f1o UI web basado en el \u00e1rbol v0.4 de Felipe. Presenta preguntas, alternativas y fuentes; conserva el inventario de 82 skills y registra confirmaciones humanas separadas. Incluye el \u00e1rbol, el visor y un helper Python de estado portable. No instala 82 skills, no ofrece un servidor ni impide acciones fuera de su ejecutor. Las fuentes externas se recuperan por revisi\u00f3n fijada y las rutas incompletas quedan bloqueadas.",
+    "shortDescription": "Dise\u00f1o con decisiones humanas"
+  },
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/design-tree/SKILL.md"
+    }
+  },
+  "name": "design-skills-router",
+  "version": "0.3.1",
+  "description": "\u00c1rbol de decisiones para dise\u00f1o UI web con fuentes, reutilizaci\u00f3n y confirmaci\u00f3n humana por nodo.",
+  "author": {
+    "name": "Felipe Gonzalez",
+    "email": "especialidadoncouv@gmail.com"
+  },
+  "keywords": [
+    "design",
+    "decision-tree",
+    "human-in-the-loop",
+    "skills",
+    "ui",
+    "reutilizacion"
+  ],
+  "skills": "./skills"
+}

@@ -1,0 +1,113 @@
+{
+  "passed": 27,
+  "checks": [
+    {
+      "check": "portable schema",
+      "passed": true
+    },
+    {
+      "check": "plugin identity",
+      "passed": true
+    },
+    {
+      "check": "strict semver",
+      "passed": true
+    },
+    {
+      "check": "subtitle <=30",
+      "passed": true
+    },
+    {
+      "check": "interface fields",
+      "passed": true
+    },
+    {
+      "check": "no nonexistent interactive capability",
+      "passed": true
+    },
+    {
+      "check": "no invented integrations",
+      "passed": true
+    },
+    {
+      "check": "onboarding exists",
+      "passed": true
+    },
+    {
+      "check": "one discoverable skill",
+      "passed": true
+    },
+    {
+      "check": "skill frontmatter",
+      "passed": true
+    },
+    {
+      "check": "explicit invocation",
+      "passed": true
+    },
+    {
+      "check": "host invocation boolean",
+      "passed": true
+    },
+    {
+      "check": "agent labels",
+      "passed": true
+    },
+    {
+      "check": "local skill link: references/PILOT.md",
+      "passed": true
+    },
+    {
+      "check": "local skill link: references/CLI.md",
+      "passed": true
+    },
+    {
+      "check": "no symlinks",
+      "passed": true
+    },
+    {
+      "check": "all baseline bytes identical",
+      "passed": true
+    },
+    {
+      "check": "CLI verify-package",
+      "passed": true
+    },
+    {
+      "check": "CLI Synthetic startup; no project approval",
+      "passed": true
+    },
+    {
+      "check": "smoke starts at real root",
+      "passed": true
+    },
+    {
+      "check": "CLI Q00",
+      "passed": true
+    },
+    {
+      "check": "root alternatives",
+      "passed": true
+    },
+    {
+      "check": "my-skills first",
+      "passed": true
+    },
+    {
+      "check": "CLI /tmp/tmpnhy29pc6/unapproved.json",
+      "passed": true
+    },
+    {
+      "check": "CLI /tmp/tmpnhy29pc6/unapproved.json",
+      "passed": true
+    },
+    {
+      "check": "CLI status",
+      "passed": true
+    },
+    {
+      "check": "failure did not advance state",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,743 @@
+{
+  "nodes": [
+    {
+      "id": "ctx-manifest",
+      "title": "Manifiesto del plugin",
+      "path": "plugin.json",
+      "symbol": "/version",
+      "summary": "Identidad y versión vigentes, con presentación y alcance del plugin definidos en extensions.",
+      "group": "host"
+    },
+    {
+      "id": "ctx-overlay",
+      "title": "Manifiesto de compatibilidad",
+      "path": ".codex-plugin/plugin.json",
+      "symbol": "/skills",
+      "summary": "Proyección de compatibilidad para descubrir skills en el paquete.",
+      "group": "host"
+    },
+    {
+      "id": "ctx-skill",
+      "title": "Entrada explícita del usuario",
+      "path": "skills/design-tree/SKILL.md",
+      "symbol": "# Diseño y mantenimiento guiados por el árbol",
+      "summary": "La skill declara disable-model-invocation y distingue trabajo de diseño web supervisado y mantenimiento.",
+      "group": "host",
+      "line": 7
+    },
+    {
+      "id": "ctx-project",
+      "title": "Proyecto de diseño",
+      "path": "skills/design-tree/SKILL.md",
+      "symbol": "## Proyecto de diseño",
+      "summary": "Usa el runner real y un expediente externo. Si el helper no corre, declara VALIDATOR_NOT_RUN.",
+      "group": "host",
+      "line": 13
+    },
+    {
+      "id": "ctx-walk",
+      "title": "Recorrer decisiones",
+      "path": "skills/design-tree/SKILL.md",
+      "symbol": "## Recorrer decisiones",
+      "summary": "Inspecciona estado/nodo, recupera fuentes fijadas, propone, confirma o delega y detiene en aceptación humana de fase.",
+      "group": "host",
+      "line": 41
+    },
+    {
+      "id": "ctx-levels",
+      "title": "Niveles conversacionales",
+      "path": "skills/design-tree/SKILL.md",
+      "symbol": "## Experiencia de los tres niveles (contrato conversacional)",
+      "summary": "Recomienda guided una vez si falta nivel. Mantiene manual hasta autorización exacta y conserva obligaciones en los tres niveles.",
+      "group": "host",
+      "line": 21
+    },
+    {
+      "id": "ctx-pilot",
+      "title": "Contrato de piloto",
+      "path": "skills/design-tree/references/PILOT.md",
+      "symbol": "# Contrato del piloto",
+      "summary": "Acota encargo web supervisado y distingue comprobación local, autorización y observación de host.",
+      "group": "host",
+      "line": 1
+    },
+    {
+      "id": "ctx-assist-doc",
+      "title": "Contrato de asistencia",
+      "path": "skills/design-tree/references/ASSISTANCE.md",
+      "symbol": "# Niveles de asistencia — contrato implementado",
+      "summary": "Detalla manual, guided y phase_auto con reservas, alcance y gates.",
+      "group": "host",
+      "line": 1
+    },
+    {
+      "id": "ctx-cli",
+      "title": "Referencia de comandos",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "# CLI — expediente 0.3, Python 3.10+",
+      "summary": "Documenta el helper local Python, JSON de salida y código 2 en gates bloqueados.",
+      "group": "host",
+      "line": 1
+    },
+    {
+      "id": "ctx-cli-start",
+      "title": "Comandos de arranque",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Inspección e inicio",
+      "summary": "verify-package, init, node y status. Arranque manual y auditoría read_only.",
+      "group": "host",
+      "line": 5
+    },
+    {
+      "id": "ctx-cli-receipts",
+      "title": "Recibos y binding exacto",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Recibos humanos — nunca copiar como autorizaciones",
+      "summary": "Contrato del recibo ligado al objeto exacto de una aceptación humana observada. El helper comprueba forma y binding.",
+      "group": "host",
+      "line": 17
+    },
+    {
+      "id": "ctx-cli-propose",
+      "title": "Propuesta y resolución",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Propuesta y decisión",
+      "summary": "Aporta alternativas, revisiones y evidencia. Confirmación humana y decisión delegada son operaciones alternativas con requisitos distintos.",
+      "group": "host",
+      "line": 64
+    },
+    {
+      "id": "ctx-cli-source",
+      "title": "Recepción de fuente canónica",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Fuentes",
+      "summary": "La fuente se recupera por conector y commit fijado. El CLI recibe bytes completos y SHA Git blob como evidencia local.",
+      "group": "host",
+      "line": 54
+    },
+    {
+      "id": "ctx-cli-phase",
+      "title": "Gate de fase",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Gate de fase",
+      "summary": "phase-prepare detiene cambios pendientes de aceptación. phase-accept usa recibo exacto del paquete, y reabrir conserva historia.",
+      "group": "host",
+      "line": 93
+    },
+    {
+      "id": "ctx-cli-persist",
+      "title": "Persistencia del expediente",
+      "path": "skills/design-tree/references/CLI.md",
+      "symbol": "## Persistencia y migración",
+      "summary": "export, resume y upgrade-state trabajan con estado externo. Recuperación valida evidencia y vuelve a manual.",
+      "group": "host",
+      "line": 107
+    },
+    {
+      "id": "ctx-protocol",
+      "title": "Propiedad del protocolo",
+      "path": "skills/design-tree/references/PROTOCOL.md",
+      "symbol": "## Propiedad",
+      "summary": "Distingue fuente normativa v0.4, contratos suplementarios, expediente externo, mandato humano y manifiestos.",
+      "group": "contratos",
+      "line": 5
+    },
+    {
+      "id": "ctx-protocol-ledger",
+      "title": "Expediente 0.3",
+      "path": "skills/design-tree/references/PROTOCOL.md",
+      "symbol": "## Expediente 0.3",
+      "summary": "Define estado, evidencia, revisiones y binding. permission_to_execute permanece false.",
+      "group": "contratos",
+      "line": 37
+    },
+    {
+      "id": "ctx-protocol-verification",
+      "title": "Resultados normativos",
+      "path": "skills/design-tree/references/PROTOCOL.md",
+      "symbol": "## Resultados normativos (nuevo en ledger/0.3)",
+      "summary": "Define resultados declarados y evidencia por ámbito helper, browser, device o host.",
+      "group": "contratos",
+      "line": 72
+    },
+    {
+      "id": "ctx-baseline-lock",
+      "title": "Lock de integridad v0.4",
+      "path": "skills/design-tree/references/baseline-lock.json",
+      "symbol": "/index.html",
+      "summary": "Ancla hashes del árbol, reglas, inventario, mapa, documentación y visor v0.4.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-tree-data",
+      "title": "Árbol canónico",
+      "path": "skills/design-tree/references/tree-v0.4/tree.json",
+      "symbol": "/root",
+      "summary": "Raíz, alternativas, nodos y referencias a plantillas reutilizables. Q00 inicia la distinción del encargo.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-tree-rules",
+      "title": "Reglas y criterios",
+      "path": "skills/design-tree/references/tree-v0.4/rules.json",
+      "symbol": "/scope",
+      "summary": "Criterios con procedencia, categoría y verificaciones. scope vincula Q00 con la fuente de orquestación.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-tree-inventory",
+      "title": "Inventario canónico",
+      "path": "skills/design-tree/references/tree-v0.4/skill-inventory.json",
+      "symbol": "/skills",
+      "summary": "82 referencias con disposición y procedencia. La presencia en el inventario representa referencia.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-tree-criteria",
+      "title": "Mapeo de criterios",
+      "path": "skills/design-tree/references/tree-v0.4/criterion-map.json",
+      "symbol": "/0",
+      "summary": "Cruza rule, skill, sección y nodos de definición. El primer criterio mapea scope.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-contracts-json",
+      "title": "Relaciones suplementarias",
+      "path": "skills/design-tree/references/contracts.json",
+      "symbol": "/relations",
+      "summary": "Política adicional tipada con recursos, relaciones y requisitos de verificación fuera del baseline.",
+      "group": "contratos"
+    },
+    {
+      "id": "ctx-contracts-validate",
+      "title": "Validar contrato suplementario",
+      "path": "skills/design-tree/scripts/contracts.py",
+      "symbol": "validate_contracts",
+      "summary": "Valida referencias, recursos, relaciones, procedencia, ciclos y requisitos de verificación.",
+      "group": "contratos",
+      "line": 32
+    },
+    {
+      "id": "ctx-contracts-evaluate",
+      "title": "Evaluar relaciones",
+      "path": "skills/design-tree/scripts/contracts.py",
+      "symbol": "evaluate_contracts",
+      "summary": "Filtra relaciones por nodo y operación y evalúa condiciones con hechos presentes/ausentes/desconocidos.",
+      "group": "contratos",
+      "line": 104
+    },
+    {
+      "id": "ctx-verification-validate",
+      "title": "Validar resultados registrados",
+      "path": "skills/design-tree/scripts/verification.py",
+      "symbol": "validate_results",
+      "summary": "Comprueba esquema, IDs, métodos, scope, ambiente, hora, referencias a evidencia y requisitos de justificación.",
+      "group": "contratos",
+      "line": 18
+    },
+    {
+      "id": "ctx-verification-results",
+      "title": "Evaluar cumplimiento",
+      "path": "skills/design-tree/scripts/verification.py",
+      "symbol": "evaluate_results",
+      "summary": "Evalúa aplicabilidad y resultado por separado. Reporta bloqueos, fallos y requisitos satisfechos.",
+      "group": "contratos",
+      "line": 57
+    },
+    {
+      "id": "ctx-assistance-action",
+      "title": "Admisibilidad de delegación",
+      "path": "skills/design-tree/scripts/assistance.py",
+      "symbol": "assistance_action",
+      "summary": "Valida nivel, mandato activo, fase, nodo, reservas y acciones delegadas. Devuelve resultado local.",
+      "group": "contratos",
+      "line": 21
+    },
+    {
+      "id": "ctx-viewer-data",
+      "title": "Datos incrustados en el visor",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "source-data / rule-data / inventory-data",
+      "summary": "JavaScript carga los tres JSON incrustados. El navegador navega sin runner y sin expediente.",
+      "group": "visor",
+      "line": 17
+    },
+    {
+      "id": "ctx-viewer-index",
+      "title": "Indexar definiciones visuales",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "index",
+      "summary": "Indexa definiciones fuente y plantillas. Omite nodos instance hasta expandir.",
+      "group": "visor",
+      "line": 22
+    },
+    {
+      "id": "ctx-viewer-expand",
+      "title": "Expandir árbol visual",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "expand",
+      "summary": "Resuelve instancias, prefijos, prerequisitos y contexto. Esta expansión alimenta el visor, que examina el árbol v0.4.",
+      "group": "visor",
+      "line": 24
+    },
+    {
+      "id": "ctx-viewer-collect",
+      "title": "Indexar nodos y padres",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "collect",
+      "summary": "Construye índices para buscar por ID, subir y formar breadcrumbs.",
+      "group": "visor",
+      "line": 36
+    },
+    {
+      "id": "ctx-viewer-navigate",
+      "title": "Navegar por ID y fragmento",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "navigate",
+      "summary": "Valida ID, cambia nodo actual y sincroniza location.hash. El hash permite compartir una rama.",
+      "group": "visor",
+      "line": 44
+    },
+    {
+      "id": "ctx-viewer-render",
+      "title": "Renderizar rama",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "render",
+      "summary": "Actualiza título, breadcrumbs, proyección y lista. Muestra ficha al llegar a hoja.",
+      "group": "visor",
+      "line": 97
+    },
+    {
+      "id": "ctx-viewer-svg",
+      "title": "Dibujar rama SVG",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "drawGraph",
+      "summary": "Proyecta nodo actual e hijos visibles y enlaza nodos para navegación.",
+      "group": "visor",
+      "line": 71
+    },
+    {
+      "id": "ctx-viewer-outline",
+      "title": "Renderizar árbol textual",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "outline",
+      "summary": "Crea lista recursiva de detalles y botones para inspección y exploración.",
+      "group": "visor",
+      "line": 91
+    },
+    {
+      "id": "ctx-viewer-inspect",
+      "title": "Inspeccionar nodo",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "inspect",
+      "summary": "Muestra estado pendiente, criterios, evidencias, bloqueos y enlaces de fuentes, más navegación hacia hijos.",
+      "group": "visor",
+      "line": 51
+    },
+    {
+      "id": "ctx-viewer-inventory",
+      "title": "Mostrar inventario",
+      "path": "skills/design-tree/references/tree-v0.4/index.html",
+      "symbol": "renderInventory",
+      "summary": "Agrupa referencias incrustadas por disposición y enlaza fuentes.",
+      "group": "visor",
+      "line": 101
+    },
+    {
+      "id": "ctx-maint-skill",
+      "title": "Entrada de mantenimiento",
+      "path": "skills/design-tree/SKILL.md",
+      "symbol": "## Mantenimiento del plugin",
+      "summary": "Usa manual y doctor. La ruta de mantenimiento evita inicializar el encargo Q00.",
+      "group": "mantenimiento",
+      "line": 9
+    },
+    {
+      "id": "ctx-maint",
+      "title": "Manual de mantenimiento",
+      "path": "skills/design-tree/references/MAINTENANCE.md",
+      "symbol": "# Manual de mantenimiento para agentes",
+      "summary": "Define propiedad del baseline, reparación autorizada, rollback y validación por ámbito.",
+      "group": "mantenimiento",
+      "line": 1
+    },
+    {
+      "id": "ctx-maint-publish",
+      "title": "Preparar y publicar",
+      "path": "skills/design-tree/references/MAINTENANCE.md",
+      "symbol": "## Preparar y publicar",
+      "summary": "Prepara localmente y separa la publicación y lectura remota con expected_release_id.",
+      "group": "mantenimiento",
+      "line": 92
+    },
+    {
+      "id": "ctx-doctor",
+      "title": "CLI de diagnóstico",
+      "path": "skills/design-tree/scripts/doctor.py",
+      "symbol": "main",
+      "summary": "Despacha inspección local de paquete, estado o bundle y devuelve código de estado. No aplica reparaciones.",
+      "group": "mantenimiento",
+      "line": 9
+    },
+    {
+      "id": "ctx-diagnose-package",
+      "title": "Diagnosticar paquete",
+      "path": "skills/design-tree/scripts/diagnostics.py",
+      "symbol": "inspect_package",
+      "summary": "Valida manifiestos, assets, hashes, baseline, estructura y contratos. Reporta ámbito y próximos pasos.",
+      "group": "mantenimiento",
+      "line": 50
+    },
+    {
+      "id": "ctx-diagnose-session",
+      "title": "Diagnosticar expediente",
+      "path": "skills/design-tree/scripts/diagnostics.py",
+      "symbol": "inspect_session",
+      "summary": "Inspecciona paquete primero. Con paquete válido, comprueba expediente, esquema, estado y evidencias requeridas.",
+      "group": "mantenimiento",
+      "line": 125
+    },
+    {
+      "id": "ctx-diagnose-bundle",
+      "title": "Diagnosticar bundle",
+      "path": "skills/design-tree/scripts/diagnostics.py",
+      "symbol": "inspect_bundle",
+      "summary": "Tras verificar paquete, inspecciona bundle y comprueba versión compatible y portabilidad.",
+      "group": "mantenimiento",
+      "line": 141
+    },
+    {
+      "id": "ctx-migration-inspect",
+      "title": "Inspeccionar bundle portátil",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "inspect_portable_bundle",
+      "summary": "Comprueba rutas seguras, formato y SHA de archivos. Devuelve estado y mapa de evidencias validadas.",
+      "group": "mantenimiento",
+      "line": 46
+    },
+    {
+      "id": "ctx-migration-export",
+      "title": "Exportar bundle portátil",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "export_bundle",
+      "summary": "Genera copia en staging, verifica y renombra. Copia evidencias referenciadas y conserva sha256.",
+      "group": "mantenimiento",
+      "line": 58
+    },
+    {
+      "id": "ctx-migration-upgrade",
+      "title": "Migrar expediente anterior",
+      "path": "skills/design-tree/scripts/migration.py",
+      "symbol": "upgrade_bundle",
+      "summary": "Dry-run o copia nueva 0.3. Conserva snapshot histórico y reabre obligaciones en manual.",
+      "group": "mantenimiento",
+      "line": 81
+    },
+    {
+      "id": "ctx-release-prepare",
+      "title": "Preparar ZIP de release",
+      "path": "scripts/release.py",
+      "symbol": "prepare_release",
+      "summary": "Valida aumento de versión, integridad y destino externo, genera ZIP determinista. La publicación queda NOT_RUN.",
+      "group": "mantenimiento",
+      "line": 16
+    }
+  ],
+  "edges": [
+    {
+      "from": "ctx-manifest",
+      "to": "ctx-overlay",
+      "condition": "Proyección de compatibilidad del mismo release"
+    },
+    {
+      "from": "ctx-overlay",
+      "to": "ctx-skill",
+      "condition": "El host descubre la skill; uso por elección explícita"
+    },
+    {
+      "from": "ctx-skill",
+      "to": "ctx-project",
+      "condition": "Encargo de diseño web supervisado"
+    },
+    {
+      "from": "ctx-skill",
+      "to": "ctx-maint-skill",
+      "condition": "Encargo de diagnóstico o mantenimiento del plugin"
+    },
+    {
+      "from": "ctx-project",
+      "to": "ctx-levels",
+      "condition": "Se define nivel y límites"
+    },
+    {
+      "from": "ctx-project",
+      "to": "ctx-pilot",
+      "condition": "Consultar contrato antes de recorrer"
+    },
+    {
+      "from": "ctx-project",
+      "to": "ctx-assist-doc",
+      "condition": "Consultar reglas de asistencia y gates"
+    },
+    {
+      "from": "ctx-project",
+      "to": "ctx-walk",
+      "condition": "Iniciar o recuperar expediente real"
+    },
+    {
+      "from": "ctx-walk",
+      "to": "ctx-cli",
+      "condition": "Ejecutar comandos para cada transición local"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-start",
+      "condition": "Arranque o consulta"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-receipts",
+      "condition": "Propuesta o paso sujeto a aceptación humana"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-propose",
+      "condition": "Operación sobre una decisión activa"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-source",
+      "condition": "Consultar y registrar bytes canónicos"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-phase",
+      "condition": "Preparar, aceptar o reabrir una fase"
+    },
+    {
+      "from": "ctx-cli",
+      "to": "ctx-cli-persist",
+      "condition": "Mover, recuperar o migrar estado"
+    },
+    {
+      "from": "ctx-cli-receipts",
+      "to": "ctx-protocol-ledger",
+      "condition": "Campo y huella quedan registrados en el expediente"
+    },
+    {
+      "from": "ctx-protocol",
+      "to": "ctx-protocol-ledger",
+      "condition": "Expediente externo y binding"
+    },
+    {
+      "from": "ctx-protocol",
+      "to": "ctx-protocol-verification",
+      "condition": "La política es dueña de obligaciones de verificación"
+    },
+    {
+      "from": "ctx-protocol",
+      "to": "ctx-tree-data",
+      "condition": "Propiedad canónica del árbol"
+    },
+    {
+      "from": "ctx-protocol",
+      "to": "ctx-contracts-json",
+      "condition": "Política suplementaria autorizada"
+    },
+    {
+      "from": "ctx-baseline-lock",
+      "to": "ctx-tree-data",
+      "condition": "Verifica hash de tree.json"
+    },
+    {
+      "from": "ctx-baseline-lock",
+      "to": "ctx-tree-rules",
+      "condition": "Verifica hash de rules.json"
+    },
+    {
+      "from": "ctx-baseline-lock",
+      "to": "ctx-tree-inventory",
+      "condition": "Verifica hash del inventario"
+    },
+    {
+      "from": "ctx-baseline-lock",
+      "to": "ctx-tree-criteria",
+      "condition": "Verifica hash del mapa"
+    },
+    {
+      "from": "ctx-baseline-lock",
+      "to": "ctx-viewer-data",
+      "condition": "Verifica hash de index.html; relación de integridad"
+    },
+    {
+      "from": "ctx-contracts-json",
+      "to": "ctx-contracts-validate",
+      "condition": "Comprobar esquema y referencias"
+    },
+    {
+      "from": "ctx-contracts-json",
+      "to": "ctx-contracts-evaluate",
+      "condition": "Resolver política y hechos aplicables"
+    },
+    {
+      "from": "ctx-protocol-verification",
+      "to": "ctx-verification-validate",
+      "condition": "Comprobar resultados y evidencias registrados"
+    },
+    {
+      "from": "ctx-verification-validate",
+      "to": "ctx-verification-results",
+      "condition": "Evaluación semántica de aplicabilidad y resultado"
+    },
+    {
+      "from": "ctx-assist-doc",
+      "to": "ctx-assistance-action",
+      "condition": "Gate de delegación en fase activa"
+    },
+    {
+      "from": "ctx-viewer-data",
+      "to": "ctx-viewer-index",
+      "condition": "Carga local en navegador"
+    },
+    {
+      "from": "ctx-viewer-data",
+      "to": "ctx-viewer-inventory",
+      "condition": "Inventario incrustado"
+    },
+    {
+      "from": "ctx-viewer-index",
+      "to": "ctx-viewer-expand",
+      "condition": "Antes de resolver las instancias"
+    },
+    {
+      "from": "ctx-viewer-expand",
+      "to": "ctx-viewer-collect",
+      "condition": "Árbol visual expandido"
+    },
+    {
+      "from": "ctx-viewer-collect",
+      "to": "ctx-viewer-navigate",
+      "condition": "Índice disponible; búsqueda, botones o hash"
+    },
+    {
+      "from": "ctx-viewer-navigate",
+      "to": "ctx-viewer-render",
+      "condition": "Rama válida y hash sincronizado"
+    },
+    {
+      "from": "ctx-viewer-render",
+      "to": "ctx-viewer-svg",
+      "condition": "Proyección SVG de la rama"
+    },
+    {
+      "from": "ctx-viewer-render",
+      "to": "ctx-viewer-outline",
+      "condition": "Árbol textual de la rama"
+    },
+    {
+      "from": "ctx-viewer-render",
+      "to": "ctx-viewer-inspect",
+      "condition": "Nodo hoja o botón de ficha"
+    },
+    {
+      "from": "ctx-viewer-svg",
+      "to": "ctx-viewer-navigate",
+      "condition": "Clic en un nodo de la proyección"
+    },
+    {
+      "from": "ctx-viewer-outline",
+      "to": "ctx-viewer-inspect",
+      "condition": "Clic en ficha"
+    },
+    {
+      "from": "ctx-viewer-outline",
+      "to": "ctx-viewer-navigate",
+      "condition": "Clic en explorar respuestas"
+    },
+    {
+      "from": "ctx-maint-skill",
+      "to": "ctx-maint",
+      "condition": "Consultar manual vigente"
+    },
+    {
+      "from": "ctx-maint",
+      "to": "ctx-doctor",
+      "condition": "Diagnóstico previo; no modifica entradas"
+    },
+    {
+      "from": "ctx-doctor",
+      "to": "ctx-diagnose-package",
+      "condition": "Sin --state ni --bundle"
+    },
+    {
+      "from": "ctx-doctor",
+      "to": "ctx-diagnose-session",
+      "condition": "Con --state"
+    },
+    {
+      "from": "ctx-doctor",
+      "to": "ctx-diagnose-bundle",
+      "condition": "Con --bundle"
+    },
+    {
+      "from": "ctx-diagnose-session",
+      "to": "ctx-diagnose-package",
+      "condition": "Chequeo anterior a validar expediente"
+    },
+    {
+      "from": "ctx-diagnose-bundle",
+      "to": "ctx-diagnose-package",
+      "condition": "Chequeo anterior a inspeccionar bundle"
+    },
+    {
+      "from": "ctx-diagnose-package",
+      "to": "ctx-baseline-lock",
+      "condition": "Verificación de fuentes fijadas"
+    },
+    {
+      "from": "ctx-diagnose-package",
+      "to": "ctx-contracts-validate",
+      "condition": "Validación estructural complementaria"
+    },
+    {
+      "from": "ctx-diagnose-bundle",
+      "to": "ctx-migration-inspect",
+      "condition": "Si el paquete permite inspección de bundle"
+    },
+    {
+      "from": "ctx-cli-persist",
+      "to": "ctx-migration-export",
+      "condition": "El comando export invoca export_bundle"
+    },
+    {
+      "from": "ctx-cli-persist",
+      "to": "ctx-migration-inspect",
+      "condition": "El comando resume invoca inspect_portable_bundle"
+    },
+    {
+      "from": "ctx-cli-persist",
+      "to": "ctx-migration-upgrade",
+      "condition": "El comando upgrade-state invoca upgrade_bundle"
+    },
+    {
+      "from": "ctx-migration-upgrade",
+      "to": "ctx-migration-inspect",
+      "condition": "Valida bundle original antes de transformar"
+    },
+    {
+      "from": "ctx-maint",
+      "to": "ctx-maint-publish",
+      "condition": "Preparar una distribución autorizada"
+    },
+    {
+      "from": "ctx-maint-publish",
+      "to": "ctx-release-prepare",
+      "condition": "Paso local de preparar el paquete"
+    },
+    {
+      "from": "ctx-release-prepare",
+      "to": "ctx-baseline-lock",
+      "condition": "Rechaza deriva del baseline"
+    }
+  ]
+}

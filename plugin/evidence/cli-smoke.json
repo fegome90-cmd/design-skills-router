@@ -1,0 +1,71 @@
+[
+  {
+    "args": [
+      "verify-package"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"baseline_verified\": true,\n  \"inventory_count\": 82,\n  \"expanded_nodes\": 3660\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "--state",
+      "/tmp/tmpnhy29pc6/ledger.json",
+      "init",
+      "--project-id",
+      "package-smoke",
+      "--scope",
+      "Synthetic startup; no project approval"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"project_id\": \"package-smoke\",\n  \"tree_version\": \"0.4\",\n  \"revision\": 0,\n  \"frontier\": [\n    \"Q00\"\n  ],\n  \"active_node_count\": 1,\n  \"approved_current_count\": 0,\n  \"inventory_confirmed\": false,\n  \"inventory_pending\": [\n    \"fegome90-cmd/my-skills/agy-agent\",\n    \"fegome90-cmd/my-skills/ai-work-prompting-gates\",\n    \"fegome90-cmd/my-skills/anchoring-tasks\",\n    \"fegome90-cmd/my-skills/authority-flow-audit\",\n    \"fegome90-cmd/my-skills/claude-md-optimizer\",\n    \"fegome90-cmd/my-skills/code-path-cartographer\",\n    \"fegome90-cmd/my-skills/codex-agent\",\n    \"fegome90-cmd/my-skills/color-theory-engine\",\n    \"fegome90-cmd/my-skills/color-theory-palette\",\n    \"fegome90-cmd/my-skills/design-art-direction\",\n    \"fegome90-cmd/my-skills/design-process-orchestrator\",\n    \"fegome90-cmd/my-skills/design-tokens-components\",\n    \"fegome90-cmd/my-skills/diagram-auditor\",\n    \"fegome90-cmd/my-skills/disenar-slides\",\n    \"fegome90-cmd/my-skills/disk-cleanup-macos-safe\",\n    \"fegome90-cmd/my-skills/dots-maintenance\",\n    \"fegome90-cmd/my-skills/ensenar\",\n    \"fegome90-cmd/my-skills/fish-shell-config\",\n    \"fegome90-cmd/my-skills/grill-me-dual-herdr\",\n    \"fegome90-cmd/my-skills/herdr-worktrunk\",\n    \"fegome90-cmd/my-skills/interagent-dispatch\",\n    \"fegome90-cmd/my-skills/layout-grid-hierarchy\",\n    \"fegome90-cmd/my-skills/learned-accuracy-fallacy-audit\",\n    \"fegome90-cmd/my-skills/learned-keynote-to-mp4-pipeline\",\n    \"fegome90-cmd/my-skills/learned-pr-feedback-resolution\",\n    \"fegome90-cmd/my-skills/learned-progressive-disclosure\",\n    \"fegome90-cmd/my-skills/learned-ssh-agent-vm-bootstrap\",\n    \"fegome90-cmd/my-skills/learned-structured-review\",\n    \"fegome90-cmd/my-skills/muse-agent\",\n    \"fegome90-cmd/my-skills/nix-fish-homemanager\",\n    \"fegome90-cmd/my-skills/opencode-agent\",\n    \"fegome90-cmd/my-skills/pi-agent\",\n    \"fegome90-cmd/my-skills/pi-extension-builder\",\n    \"fegome90-cmd/my-skills/pi-startup-diagnostics\",\n    \"fegome90-cmd/my-skills/prompt-doctor\",\n    \"fegome90-cmd/my-skills/quality-plan-loop\",\n    \"fegome90-cmd/my-skills/scripting-technical-presentations\",\n    \"fegome90-cmd/my-skills/skill-import-untrusted\",\n    \"fegome90-cmd/my-skills/skill-onboarding\",\n    \"fegome90-cmd/my-skills/skill-vetting\",\n    \"fegome90-cmd/my-skills/starship-nix-manager\",\n    \"fegome90-cmd/my-skills/starship-prompt\",\n    \"fegome90-cmd/my-skills/template-skill\",\n    \"fegome90-cmd/my-skills/tmux-plan-auditor\",\n    \"fegome90-cmd/my-skills/typography-scales-microtype\",\n    \"fegome90-cmd/my-skills/typography-selection-pairing\",\n    \"fegome90-cmd/my-skills/ui-motion-and-handoff\",\n    \"fegome90-cmd/my-skills/wiki-starter\",\n    \"fegome90-cmd/my-skills/work-closeout\",\n    \"emilkowalski/skills/animate-expo\",\n    \"emilkowalski/skills/animate\",\n    \"emilkowalski/skills/animation-performance\",\n    \"emilkowalski/skills/animation-vocabulary\",\n    \"emilkowalski/skills/apple-design\",\n    \"emilkowalski/skills/ask-sonner\",\n    \"emilkowalski/skills/break-ui\",\n    \"emilkowalski/skills/choreograph\",\n    \"emilkowalski/skills/emil-design-eng\",\n    \"emilkowalski/skills/find-animation-opportunities\",\n    \"emilkowalski/skills/gestures\",\n    \"emilkowalski/skills/improve-animations\",\n    \"emilkowalski/skills/mobile-native\",\n    \"emilkowalski/skills/pick-ui-library\",\n    \"emilkowalski/skills/prototype\",\n    \"emilkowalski/skills/remove-animations\",\n    \"emilkowalski/skills/review-animations\",\n    \"emilkowalski/skills/write-swift\",\n    \"jakubkrehel/skills/afk\",\n    \"jakubkrehel/skills/better-accessibility\",\n    \"jakubkrehel/skills/better-colors\",\n    \"jakubkrehel/skills/better-interface\",\n    \"jakubkrehel/skills/better-layout\",\n    \"jakubkrehel/skills/better-typography\",\n    \"jakubkrehel/skills/better-ui\",\n    \"jakubkrehel/skills/better-writing\",\n    \"jakubkrehel/skills/break\",\n    \"jakubkrehel/skills/build-design\",\n    \"jakubkrehel/skills/explain-interface\",\n    \"jakubkrehel/skills/interface-review\",\n    \"jakubkrehel/skills/state-machine\",\n    \"jakubkrehel/skills/teardown\",\n    \"jakubkrehel/skills/variant\"\n  ],\n  \"deferred_skills\": [],\n  \"unreviewed_applicable_skills\": [],\n  \"inventory_conflicts\": [],\n  \"blocked_nodes\": [],\n  \"unverified_nodes\": [],\n  \"ready_for_human_handoff\": false,\n  \"permission_to_execute\": false,\n  \"external_tool_enforcement\": false,\n  \"authenticated_human_identity\": false,\n  \"limitations\": [\n    \"Supervised pilot; receipt contents are not authenticated.\",\n    \"Source bytes received do not prove reading or correct use.\",\n    \"One atomic component requirement per session; use a separate named session for another requirement.\",\n    \"No server or automatic cross-chat/cloud persistence. Export and explicitly save the ledger.\",\n    \"Original tree has incomplete and contextual criteria; no universal coverage claim.\"\n  ]\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "--state",
+      "/tmp/tmpnhy29pc6/ledger.json",
+      "node",
+      "Q00"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"node_id\": \"Q00\",\n  \"definition_id\": \"Q00\",\n  \"title\": \"¿De qué punto de partida nace este diseño?\",\n  \"kind\": \"decision\",\n  \"active\": true,\n  \"structure_hash\": \"f1baa0c6a0bd5e3d98b5f1d8a94c28814035c4719fbe4445fa5d420c298e09dd\",\n  \"structure_status\": \"PENDING\",\n  \"project_status\": \"PENDING\",\n  \"criterion\": \"La persona confirma el punto de partida. No deducir greenfield porque el repositorio esté vacío.\",\n  \"output\": \"Alcance del encargo\",\n  \"requires\": [],\n  \"context_mode\": null,\n  \"write_policy\": null,\n  \"candidate_key\": null,\n  \"terminal_status\": null,\n  \"proposal_status\": \"PROPOSED\",\n  \"alternatives\": [\n    {\n      \"answer\": \"Proyecto nuevo, explícitamente solicitado\",\n      \"node_id\": \"F00\",\n      \"title\": \"Fundaciones · revisar dominios, no fabricar documentos por obligación\"\n    },\n    {\n      \"answer\": \"Proyecto existente\",\n      \"node_id\": \"E01\",\n      \"title\": \"¿Los documentos y el código expresan decisiones vigentes y coherentes?\"\n    },\n    {\n      \"answer\": \"Todavía no está definido\",\n      \"node_id\": \"Q01\",\n      \"title\": \"Aclarar el encargo antes de fijar una ruta\"\n    }\n  ],\n  \"skills\": [\n    {\n      \"id\": \"fegome90-cmd/my-skills/design-process-orchestrator\",\n      \"name\": \"design-process-orchestrator\",\n      \"url\": \"https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md\",\n      \"commit\": \"5211aae8843eca4966d2aee828513582a04a7c8f\",\n      \"source_receipt\": null\n    }\n  ],\n  \"criteria\": [\n    {\n      \"id\": \"scope\",\n      \"skill\": \"fegome90-cmd/my-skills/design-process-orchestrator\",\n      \"source_url\": \"https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md\",\n      \"source_section\": \"Entry guards; Run; execution-contracts.md / Mode contracts\",\n      \"category\": \"project-contract\",\n      \"criterion\": \"Conservar fuentes y permisos. Un ajuste, auditoría o fuente ausente no autoriza reconstruir el proyecto.\",\n      \"adaptation\": \"\",\n      \"verification\": \"SECTION_REVIEWED_IN_CONVERSATION\",\n      \"source_commit\": \"5211aae8843eca4966d2aee828513582a04a7c8f\"\n    }\n  ],\n  \"candidate_contract\": null,\n  \"notice\": \"Inspecting a packet is not consulting its external sources or approving anything.\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "--state",
+      "/tmp/tmpnhy29pc6/ledger.json",
+      "propose",
+      "P01",
+      "--file",
+      "/tmp/tmpnhy29pc6/unapproved.json"
+    ],
+    "exit_code": 2,
+    "stdout": "",
+    "stderr": "{\"status\": \"BLOCKED\", \"error\": \"NODE_NOT_ACTIVE:P01\"}\n"
+  },
+  {
+    "args": [
+      "--state",
+      "/tmp/tmpnhy29pc6/ledger.json",
+      "propose",
+      "Q00",
+      "--file",
+      "/tmp/tmpnhy29pc6/unapproved.json"
+    ],
+    "exit_code": 2,
+    "stdout": "",
+    "stderr": "{\"status\": \"BLOCKED\", \"error\": \"STRUCTURE_CONFIRMATION_REQUIRED\"}\n"
+  },
+  {
+    "args": [
+      "--state",
+      "/tmp/tmpnhy29pc6/ledger.json",
+      "status"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"project_id\": \"package-smoke\",\n  \"tree_version\": \"0.4\",\n  \"revision\": 0,\n  \"frontier\": [\n    \"Q00\"\n  ],\n  \"active_node_count\": 1,\n  \"approved_current_count\": 0,\n  \"inventory_confirmed\": false,\n  \"inventory_pending\": [\n    \"fegome90-cmd/my-skills/agy-agent\",\n    \"fegome90-cmd/my-skills/ai-work-prompting-gates\",\n    \"fegome90-cmd/my-skills/anchoring-tasks\",\n    \"fegome90-cmd/my-skills/authority-flow-audit\",\n    \"fegome90-cmd/my-skills/claude-md-optimizer\",\n    \"fegome90-cmd/my-skills/code-path-cartographer\",\n    \"fegome90-cmd/my-skills/codex-agent\",\n    \"fegome90-cmd/my-skills/color-theory-engine\",\n    \"fegome90-cmd/my-skills/color-theory-palette\",\n    \"fegome90-cmd/my-skills/design-art-direction\",\n    \"fegome90-cmd/my-skills/design-process-orchestrator\",\n    \"fegome90-cmd/my-skills/design-tokens-components\",\n    \"fegome90-cmd/my-skills/diagram-auditor\",\n    \"fegome90-cmd/my-skills/disenar-slides\",\n    \"fegome90-cmd/my-skills/disk-cleanup-macos-safe\",\n    \"fegome90-cmd/my-skills/dots-maintenance\",\n    \"fegome90-cmd/my-skills/ensenar\",\n    \"fegome90-cmd/my-skills/fish-shell-config\",\n    \"fegome90-cmd/my-skills/grill-me-dual-herdr\",\n    \"fegome90-cmd/my-skills/herdr-worktrunk\",\n    \"fegome90-cmd/my-skills/interagent-dispatch\",\n    \"fegome90-cmd/my-skills/layout-grid-hierarchy\",\n    \"fegome90-cmd/my-skills/learned-accuracy-fallacy-audit\",\n    \"fegome90-cmd/my-skills/learned-keynote-to-mp4-pipeline\",\n    \"fegome90-cmd/my-skills/learned-pr-feedback-resolution\",\n    \"fegome90-cmd/my-skills/learned-progressive-disclosure\",\n    \"fegome90-cmd/my-skills/learned-ssh-agent-vm-bootstrap\",\n    \"fegome90-cmd/my-skills/learned-structured-review\",\n    \"fegome90-cmd/my-skills/muse-agent\",\n    \"fegome90-cmd/my-skills/nix-fish-homemanager\",\n    \"fegome90-cmd/my-skills/opencode-agent\",\n    \"fegome90-cmd/my-skills/pi-agent\",\n    \"fegome90-cmd/my-skills/pi-extension-builder\",\n    \"fegome90-cmd/my-skills/pi-startup-diagnostics\",\n    \"fegome90-cmd/my-skills/prompt-doctor\",\n    \"fegome90-cmd/my-skills/quality-plan-loop\",\n    \"fegome90-cmd/my-skills/scripting-technical-presentations\",\n    \"fegome90-cmd/my-skills/skill-import-untrusted\",\n    \"fegome90-cmd/my-skills/skill-onboarding\",\n    \"fegome90-cmd/my-skills/skill-vetting\",\n    \"fegome90-cmd/my-skills/starship-nix-manager\",\n    \"fegome90-cmd/my-skills/starship-prompt\",\n    \"fegome90-cmd/my-skills/template-skill\",\n    \"fegome90-cmd/my-skills/tmux-plan-auditor\",\n    \"fegome90-cmd/my-skills/typography-scales-microtype\",\n    \"fegome90-cmd/my-skills/typography-selection-pairing\",\n    \"fegome90-cmd/my-skills/ui-motion-and-handoff\",\n    \"fegome90-cmd/my-skills/wiki-starter\",\n    \"fegome90-cmd/my-skills/work-closeout\",\n    \"emilkowalski/skills/animate-expo\",\n    \"emilkowalski/skills/animate\",\n    \"emilkowalski/skills/animation-performance\",\n    \"emilkowalski/skills/animation-vocabulary\",\n    \"emilkowalski/skills/apple-design\",\n    \"emilkowalski/skills/ask-sonner\",\n    \"emilkowalski/skills/break-ui\",\n    \"emilkowalski/skills/choreograph\",\n    \"emilkowalski/skills/emil-design-eng\",\n    \"emilkowalski/skills/find-animation-opportunities\",\n    \"emilkowalski/skills/gestures\",\n    \"emilkowalski/skills/improve-animations\",\n    \"emilkowalski/skills/mobile-native\",\n    \"emilkowalski/skills/pick-ui-library\",\n    \"emilkowalski/skills/prototype\",\n    \"emilkowalski/skills/remove-animations\",\n    \"emilkowalski/skills/review-animations\",\n    \"emilkowalski/skills/write-swift\",\n    \"jakubkrehel/skills/afk\",\n    \"jakubkrehel/skills/better-accessibility\",\n    \"jakubkrehel/skills/better-colors\",\n    \"jakubkrehel/skills/better-interface\",\n    \"jakubkrehel/skills/better-layout\",\n    \"jakubkrehel/skills/better-typography\",\n    \"jakubkrehel/skills/better-ui\",\n    \"jakubkrehel/skills/better-writing\",\n    \"jakubkrehel/skills/break\",\n    \"jakubkrehel/skills/build-design\",\n    \"jakubkrehel/skills/explain-interface\",\n    \"jakubkrehel/skills/interface-review\",\n    \"jakubkrehel/skills/state-machine\",\n    \"jakubkrehel/skills/teardown\",\n    \"jakubkrehel/skills/variant\"\n  ],\n  \"deferred_skills\": [],\n  \"unreviewed_applicable_skills\": [],\n  \"inventory_conflicts\": [],\n  \"blocked_nodes\": [],\n  \"unverified_nodes\": [],\n  \"ready_for_human_handoff\": false,\n  \"permission_to_execute\": false,\n  \"external_tool_enforcement\": false,\n  \"authenticated_human_identity\": false,\n  \"limitations\": [\n    \"Supervised pilot; receipt contents are not authenticated.\",\n    \"Source bytes received do not prove reading or correct use.\",\n    \"One atomic component requirement per session; use a separate named session for another requirement.\",\n    \"No server or automatic cross-chat/cloud persistence. Export and explicitly save the ledger.\",\n    \"Original tree has incomplete and contextual criteria; no universal coverage claim.\"\n  ]\n}\n",
+    "stderr": ""
+  }
+]

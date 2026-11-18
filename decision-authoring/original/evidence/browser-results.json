@@ -1,0 +1,411 @@
+{
+  "browser": "Chromium /usr/bin/chromium",
+  "render_mode": "set_content from provided HTML; file URL navigation blocked by administrator; policy unchanged",
+  "scope": "Local render and interaction. Not Safari/iOS or assistive-technology certification.",
+  "passed": 72,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "initial_render",
+      "pass_": true,
+      "detail": 0.286
+    },
+    {
+      "name": "python_js_tree_parity",
+      "pass_": true,
+      "detail": 3660
+    },
+    {
+      "name": "title",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "root_three_branches",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "graph_click_opens_branch",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "art_direction_has_five_questions",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "keyboard_explores",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "source_details_visible",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "source_is_pinned",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "parent_navigation",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "hash_opens_named_candidate",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_has_bound_assessment",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "candidate_binding_in_inspector",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "existing_path_review",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "invalid_id_safe",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "bookmark_Q00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_Q00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_F00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_F00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_ENV00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_ENV00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_D00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_D00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_ART00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_ART00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_T00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_T00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_L00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_L00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_R01",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_R01",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_R11",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_R11",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_M03",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_M03",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_A10",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_A10",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_QA01",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_QA01",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_GOV00",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_GOV00",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "bookmark_E01",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "svg_text_bounds_E01",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "no_runtime_errors",
+      "pass_": true,
+      "detail": []
+    },
+    {
+      "name": "root_visible_in_canvas_320",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "initial_width_320",
+      "pass_": true,
+      "detail": {
+        "viewport": 320,
+        "scroll": 320
+      }
+    },
+    {
+      "name": "expanded_width_320",
+      "pass_": true,
+      "detail": {
+        "viewport": 320,
+        "scroll": 320
+      }
+    },
+    {
+      "name": "expanded_all_instances_320",
+      "pass_": true,
+      "detail": 3660
+    },
+    {
+      "name": "deep_width_320",
+      "pass_": true,
+      "detail": {
+        "viewport": 320,
+        "scroll": 320
+      }
+    },
+    {
+      "name": "collapse_320",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "root_visible_in_canvas_390",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "initial_width_390",
+      "pass_": true,
+      "detail": {
+        "viewport": 390,
+        "scroll": 390
+      }
+    },
+    {
+      "name": "expanded_width_390",
+      "pass_": true,
+      "detail": {
+        "viewport": 390,
+        "scroll": 390
+      }
+    },
+    {
+      "name": "expanded_all_instances_390",
+      "pass_": true,
+      "detail": 3660
+    },
+    {
+      "name": "deep_width_390",
+      "pass_": true,
+      "detail": {
+        "viewport": 390,
+        "scroll": 390
+      }
+    },
+    {
+      "name": "collapse_390",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "root_visible_in_canvas_768",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "initial_width_768",
+      "pass_": true,
+      "detail": {
+        "viewport": 768,
+        "scroll": 768
+      }
+    },
+    {
+      "name": "expanded_width_768",
+      "pass_": true,
+      "detail": {
+        "viewport": 768,
+        "scroll": 768
+      }
+    },
+    {
+      "name": "expanded_all_instances_768",
+      "pass_": true,
+      "detail": 3660
+    },
+    {
+      "name": "deep_width_768",
+      "pass_": true,
+      "detail": {
+        "viewport": 768,
+        "scroll": 768
+      }
+    },
+    {
+      "name": "collapse_768",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "root_visible_in_canvas_1440",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "initial_width_1440",
+      "pass_": true,
+      "detail": {
+        "viewport": 1440,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "expanded_width_1440",
+      "pass_": true,
+      "detail": {
+        "viewport": 1440,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "expanded_all_instances_1440",
+      "pass_": true,
+      "detail": 3660
+    },
+    {
+      "name": "deep_width_1440",
+      "pass_": true,
+      "detail": {
+        "viewport": 1440,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "collapse_1440",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "text_spacing_document_width",
+      "pass_": true,
+      "detail": {
+        "viewport": 1440,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "narrow_reflow_probe",
+      "pass_": true,
+      "detail": {
+        "viewport": 720,
+        "scroll": 720
+      }
+    },
+    {
+      "name": "reduced_motion_preference",
+      "pass_": true,
+      "detail": null
+    },
+    {
+      "name": "no_errors_after_interactions",
+      "pass_": true,
+      "detail": []
+    }
+  ]
+}

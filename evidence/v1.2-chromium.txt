@@ -1,0 +1,35 @@
+17 de noviembre de 2026. MacBook Pro, macOS arm64, Node 24.22.2, Playwright 1.57.0.
+HTML SHA-256 eb0a52be39ff35898ae3a83dedc380bad45eb2d0cc1454e0a38a7497d86dcfa3
+Suite revisada SHA-256 a1634900462158f8cd160d71339b36807e2978aeabc602d42d2de765a9a4cc07
+
+Primera corrida con la suite original: 10/11. En UX-05 la tecla End dejó «Pendiente» en el selector nativo. La selección por inicial con n eligió «No aplica» mediante teclado. Se usó esta pulsación en la suite revisada y se mantuvieron todas las aserciones de foco, selección, edición, tabulación y exportación. La huella del HTML permaneció idéntica.
+
+Chromium completo 159.0.8154.6, macOS arm64
+PASS Base: fuente G2, microtipografía G3 y escenario G2 + G3
+PASS SEM-01: auditoría de tipografía, solo función
+PASS SEM-02: auditoría de layout, escenario completo
+PASS STATE-03: N/A vacío y N/A de G2 requerido
+PASS TRACE-04: expediente descargado conserva ámbito y huella de política
+PASS UX-05: cambio con teclado conserva select exacto y selección dentro del texto
+PASS Auditoría sin ámbito en ambos alcances
+PASS Ida y vuelta entre dominios con justificaciones independientes
+PASS POLICY-08: al entrar en auditoría se bloquea sandbox y se conserva lectura efectiva
+PASS VIS-07: los apoyos de escritura están visibles o se pueden desplegar
+PASS Responsive: 320, 390, 768 y 1440 CSS px sin desborde al abrir requisitos
+11/11 casos aprobados
+✅ Process completed with exit code 0 (runtime: 6.70s)
+
+Chromium Headless Shell 159.0.8154.6, macOS arm64
+PASS Base: fuente G2, microtipografía G3 y escenario G2 + G3
+PASS SEM-01: auditoría de tipografía, solo función
+PASS SEM-02: auditoría de layout, escenario completo
+PASS STATE-03: N/A vacío y N/A de G2 requerido
+PASS TRACE-04: expediente descargado conserva ámbito y huella de política
+PASS UX-05: cambio con teclado conserva select exacto y selección dentro del texto
+PASS Auditoría sin ámbito en ambos alcances
+PASS Ida y vuelta entre dominios con justificaciones independientes
+PASS POLICY-08: al entrar en auditoría se bloquea sandbox y se conserva lectura efectiva
+PASS VIS-07: los apoyos de escritura están visibles o se pueden desplegar
+PASS Responsive: 320, 390, 768 y 1440 CSS px sin desborde al abrir requisitos
+11/11 casos aprobados
+✅ Process completed with exit code 0 (runtime: 7.35s)

@@ -1,0 +1,26 @@
+{
+  "html_sha256": "591257cf413b7380e2ad7f2e72377aa69882c72651e785d7f9e816ef2284a1b8",
+  "html_bytes": 292387,
+  "definition_count": 212,
+  "expanded_instances": 3660,
+  "expanded_questions": 908,
+  "inventory": {
+    "CONDITIONAL_NOT_EXPANDED": 18,
+    "DEFERRED_SPECIALIZED_ROUTE": 3,
+    "GOVERNANCE_REFERENCE_PROPOSED": 14,
+    "MAPPED_FOR_REVIEW": 24,
+    "OUT_OF_DESIGN_SCOPE_PROPOSED": 23
+  },
+  "root_expanded_mobile": {
+    "documentHeight": 824360,
+    "details": 3660,
+    "domElements": 32520
+  },
+  "browser_version": "144.0.7559.96",
+  "dependencies": {
+    "playwright": "1.57.0",
+    "pytest": "9.0.2",
+    "beautifulsoup4": "4.14.3"
+  },
+  "original_html_sha256": "9ae1a6eefa27bf5e0be37a45601a3c5af1995e47ee4549ef7d1af7b166f0bf68"
+}

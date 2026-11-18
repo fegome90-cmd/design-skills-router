@@ -1,0 +1,55 @@
+{
+  "target": ".",
+  "passed": 12,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "single_root_unique_ids",
+      "pass": true
+    },
+    {
+      "name": "identity_and_required_review_are_siblings",
+      "pass": true
+    },
+    {
+      "name": "existing_scopes_have_review_expansion",
+      "pass": true
+    },
+    {
+      "name": "art_direction_decomposed",
+      "pass": true
+    },
+    {
+      "name": "microtypography_decomposed",
+      "pass": true
+    },
+    {
+      "name": "deliverable_always_reviewed",
+      "pass": true
+    },
+    {
+      "name": "capabilities_not_exclusive",
+      "pass": true
+    },
+    {
+      "name": "cross_discipline_reviewer_present",
+      "pass": true
+    },
+    {
+      "name": "each_named_candidate_has_assessment",
+      "pass": true
+    },
+    {
+      "name": "all_82_have_disposition",
+      "pass": true
+    },
+    {
+      "name": "every_decision_has_rule_source",
+      "pass": true
+    },
+    {
+      "name": "human_gates_are_not_self_approved",
+      "pass": true
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "files": {
+    "INFORME_AUDITORIA_v11.md": {
+      "bytes": 10796,
+      "sha256": "3557aba3eda347b11327a585eddb1887a363b922d3eabb3736c392981783140d"
+    },
+    "LEER_PRIMERO.txt": {
+      "bytes": 588,
+      "sha256": "a64f43b6b1313fdcd37f4cb5c6bd098538de5145275211cdfafe471ce37f185b"
+    },
+    "auditoria_v11_resultado.json": {
+      "bytes": 7814,
+      "sha256": "0de0ee59cdeb9a7b5e3318548ccebc5690c8cf7e5bfb9c6242f9f72859b7828f"
+    },
+    "design-router-pizarra-seleccion-minima-v1.1.html": {
+      "bytes": 1171593,
+      "sha256": "9136c45f41d8c3f0f0f896477fbb7150060114daf046d609a79b382b8ba32317"
+    },
+    "design-router-pizarra-v1.1-auditada.html": {
+      "bytes": 1355270,
+      "sha256": "84d36bd8055c150efb3fc2eb7a705f7fd54ee1f0b8c0b2f828d8fe287b35cdd1"
+    },
+    "evidencia_A01_auditoria_G5_G7.png": {
+      "bytes": 132467,
+      "sha256": "bd566fea3b93aa2c716b0b6af199085a9bc7d216120e8e386d76ea85da49ca22"
+    },
+    "evidencia_A02_auditoria_G2_sin_owner.png": {
+      "bytes": 116947,
+      "sha256": "6ebdb8000117f4b7f73667c652616ff53f08e0242250bd79d57c9eed6e058ba9"
+    },
+    "min_route_v11.js": {
+      "bytes": 10824,
+      "sha256": "d10bb494c4eedb0199f6735f9960301fabf9be98d0a8a7f2cf1adf091096cb86"
+    },
+    "probe_a11y.json": {
+      "bytes": 4617,
+      "sha256": "ae49a79d15e69532cc47d8531fa70bd79988f28a839ed7c665dd63bcc427c2e8"
+    },
+    "probe_contrast.json": {
+      "bytes": 4173,
+      "sha256": "43aa50a70d2593412e364123f43bf87fed790039f492b1a58307b3b9651bd221"
+    },
+    "probe_negative.json": {
+      "bytes": 19557,
+      "sha256": "576335dc5ca9476bea7d9d469ac217620103582f0c59f9a02f021ebd8becf18b"
+    },
+    "qa_copia_auditada.json": {
+      "bytes": 711,
+      "sha256": "dbd26956f3d37eb7adb76baab83da76044f620c1ebf95f32647be2cd73d754f8"
+    },
+    "resultados_pruebas_negativas.txt": {
+      "bytes": 5045,
+      "sha256": "23dadd8ac7ad2571fa96a8caa563906466ff34b264152c1c3ab920e9d59291ca"
+    },
+    "resultados_pruebas_originales.txt": {
+      "bytes": 334,
+      "sha256": "2062d2c255b7545932b53a3317a410c5770e7dce3149af42cf1418fbfb6412cd"
+    },
+    "test_regresion_negativa_v11.py": {
+      "bytes": 3292,
+      "sha256": "156497e874fe84b000d0391b305ac0c766e972e460a23f9d735dd836b978c2c4"
+    }
+  },
+  "schema": "design-router-audit-bundle/1",
+  "status": "AUDIT_ONLY_ORIGINAL_UNCHANGED"
+}

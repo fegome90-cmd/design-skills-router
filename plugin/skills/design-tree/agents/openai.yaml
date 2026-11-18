@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design Skills Router"
+  short_description: "Diseño web con decisiones y revisión humana"
+  default_prompt: "Usa design-tree para revisar la próxima decisión del árbol v0.4 sin aprobar ni ejecutar por mí."
+policy:
+  allow_implicit_invocation: false
