@@ -59,6 +59,15 @@ class SecurityChecks(unittest.TestCase):
     def commit_fixture(self):
         self.git("-c", f"core.hooksPath={os.devnull}", "commit", "--quiet", "-m", "synthetic fixture")
 
+    def stub_desktop_checks(self):
+        runner = self.repo / "bin/pre-commit"
+        self.write(
+            "bin/pre-commit",
+            '#!/bin/sh\nprintf "Desktop checks: %s\\n" "$*"\nexit 7\n',
+        )
+        runner.chmod(0o755)
+        self.env["PATH"] = str(runner.parent) + os.pathsep + self.env["PATH"]
+
     def assert_content_blocked(self, result, *sensitive_values):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
@@ -92,6 +101,89 @@ class SecurityChecks(unittest.TestCase):
 
         self.assertEqual(self.git("show", "HEAD:.env.example").stdout, "DEMO_API_KEY=\n")
         self.assertEqual(self.scan("history").returncode, 0)
+
+    def test_hook_checks_desktop_changes_after_security_and_blocks_on_failure(self):
+        self.write("readme.md", "Unrelated documentation.\n")
+        self.git("add", "readme.md")
+        self.stub_desktop_checks()
+        commit = self.git("commit", "--quiet", "-m", "docs fixture")
+        self.assertNotIn("Desktop checks:", commit.stdout + commit.stderr)
+
+        config = "board/desktop-demo/.pre-commit-config.yaml"
+        self.write(config, "repos: []\n")
+        self.git("add", config)
+        self.commit_fixture()
+
+        desktop = "board/desktop-demo/sample.js"
+        self.write(desktop, f"DEMO_API_KEY={FAKE_VALUE}\n")
+        self.git("add", desktop)
+        original_head = self.git("rev-parse", "HEAD").stdout
+        rejected = self.git("commit", "--quiet", "-m", "blocked secret", check=False)
+        self.assert_content_blocked(rejected, FAKE_VALUE)
+
+        self.write(desktop, "const demo = true;\n")
+        self.git("add", desktop)
+        rejected = self.git("commit", "--quiet", "-m", "blocked desktop checks", check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertEqual(
+            (rejected.stdout + rejected.stderr).splitlines(),
+            [
+                "Security check passed (staged).",
+                "Desktop checks: run --config board/desktop-demo/.pre-commit-config.yaml",
+            ],
+        )
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, original_head)
+
+    def test_hook_allows_removing_the_desktop_prototype(self):
+        desktop = "board/desktop-demo"
+        config = "board/desktop-demo/.pre-commit-config.yaml"
+        self.write(config, "repos: []\n")
+        self.write(f"{desktop}/sample.js", "const demo = true;\n")
+        self.git("add", desktop)
+        self.commit_fixture()
+        self.stub_desktop_checks()
+
+        self.git("rm", "--quiet", "-r", desktop)
+        commit = self.git("commit", "--quiet", "-m", "remove desktop fixture")
+        self.assertIn("Security check passed (staged).", commit.stdout + commit.stderr)
+        self.assertNotIn("Desktop checks:", commit.stdout + commit.stderr)
+        self.assertEqual(self.git("ls-tree", "HEAD", "--", desktop).stdout, "")
+
+    def test_hook_invokes_desktop_checks_on_partial_deletion(self):
+        desktop = "board/desktop-demo"
+        config = f"{desktop}/.pre-commit-config.yaml"
+        sample = f"{desktop}/sample.js"
+        self.write(config, "repos: []\n")
+        self.write(sample, "const demo = true;\n")
+        self.git("add", desktop)
+        self.commit_fixture()
+        self.stub_desktop_checks()
+
+        self.git("rm", "--quiet", sample)
+        original_head = self.git("rev-parse", "HEAD").stdout
+        rejected = self.git("commit", "--quiet", "-m", "remove sample", check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn(f"Desktop checks: run --config {config}", rejected.stdout + rejected.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, original_head)
+
+    def test_hook_rejects_removing_only_the_staged_desktop_config(self):
+        desktop = "board/desktop-demo"
+        config = f"{desktop}/.pre-commit-config.yaml"
+        self.write(config, "repos: []\n")
+        self.write(f"{desktop}/sample.js", "const demo = true;\n")
+        self.git("add", desktop)
+        self.commit_fixture()
+        self.stub_desktop_checks()
+
+        self.git("rm", "--quiet", config)
+        self.write(config, "repos: []\n")
+        original_head = self.git("rev-parse", "HEAD").stdout
+        rejected = self.git("commit", "--quiet", "-m", "remove config only", check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+        output = rejected.stdout + rejected.stderr
+        self.assertIn("Keep the desktop pre-commit configuration while prototype files remain in the index.", output)
+        self.assertNotIn("Desktop checks:", output)
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, original_head)
 
     def test_staged_filenames_are_rejected_even_when_empty_and_forced(self):
         blocked_names = [
