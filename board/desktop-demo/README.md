@@ -50,15 +50,15 @@ Las pruebas abren el puerto 4183. `DESKTOP_TEST_PORT` permite usar otro puerto. 
 
 ## Verificaciones antes de un commit
 
-Desde la raíz del repositorio, instala las dependencias del prototipo, el navegador de Playwright CLI y el hook con `pre-commit` 4.4 o posterior:
+Instala Python 3, Gitleaks y `pre-commit` 4.4 o posterior. Desde la raíz del clon, instala las dependencias del prototipo y el navegador de Playwright CLI, y activa el hook del repositorio:
 
 ```sh
 npm ci --prefix board/desktop-demo
 npm --prefix board/desktop-demo exec -- playwright-cli install-browser chrome-for-testing
-pre-commit install --config board/desktop-demo/.pre-commit-config.yaml --allow-missing-config
+git config --local core.hooksPath .githooks
 ```
 
-Al hacer un commit con archivos de `board/desktop-demo` en el índice, el hook ejecuta Oxlint, Impeccable sobre el código de `src` y una prueba de humo con Playwright CLI. Los errores del detector bloquean el commit y los avisos se muestran. La prueba abre el dashboard en un servidor local temporal y comprueba el cambio al período semanal. La suite completa sigue disponible con `npm test`.
+El hook ejecuta el escáner de seguridad en cada commit. Si hay archivos añadidos o modificados en `board/desktop-demo` en el índice, después ejecuta Oxlint, Impeccable sobre el código de `src` y una prueba de humo con Playwright CLI. Los errores del detector bloquean el commit y los avisos se muestran. La prueba abre el dashboard en un servidor local temporal y comprueba el cambio al período semanal. La suite completa sigue disponible con `npm test`.
 
 Para ejecutar los tres controles manualmente desde la raíz:
 

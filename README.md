@@ -14,6 +14,10 @@ Para una auditoría con ese alcance, el router propone **G5**, el especialista e
 
 El resultado es una propuesta de revisión. La persona a cargo decide qué comprobaciones llevar a cabo.
 
+## Prototipo de escritorio
+
+El [prototipo React](board/desktop-demo/README.md) incluye un espacio de trabajo con navegación, conversaciones de ejemplo y un dashboard interactivo. La guía del prototipo explica cómo ejecutarlo y comprobarlo localmente.
+
 ## Cómo colaborar
 
 Este repositorio público reúne las propuestas y revisiones de personas y agentes.
