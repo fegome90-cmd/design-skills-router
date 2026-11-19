@@ -228,6 +228,42 @@ class ClientTests(unittest.TestCase):
         self.assertEqual({event["event_id"] for event in sent}, {first["event_id"], second["event_id"]})
         self.assertEqual(list(client._outbox_dir().glob("outbox-*.jsonl")), [])
 
+    def test_non_regular_spool_entry_is_quarantined_without_blocking_valid_batch(self):
+        client = Telemetry(self.config())
+        event = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(client, "_post", return_value=POST_RETRY):
+            self.assertFalse(client.flush())
+        directory = client._outbox_dir()
+        bogus = directory / "outbox-0000.jsonl"
+        bogus.mkdir()
+        with patch.object(client, "_post", return_value=POST_OK) as post:
+            self.assertFalse(client.flush_spool())
+            post.assert_called_once_with([event])
+        self.assertFalse(bogus.exists())
+        self.assertTrue((directory / "rejected-0000.jsonl").is_dir())
+        self.assertEqual(list(directory.glob("outbox-*.jsonl")), [])
+
+    def test_retry_after_compaction_of_in_flight_file_reports_failure(self):
+        reader, producer = Telemetry(self.config()), Telemetry(self.config())
+        original = reader.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(reader, "_post", return_value=POST_RETRY):
+            self.assertFalse(reader.flush())
+        old_path, = reader._outbox_dir().glob("outbox-*.jsonl")
+        appended = []
+
+        def retry_after_compaction(events):
+            next_event = producer.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+            appended.append(next_event)
+            replacement = producer._spool_batch([next_event])
+            self.assertIsNotNone(replacement)
+            self.assertFalse(old_path.exists())
+            return POST_RETRY, events, False
+
+        with patch.object(reader, "_deliver_batch", side_effect=retry_after_compaction):
+            self.assertFalse(reader.flush_spool())
+        replacement, = reader._outbox_dir().glob("outbox-*.jsonl")
+        self.assertEqual(json.loads(replacement.read_text())["events"], [original, appended[0]])
+
     @unittest.skipUnless(hasattr(os, "geteuid") and os.geteuid() != 0,
                          "requires POSIX file permissions and an unprivileged user")
     def test_unreadable_file_is_quarantined_while_readable_events_can_recover(self):

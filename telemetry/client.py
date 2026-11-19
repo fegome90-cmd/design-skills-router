@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import stat
 import tempfile
 import threading
 import time
@@ -531,6 +532,15 @@ class Telemetry:
                 if not locked:
                     return False
                 try:
+                    # os.listdir includes directories and symlinks with spool
+                    # names. Isolate those entries instead of blocking valid
+                    # files or reading through a link to an unrelated path.
+                    if not stat.S_ISREG(path.lstat().st_mode):
+                        if not self._quarantine(path):
+                            return False
+                        self._protected_spool.discard(path)
+                        ok = False
+                        continue
                     snapshot = path.read_bytes()
                 except FileNotFoundError:
                     continue
@@ -562,7 +572,11 @@ class Telemetry:
                         # during the POST. Leave its changed batch for replay.
                         return False
                 except FileNotFoundError:
-                    continue  # Evicted while in flight at the configured cap.
+                    # Compaction can replace this generation while a response
+                    # is in flight. A transient POST failure is still a retry.
+                    if status == POST_RETRY:
+                        return False
+                    continue  # Its replacement must remain untouched.
                 except OSError:
                     return False
 

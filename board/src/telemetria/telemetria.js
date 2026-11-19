@@ -498,6 +498,34 @@
       try { return eventTime(JSON.parse(read(storage, key))); } catch (_) { return -Infinity; }
     }
 
+    function legacyInDeliveryOrder(events) {
+      // A full legacy mirror prioritizes shard-only events for eviction, not
+      // transmission. A selected skill must follow its invocation even if a
+      // full mirror cannot be rewritten under storage pressure.
+      const parents = new Set(events.filter(event => event && event.name === 'router.invoked')
+        .map(event => event.evaluation_id));
+      const seen = new Set();
+      const held = new Map();
+      const ordered = [];
+      for (const event of events) {
+        const id = event && event.evaluation_id;
+        if (id && parents.has(id) && event.name !== 'router.invoked' && !seen.has(id)) {
+          if (!held.has(id)) held.set(id, []);
+          held.get(id).push(event);
+          continue;
+        }
+        ordered.push(event);
+        if (id && event.name === 'router.invoked') {
+          seen.add(id);
+          if (held.has(id)) {
+            ordered.push(...held.get(id));
+            held.delete(id);
+          }
+        }
+      }
+      return ordered;
+    }
+
     function loadOutbox(limit = 100) {
       if (!enumerable) {
         const stored = readList(storage, outbox, MAX_OUTBOX);
@@ -506,7 +534,7 @@
         return excludeRetired(pending).slice(0, limit);
       }
       const { legacy, entries } = snapshot();
-      const pending = legacy.slice(0, limit);
+      const pending = legacyInDeliveryOrder(legacy).slice(0, limit);
       for (const key of entries) {
         if (pending.length >= limit) break;
         let event = volatileEntries.get(key);

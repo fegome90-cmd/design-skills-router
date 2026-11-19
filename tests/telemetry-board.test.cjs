@@ -1099,11 +1099,62 @@ test('quota-limited events remain in memory and are persisted when writes recove
   assert.deepEqual(collector.accepted, batch);
 });
 
+test('legacy shard-only selection waits for its invocation in a full mirror', async () => {
+  const storage = enumerableStorage();
+  const evaluationId = randomUUID();
+  const parent = boardEvent(randomUUID(), 'router.invoked', {
+    evaluation_id: evaluationId, command: 'board', occurred_at: '2026-11-18T12:00:00.000Z'
+  });
+  const selectionEvent = boardEvent(randomUUID(), 'skill.selected', {
+    evaluation_id: evaluationId, skill_id: 'X01', function_id: 'visual-qa',
+    occurred_at: '2026-11-18T12:00:00.000Z'
+  });
+  const unrelated = Array.from({ length: 999 }, () => boardEvent(randomUUID(), 'router.invoked', {
+    evaluation_id: randomUUID(), command: 'board', occurred_at: '2026-11-17T12:00:00.000Z'
+  }));
+  storage.setItem(localKeys.outbox, JSON.stringify([...unrelated, parent]));
+  storage.setItem(localKeys.shardPrefix + 'old-tab', JSON.stringify([parent, selectionEvent]));
+  // A full localStorage mirror cannot be rewritten during recovery.
+  const originalSet = storage.setItem;
+  storage.setItem = (key, value) => {
+    if (key === localKeys.outbox) throw new Error('QuotaExceededError');
+    originalSet(key, value);
+  };
+
+  const known = new Set();
+  const accepted = [];
+  let rejected = 0;
+  const fetch = async (_url, options) => {
+    const events = JSON.parse(options.body).events;
+    const staged = new Set(known);
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      if (event.name === 'skill.selected' && !staged.has(event.evaluation_id)) {
+        rejected++;
+        return { ok: false, status: 422, json: async () => ({ error: 'INVOCATION_NOT_RECORDED', index: i }) };
+      }
+      if (event.name === 'router.invoked') staged.add(event.evaluation_id);
+    }
+    accepted.push(...events);
+    for (const evaluation of staged) known.add(evaluation);
+    return ack(options);
+  };
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch });
+  assert.equal(await client.flush(), true);
+  assert.equal(rejected, 0);
+  assert.ok(accepted.some(event => event.event_id === parent.event_id));
+  assert.ok(accepted.some(event => event.event_id === selectionEvent.event_id));
+  assert.ok(accepted.findIndex(event => event.event_id === parent.event_id) <
+    accepted.findIndex(event => event.event_id === selectionEvent.event_id));
+});
+
 test('corrupt immutable entries are diagnosed locally and never block later deliveries', async () => {
   const storage = enumerableStorage();
   const offline = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787',
     fetch: async () => ({ ok: false, status: 503 }) });
-  const events = offline.trackEvaluation(selection, {});
+  // Use independent invocations: a selection from a corrupt invocation cannot
+  // be accepted by the real collector even when its JSON is well formed.
+  const events = Array.from({ length: 3 }, () => offline.trackEvaluation({}, {})[0]);
   const keys = [...storage.values.keys()].filter(key => key.startsWith(localKeys.entryPrefix)).sort();
   storage.setItem(keys[0], '{');
   storage.setItem(keys[1], JSON.stringify({ name: 'router.invoked' }));
