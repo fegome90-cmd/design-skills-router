@@ -50,4 +50,4 @@ En el PR que introduce el escáner, el workflow identifica el commit de base ini
 
 El contenido propio de este repositorio se distribuye bajo la licencia MIT; el texto completo está en [LICENSE](LICENSE).
 
-Las fuentes fijadas de terceros conservan sus licencias y avisos. El manifiesto de `vendor/` registra la procedencia y las licencias de cada componente (MIT, Apache-2.0, CC0, BSD-3-Clause y OFL-1.1, entre otras). La licencia MIT de este repositorio no relicencia ese material: cada componente se rige por su propia licencia.
+Las fuentes fijadas de terceros conservan sus licencias y avisos. Cuando el repositorio incorpore `vendor/`, su manifiesto registrará la procedencia y las licencias de cada componente (MIT, Apache-2.0, CC0, BSD-3-Clause y OFL-1.1, entre otras). La licencia MIT de este repositorio no relicencia ese material: cada componente se rige por su propia licencia.
