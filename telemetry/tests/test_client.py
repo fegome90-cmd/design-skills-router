@@ -209,6 +209,61 @@ class ClientTests(unittest.TestCase):
             self.assertTrue(client.flush())
             post.assert_called_once_with([first, second])
 
+    def test_compaction_survives_ack_from_a_legacy_reader_of_the_previous_file(self):
+        client = Telemetry(self.config())
+        first = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(client, "_post", return_value=POST_RETRY):
+            self.assertFalse(client.flush())
+            old_path, = client._outbox_dir().glob("outbox-*.jsonl")
+            # A client from before the replay lock has read this generation.
+            acknowledged = json.loads(old_path.read_text())["events"]
+            second = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+            self.assertFalse(client.flush())
+        # Its successful POST can delete only the pathname it originally read.
+        old_path.unlink(missing_ok=True)
+        recovered = Telemetry(self.config())
+        with patch.object(recovered, "_post", return_value=POST_OK) as post:
+            self.assertTrue(recovered.flush())
+        sent = acknowledged + [event for call in post.call_args_list for event in call.args[0]]
+        self.assertEqual({event["event_id"] for event in sent}, {first["event_id"], second["event_id"]})
+        self.assertEqual(list(client._outbox_dir().glob("outbox-*.jsonl")), [])
+
+    @unittest.skipUnless(hasattr(os, "geteuid") and os.geteuid() != 0,
+                         "requires POSIX file permissions and an unprivileged user")
+    def test_unreadable_file_is_quarantined_while_readable_events_can_recover(self):
+        client = Telemetry(self.config())
+        events = [client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+                  for _ in range(contract.MAX_BATCH_EVENTS + 1)]
+        with patch.object(client, "_post", return_value=POST_RETRY):
+            self.assertFalse(client.flush())
+        directory = client._outbox_dir()
+        first, _ = sorted(directory.glob("outbox-*.jsonl"))
+        first.chmod(0)
+        newest = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+        with patch.object(client, "_post", return_value=POST_OK) as post:
+            self.assertFalse(client.flush())
+            self.assertTrue(client.flush())
+        self.assertEqual([event for call in post.call_args_list for event in call.args[0]],
+                         [events[-1], newest])
+        rejected, = directory.glob("rejected-*.jsonl")
+        rejected.chmod(0o600)
+        self.assertEqual(json.loads(rejected.read_text())["events"], events[:-1])
+        self.assertEqual(list(directory.glob("outbox-*.jsonl")), [])
+
+    def test_transient_spool_read_failure_keeps_the_batch_pending(self):
+        client = Telemetry(self.config())
+        event = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(client, "_post", return_value=POST_RETRY):
+            self.assertFalse(client.flush())
+        directory = client._outbox_dir()
+        for failure in (OSError("I/O unavailable"), PermissionError("temporary sharing conflict")):
+            with self.subTest(failure=failure), patch.object(Path, "read_bytes", side_effect=failure):
+                self.assertFalse(client.flush())
+                self.assertEqual(list(directory.glob("rejected-*.jsonl")), [])
+        with patch.object(client, "_post", return_value=POST_OK) as post:
+            self.assertTrue(client.flush())
+            post.assert_called_once_with([event])
+
     def test_equivalent_collector_origins_share_pending_events(self):
         def configured(url):
             return Telemetry(contract.TelemetryConfig(True, url, state_dir=self.state))

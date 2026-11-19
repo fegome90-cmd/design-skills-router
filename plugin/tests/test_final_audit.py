@@ -88,3 +88,52 @@ class FinalAuditTests(unittest.TestCase):
   with self.assertRaisesRegex(self.h.r.GateError,'INVENTORY_EVIDENCE_CHANGED'):
    self.r.accept_phase(self.s,'root',self.h.receipt(packet['gate_packet_hash'],'phase'))
   self.assertEqual(self.s,before)
+
+ def test_pending_legacy_inventory_gate_can_receive_a_new_human_receipt(self):
+  self.h.complete('Q00','F00')
+  records=copy.deepcopy(self.s['records'])
+  phase_map={'schema':'design-tree-phases/1','project_kind':'bounded','phases':[
+   {'id':'root','family':'foundations','revision':1,'node_instance_ids':['Q00'],
+    'dependency_ids':[],'deliverables':['Root decision']}]}
+  self.r.configure_phases(self.s,phase_map,self.h.receipt(self.h.r.digest(phase_map),'phase_map'))
+  grant=self.r.grant_template(self.s,'root')
+  self.r.grant_assistance(self.s,grant,self.h.receipt(self.r.grant_hash(self.s,grant),'delegation'))
+  rows=[{'skill_id':sid,'disposition':'DEFERRED','reason':'Review later',
+         'evidence_refs':[str(self.h.ev)]} for sid in self.r.inventory]
+  self.r.propose_inventory(self.s,rows)
+  deliverables=[self.h.evidence()]
+  self.r.prepare_phase(self.s,'root',deliverables)
+  # Reconstruct exactly the packet and inventory digest written by the previous runner.
+  phase=self.s['phases']['root']
+  legacy_hash=self.h.r.digest({'baseline':self.r.inventory_hash,'rows':rows,
+                               'context':self.r.scope_hash(self.s)})
+  phase['packet']['inventory_hash']=legacy_hash
+  phase['gate_packet_hash']=self.h.r.digest(phase['packet'])
+  self.s['inventory_proposal']['hash']=legacy_hash
+  old_receipt=self.h.receipt(phase['gate_packet_hash'],'phase')
+  with self.assertRaisesRegex(self.h.r.GateError,'INVENTORY_CHANGED'):
+   self.r.accept_phase(self.s,'root',old_receipt)
+  changed_rows=copy.deepcopy(rows)
+  changed_rows[0]['reason']='Changed after preparation'
+  self.r.propose_inventory(self.s,changed_rows)
+  with self.assertRaisesRegex(self.h.r.GateError,'PHASE_NOT_ACTIVE'):
+   self.r.prepare_phase(self.s,'root',deliverables)
+  current_hash=self.r.propose_inventory(self.s,rows)
+  before=copy.deepcopy(self.s)
+  with self.assertRaisesRegex(self.h.r.GateError,'PHASE_NOT_ACTIVE'):
+   self.r.prepare_phase(self.s,'root',[{**deliverables[0],'note':'A different deliverable'}])
+  self.assertEqual(self.s,before)
+  with self.assertRaisesRegex(self.h.r.GateError,'INVENTORY_CHANGED'):
+   self.r.accept_phase(self.s,'root',old_receipt)
+  refreshed=self.r.prepare_phase(self.s,'root',deliverables)
+  self.assertEqual(refreshed['packet']['inventory_hash'],current_hash)
+  self.assertNotEqual(old_receipt['target_hash'],refreshed['gate_packet_hash'])
+  self.assertEqual(phase['status'],'AWAITING_HUMAN')
+  with self.assertRaisesRegex(self.h.r.GateError,'RECEIPT_HASH_MISMATCH'):
+   self.r.accept_phase(self.s,'root',old_receipt)
+  with self.assertRaisesRegex(self.h.r.GateError,'PHASE_NOT_ACTIVE'):
+   self.r.prepare_phase(self.s,'root',deliverables)
+  self.r.accept_phase(self.s,'root',self.h.receipt(refreshed['gate_packet_hash'],'phase'))
+  self.assertEqual(self.s['records'],records)
+  self.assertTrue(self.r.phase_current(self.s,'root'))
+  self.assertTrue(self.r.inventory_confirmed(self.s))

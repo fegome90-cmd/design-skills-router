@@ -200,13 +200,13 @@ escalabilidad horizontal.
 
 | Comando | Resultado |
 | --- | --- |
-| `python3 -B -m unittest discover -s telemetry/tests` | 125 pruebas OK. Incluyen recuperación entre procesos, permisos de colas existentes, validación del acuse HTTP y reintento de una respuesta 422 truncada. |
-| `node --test tests/telemetry-board.test.cjs` | 40 pruebas OK. Cubren el límite compartido de 1.000 eventos, compatibilidad con colas anteriores, revocación en pestañas abiertas, acuses y reintento tras 429. |
-| `npm run test:telemetry:e2e` | Pizarra y dashboard en Chromium, colector HTTP con SQLite, revocación entre pestañas y selección de ventana ante respuestas fuera de orden. |
+| `python3 -B -m unittest discover -s telemetry/tests` | 128 pruebas OK. Incluyen un acuse tardío tras la compactación, un archivo ilegible delante de lotes válidos y un fallo transitorio de lectura. |
+| `node --test tests/telemetry-board.test.cjs` | 44 pruebas OK. Cubren el límite compartido de 1.000 eventos, la cuota de almacenamiento, el orden entre invocación y selección, la convivencia de versiones, la revocación y el reintento tras 429. |
+| `npm run test:telemetry:e2e` | Pizarra y dashboard en Chromium con colector HTTP y SQLite. Dos pestañas ante una cuota insuficiente entregan una invocación y su selección exactamente una vez. Incluye revocación y selección de ventana ante respuestas fuera de orden. |
 | `npm test` | 8 pruebas del núcleo + 11/11 del contrato semántico sobre v1.4. |
 | `npm run test:golden` | 11/11 del contrato semántico y prueba offline sobre v1.3 congelada. |
 | `npm run test:preview` | 11/11 semánticas, 7/7 mapa, 13/13 Playwright y offline sin solicitudes HTTP. |
-| `(cd plugin && python3 -B -m unittest discover -s tests)` | 186 pruebas OK. |
+| `(cd plugin && python3 -B -m unittest discover -s tests)` | 187 pruebas OK. Incluyen los límites de fase y la renovación del paquete pendiente con un nuevo recibo humano. |
 | `python3 -B tools/verify_sources.py` | 238 propios, 2.096 externos, 71 del plugin y pizarra v1.3 verificados (requiere checkout completo con `vendor/`). |
 | `python3 -B plugin/skills/design-tree/scripts/doctor.py --format json` | `exit_code=0`, sin hallazgos, paquete `CHECKED`. |
 | Colector real + wrapper CLI | 2 invocaciones, 2 evaluaciones, 1 nodo, 0 selecciones CLI; ejecuciones en `schema_supported_no_emitter`. |

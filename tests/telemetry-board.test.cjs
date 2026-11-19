@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { createHash } = require('node:crypto');
+const { createHash, randomUUID } = require('node:crypto');
 const { test } = require('node:test');
 const telemetry = require('../board/src/telemetria/telemetria.js');
 const localKeys = telemetry.keys.forEndpoint('http://127.0.0.1:8787');
@@ -1115,4 +1115,92 @@ test('corrupt immutable entries are diagnosed locally and never block later deli
     event_id: event.event_id, error: 'INVALID_STORED_EVENT'
   })));
   assert.ok(keys.every(key => storage.getItem(key) === null));
+});
+
+test('a quota failure publishes only the causal prefix of an evaluation', async () => {
+  for (const firstFailed of ['router.invoked', 'X01']) {
+    const storage = enumerableStorage();
+    const collector = transactionalCollector();
+    const options = { storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch };
+    const a = telemetry.createClient(options);
+    const b = telemetry.createClient(options);
+    a.schedule = b.schedule = () => {};
+    const setItem = storage.setItem;
+    storage.setItem = (key, value) => {
+      if (key.startsWith(localKeys.entryPrefix)) {
+        const event = JSON.parse(value);
+        if (event.name === firstFailed || event.skill_id === firstFailed) throw new Error('QuotaExceededError');
+      }
+      setItem(key, value);
+    };
+    const emitted = a.trackEvaluation(selection, {});
+    await b.flush();
+    assert.deepEqual(collector.accepted, firstFailed === 'router.invoked' ? [] : emitted.slice(0, 1));
+    storage.setItem = setItem;
+    await a.flush();
+    assert.deepEqual(collector.accepted, emitted);
+  }
+});
+
+test('a full durable queue loses only as many entries as were successfully admitted', async () => {
+  const storage = enumerableStorage();
+  const collector = transactionalCollector();
+  const options = { storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch };
+  const tab = telemetry.createClient(options);
+  tab.schedule = () => {};
+  const old = [];
+  for (let i = 0; i < 1000; i++) old.push(...tab.trackEvaluation({}, {}));
+  const setItem = storage.setItem;
+  let allowance = 1;
+  storage.setItem = (key, value) => {
+    if (key.startsWith(localKeys.entryPrefix) && allowance-- <= 0) throw new Error('QuotaExceededError');
+    setItem(key, value);
+  };
+  const added = tab.trackEvaluation(selection, {});
+  tab.trackEvaluation({}, {});
+  storage.setItem = setItem;
+  const reopened = telemetry.createClient(options);
+  await reopened.flush();
+  assert.deepEqual(collector.accepted, [...old.slice(1), added[0]]);
+});
+
+test('one free slot retains the invocation when a quota failure leaves the evaluation in memory', async () => {
+  const storage = enumerableStorage();
+  const collector = transactionalCollector();
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch });
+  client.schedule = () => {};
+  const [sample] = telemetry.buildEvaluationEvents({}, context());
+  const previous = Array.from({ length: 999 }, () => ({ ...sample, event_id: randomUUID(), evaluation_id: randomUUID() }));
+  storage.setItem(localKeys.outbox, JSON.stringify(previous));
+  const setItem = storage.setItem;
+  storage.setItem = (key, value) => {
+    if (key.startsWith(localKeys.entryPrefix)) throw new Error('QuotaExceededError');
+    setItem(key, value);
+  };
+  const [invocation] = client.trackEvaluation(selection, {});
+  assert.equal(await client.flush(), true);
+  assert.deepEqual(collector.accepted, [...previous, invocation]);
+});
+
+test('mixed-format eviction compares event ages across mirror, shard and immutable entries', async () => {
+  const storage = enumerableStorage();
+  const collector = transactionalCollector();
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch });
+  client.schedule = () => {};
+  const modern = [];
+  for (let i = 0; i < 1000; i++) modern.push(...client.trackEvaluation({}, {}));
+  const legacy = [-1, 1].map(delta => ({
+    ...modern[0], event_id: randomUUID(), evaluation_id: randomUUID(),
+    occurred_at: new Date(Date.parse(modern[0].occurred_at) + delta * 60000).toISOString()
+  }));
+  for (const key of [localKeys.outbox, localKeys.shardPrefix + 'old-tab']) {
+    storage.setItem(key, JSON.stringify(legacy));
+  }
+  assert.equal(await client.flush(), true);
+  const retained = new Set(collector.accepted.map(event => event.event_id));
+  assert.equal(retained.size, 1000);
+  assert.equal(retained.has(legacy[0].event_id), false);
+  assert.equal(retained.has(legacy[1].event_id), true);
+  assert.equal(retained.has(modern[0].event_id), false);
+  assert.equal(retained.has(modern[1].event_id), true);
 });

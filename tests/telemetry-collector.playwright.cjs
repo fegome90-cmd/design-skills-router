@@ -55,6 +55,65 @@ function serveBoard(html) {
   });
 }
 
+async function checkQuotaRecovery(browser, boardOrigin, collectorOrigin) {
+  const context = await browser.newContext();
+  const counts = async () => (await (await fetch(collectorOrigin + '/v1/metrics?window=all')).json()).event_counts;
+  try {
+    const before = await counts();
+    const writer = await context.newPage();
+    const reader = await context.newPage();
+    for (const page of [writer, reader]) {
+      await page.goto(boardOrigin);
+      await page.evaluate(endpoint => {
+        window.client = DesignRouterTelemetry.createClient({ endpoint });
+      }, collectorOrigin);
+    }
+    const now = Date.now();
+    await writer.clock.install({ time: new Date(now) });
+    await writer.clock.pauseAt(new Date(now + 1000));
+    await writer.evaluate(endpoint => {
+      // Leave room for the smaller selection record. A peer may flush before
+      // the producer gets another chance to persist its larger invocation.
+      const selection = { selectedFunctions: ['type-choice'], support: { read: [{ skill: { id: 's' } }] } };
+      const scope = { route: 'tipografia', scope: 'function' };
+      const probe = DesignRouterTelemetry.createClient({ endpoint, storage: sessionStorage });
+      probe.schedule = () => {};
+      const [invocation, child] = probe.trackEvaluation(selection, scope);
+      const size = event => {
+        const key = Object.keys(sessionStorage).find(key => key.endsWith(event.event_id));
+        return key.length + sessionStorage.getItem(key).length;
+      };
+      const childSize = size(child);
+      if (childSize >= size(invocation)) throw new Error('fixture requires a smaller selection');
+      localStorage.setItem('sync', '0');
+      let low = 0, high = 8 * 1024 * 1024;
+      while (high - low > 1) {
+        const length = Math.floor((low + high) / 2);
+        try {
+          localStorage.setItem('filler', 'x'.repeat(length));
+          low = length;
+        } catch (error) {
+          if (error.name !== 'QuotaExceededError') throw error;
+          high = length;
+        }
+      }
+      localStorage.setItem('filler', 'x'.repeat(low - childSize));
+      window.client.trackEvaluation(selection, scope);
+      localStorage.setItem('sync', '1');
+    }, collectorOrigin);
+    await reader.waitForFunction(() => localStorage.getItem('sync') === '1');
+    await reader.evaluate(() => window.client.flush());
+    await writer.evaluate(() => localStorage.removeItem('filler'));
+    assert.equal(await writer.evaluate(() => window.client.flush()), true);
+    const after = await counts();
+    for (const name of ['router.invoked', 'skill.selected']) {
+      assert.equal(after[name], (before[name] || 0) + 1, name + ' must reach SQLite exactly once');
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 async function checkDashboardRange(browser, origin) {
   const post = await fetch(origin + '/v1/events', {
     method: 'POST',
@@ -174,6 +233,7 @@ async function checkDashboardRange(browser, origin) {
 
     await page.close();
     await checkDashboardRange(browser, collector.origin);
+    await checkQuotaRecovery(browser, fixture.origin, collector.origin);
     console.log('PASS colector real: eventos válidos contados una vez, veneno aislado, política de origen aplicada');
   } finally {
     await browser.close();

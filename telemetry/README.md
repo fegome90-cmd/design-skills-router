@@ -122,7 +122,11 @@ colector admite hasta 100 archivos de 100 eventos. Al alcanzar el límite,
 el cliente puede descartar el archivo más antiguo. Un rechazo permanente se
 guarda en `rejected-*.jsonl` junto a la cola de ese colector. Varios procesos
 pueden compartir el directorio. Mientras uno reenvía un lote, los demás
-pueden guardar los suyos.
+pueden guardar los suyos. Al compactar la cola, el cliente escribe el lote en
+un archivo nuevo para que un acuse tardío de la versión anterior sólo retire
+el archivo que esa versión llegó a enviar. Si pierde el permiso de lectura
+sobre un archivo y el directorio permite moverlo, lo aparta en cuarentena y
+continúa con los lotes siguientes.
 
 Ambos clientes confirman la entrega cuando el colector devuelve HTTP 202
 con el esquema `design-router-telemetry/1` y la suma de `accepted` y
@@ -159,8 +163,16 @@ huérfanos al reintentar—; no es la fuente de verdad.
 
 El límite se comparte entre las pestañas del mismo origen que escriben al
 mismo colector. Los eventos nuevos se guardan por separado y la pizarra
-también recupera las colas anteriores en fragmentos. Ante un HTTP 429, una
-pestaña abierta programa su reintento según `Retry-After`.
+también recupera las colas anteriores en fragmentos. Ambas versiones pueden
+coexistir durante una actualización. Al comparar ambos formatos para aplicar
+el límite, la pizarra usa la fecha del evento. Un empate conserva el evento del
+formato anterior. Si el navegador agota la cuota de almacenamiento, conserva
+lo que ya está guardado. Cuando aún quedan cupos dentro del límite de 1.000,
+la pestaña productora mantiene en memoria la parte inicial de la evaluación
+que cabe en esos cupos y puede enviarla mientras siga abierta. Con los 1.000
+cupos ocupados, un evento nuevo sólo desplaza a otro tras guardarse. Ante un
+HTTP 429, una pestaña abierta programa su reintento
+según `Retry-After`.
 
 La cola de la pizarra y los rechazos pertenecen a la URL de ingesta
 configurada, incluida su ruta y consulta. Si cambias de

@@ -210,13 +210,11 @@ class Router:
         n=self.node(node_id)
         return any(str(n.get(k,'')).startswith('BLOCKED') for k in ('terminal_status','proposal_status'))
 
-    def _bounded_prerequisite_node(self,state,node_id):
+    def _bounded_prerequisite_node(self,state,phase,node_id):
         if (state.get('phase_map') or {}).get('project_kind')!='bounded':return False
-        mapped={nid for p in state.get('phases',{}).values() for nid in p.get('node_instance_ids',[])}
-        if node_id in mapped:return False
         # Ancestors only open the path to a mapped node. An explicit prerequisite
         # must also finish the same selected subtree that complete() checks.
-        pending = [(nid, False) for nid in mapped]
+        pending = [(nid, False) for nid in phase['node_instance_ids']]
         visited = set()
         while pending:
             current, must_complete = pending.pop()
@@ -238,12 +236,15 @@ class Router:
         require(not self.blocked(node_id),'BLOCKED_ROUTE:'+node_id)
         if state.get('phase_map'):
             pid=self.phase_for(state,node_id)
+            active_pid = state.get('active_phase_id')
+            phase = state['phases'].get(active_pid)
             if pid is None:
-                require(self._bounded_prerequisite_node(state,node_id),'PHASE_BOUNDARY:None')
+                require(phase and self._bounded_prerequisite_node(state,phase,node_id),'PHASE_BOUNDARY:None')
             else:
-                require(pid==state.get('active_phase_id'),'PHASE_BOUNDARY:'+str(pid))
-                require(state['phases'][pid]['status']=='ACTIVE','PHASE_GATE_REQUIRED')
-                require(all(self.phase_current(state,d) for d in state['phases'][pid]['dependency_ids']),'PHASE_DEPENDENCY_PENDING')
+                require(pid==active_pid,'PHASE_BOUNDARY:'+str(pid))
+            # A stale bounded phase can recover its previously invalidated prerequisites manually.
+            require(phase['status']=='ACTIVE' or (pid is None and phase['status']=='STALE'),'PHASE_GATE_REQUIRED')
+            require(all(self.phase_current(state,d) for d in phase['dependency_ids']),'PHASE_DEPENDENCY_PENDING')
         for dep in self.node(node_id).get('requires',[]):
             require(self.complete(state,dep), 'PREREQUISITE_PENDING:'+dep)
 
@@ -695,18 +696,30 @@ class Router:
 
     def prepare_phase(self,state,phase_id,deliverables):
         self.check_state(state);phase=state['phases'].get(phase_id,{})
-        require(phase_id==state.get('active_phase_id') and phase.get('status')=='ACTIVE','PHASE_NOT_ACTIVE')
+        require(phase_id==state.get('active_phase_id') and phase.get('status') in ('ACTIVE','AWAITING_HUMAN'),'PHASE_NOT_ACTIVE')
+        proposal = state.get('inventory_proposal')
+        pending = phase['status']=='AWAITING_HUMAN'
+        if pending:
+            require(proposal and phase.get('packet',{}).get('inventory_hash'),'PHASE_NOT_ACTIVE')
+            # Before evidence bindings, an inventory digest covered only these three fields.
+            legacy_hash = digest({'baseline':self.inventory_hash,'rows':proposal['rows'],'context':self.scope_hash(state)})
+            require(phase['packet']['inventory_hash']==legacy_hash and proposal['hash']!=legacy_hash,'PHASE_NOT_ACTIVE')
         act=self.active(state);ids=[nid for nid in act if nid in phase['node_instance_ids']]
         require(ids and all(self.record_current(state,nid) and not self.blocked(nid) for nid in ids),'PHASE_OBLIGATIONS_PENDING')
         for nid in ids:self.check_gate(state,nid,state['records'][nid]['proposal'])
         self.check_evidence(deliverables,state)
         require(len(deliverables)>=len(phase['deliverables']),'PHASE_DELIVERABLES_MISSING')
-        proposal = state.get('inventory_proposal')
         inventory_hash = self.checked_inventory_hash(state, proposal) if proposal else None
-        self.bind_evidence_paths(state, deliverables)
         packet={'phase_id':phase_id,'revision':phase['revision'],'phase_map_hash':state['phase_map_hash'],'scope_hash':self.scope_hash(state),
                 'records':{nid:state['records'][nid]['proposal_hash'] for nid in sorted(ids)},'deliverables':copy.deepcopy(deliverables),
                 'grant_id':phase.get('grant_id'),'inventory_hash':inventory_hash}
+        if pending:
+            previous = {**packet, 'inventory_hash':legacy_hash}
+            require(phase['packet']==previous and phase['gate_packet_hash']==digest(previous)
+                    and phase['delivered']==deliverables,'PHASE_NOT_ACTIVE')
+            state['history'].append({'event':'phase_inventory_binding_upgraded','phase_id':phase_id,
+                                     'previous':copy.deepcopy(phase),'at':now()})
+        self.bind_evidence_paths(state, deliverables)
         h=digest(packet);phase.update(status='AWAITING_HUMAN',packet=packet,gate_packet_hash=h,delivered=copy.deepcopy(deliverables))
         return {'gate_packet_hash':h,'packet':packet,'decisions':[{'node_id':nid,**copy.deepcopy(state['records'][nid])} for nid in ids],
                 'notice':'One phase acceptance; no individual human receipts are fabricated.'}

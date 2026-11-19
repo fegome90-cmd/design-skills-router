@@ -442,26 +442,60 @@
       }
     }
 
-    function snapshot(capacity = MAX_OUTBOX) {
+    function snapshot() {
       const keys = listStorageKeys(storage, outbox + ':');
       const legacyKeys = keys.filter(key => key.startsWith(shardPrefix));
       let legacy = readLegacy(legacyKeys);
       const entries = keys.filter(key => key.startsWith(entryPrefix) && !retiredIds.has(entryId(key)));
-      for (const key of volatileEntries.keys()) entries.push(key);
-      if (volatileEntries.size) entries.sort();
-      const excess = Math.max(0, legacy.length + entries.length - capacity);
-      if (excess) {
-        const dropped = legacy.slice(0, excess);
+      const excess = legacy.length + entries.length - MAX_OUTBOX;
+      if (excess > 0) {
+        let entryCount = Math.min(entries.length, excess);
+        let dropped = [];
+        if (legacy.length) {
+          // Legacy tabs still write while a newer tab is open. Compare the
+          // occurrence times of the two formats. Within an immutable queue,
+          // the key already records capture order (even on clock rollback).
+          const oldest = legacy.slice().sort((a, b) => eventTime(a) - eventTime(b));
+          let fromLegacy = 0;
+          entryCount = 0;
+          while (fromLegacy + entryCount < excess) {
+            const key = entries[entryCount];
+            if (!key || (fromLegacy < oldest.length && eventTime(oldest[fromLegacy]) < storedTime(key))) {
+              fromLegacy++;
+            } else {
+              entryCount++;
+            }
+          }
+          dropped = oldest.slice(0, fromLegacy);
+        }
         removeLegacy(legacyKeys, dropped);
         markRetired(dropped);
-        legacy = legacy.slice(dropped.length);
-        for (const key of entries.splice(0, excess - dropped.length)) {
+        legacy = filterOutBatch(legacy, dropped);
+        for (const key of entries.splice(0, entryCount)) {
           markRetired([{ event_id: entryId(key) }]);
-          volatileEntries.delete(key);
           remove(storage, key);
         }
       }
+      // RAM-only writes can use free event slots, but cannot evict a durable
+      // record: if the producer closes, its in-memory replacement vanishes.
+      const spare = MAX_OUTBOX - legacy.length - entries.length;
+      if (volatileEntries.size > spare) {
+        for (const key of [...volatileEntries.keys()].slice(spare)) volatileEntries.delete(key);
+      }
+      if (volatileEntries.size) {
+        entries.push(...volatileEntries.keys());
+        entries.sort();
+      }
       return { legacy, entries };
+    }
+
+    function eventTime(event) {
+      const stamp = event && Date.parse(event.occurred_at);
+      return Number.isFinite(stamp) ? stamp : -Infinity;
+    }
+
+    function storedTime(key) {
+      try { return eventTime(JSON.parse(read(storage, key))); } catch (_) { return -Infinity; }
     }
 
     function loadOutbox(limit = 100) {
@@ -522,7 +556,10 @@
 
     function persistVolatile() {
       for (const [key, event] of volatileEntries) {
-        if (write(storage, key, JSON.stringify(event))) volatileEntries.delete(key);
+        // Another tab may send this prefix immediately. Never publish a
+        // skill.selected if its preceding router.invoked failed to persist.
+        if (!write(storage, key, JSON.stringify(event))) break;
+        volatileEntries.delete(key);
       }
     }
 
@@ -535,7 +572,7 @@
       // generated in the same millisecond. Concurrent tabs never overwrite
       // one another's payload, even without the Web Locks API.
       const fresh = events.slice(-MAX_OUTBOX);
-      const { entries } = snapshot(MAX_OUTBOX - fresh.length);
+      const { legacy, entries } = snapshot();
       const lastKey = entries[entries.length - 1];
       const lastOrder = lastKey ? Number(lastKey.slice(entryPrefix.length, entryPrefix.length + 16)) : 0;
       const order = String(Math.max(Date.now(), lastOrder + 1)).padStart(16, '0');
@@ -545,6 +582,9 @@
         volatileEntries.set(key, fresh[i]);
       }
       persistVolatile();
+      // Admit first. Only successful writes can displace older persisted
+      // entries. The same reconciliation runs on reload after interruption.
+      if (legacy.length + entries.length + fresh.length > MAX_OUTBOX) snapshot();
     }
 
     let reconciliationPending = false;

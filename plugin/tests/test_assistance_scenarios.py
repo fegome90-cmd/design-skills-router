@@ -157,11 +157,30 @@ class EndToEndScenarios(unittest.TestCase):
                          ('T00',None), ('S01','S02'), ('S02',None), ('P01','P02')]:
    self.h.complete(node, selected)
   phase_map={'schema':'design-tree-phases/1','project_kind':'bounded','phases':[
+   {'id':'root','revision':1,'family':'foundations','node_instance_ids':['Q00'],
+    'dependency_ids':[],'deliverables':['Project scope']},
    {'id':'type','revision':1,'family':'visual','node_instance_ids':['T01'],
-    'dependency_ids':[],'deliverables':['Typography decision']}]}
+    'dependency_ids':['root'],'deliverables':['Typography decision']}]}
   self.r.configure_phases(self.s,phase_map,self.h.receipt(self.h.r.digest(phase_map),'phase_map'))
+  def check_blocked(node,reason):
+   with self.assertRaisesRegex(self.h.r.GateError,reason):
+    self.r.confirm_structure(self.s,node,self.h.receipt(self.r.structure_hash(node),'structure'))
+  check_blocked('P02','PHASE_BOUNDARY')
+  root_grant=self.r.grant_template(self.s,'root','manual')
+  self.r.grant_assistance(self.s,root_grant,self.h.receipt(self.r.grant_hash(self.s,root_grant),'delegation'))
+  check_blocked('P02','PHASE_BOUNDARY')
+  root_artifact=self.h.work/'scope.txt'
+  root_artifact.write_bytes(self.h.ev.read_bytes())
+  root_packet=self.r.prepare_phase(self.s,'root',[{**self.h.evidence(),'path':str(root_artifact)}])
+  check_blocked('Q00','PHASE_GATE_REQUIRED')
+  check_blocked('P02','PHASE_BOUNDARY')
+  self.r.accept_phase(self.s,'root',self.h.receipt(root_packet['gate_packet_hash'],'phase'))
   grant=self.r.grant_template(self.s,'type','manual')
   self.r.grant_assistance(self.s,grant,self.h.receipt(self.r.grant_hash(self.s,grant),'delegation'))
+  root_artifact.write_text('changed after phase acceptance')
+  check_blocked('P02','PHASE_DEPENDENCY_PENDING')
+  check_blocked('T01','PHASE_DEPENDENCY_PENDING')
+  root_artifact.write_bytes(self.h.ev.read_bytes())
   proposals={node:self.h.proposal(node,choice) for node,choice in [('P02',None),('T01','T02')]}
   self.assertFalse(self.r.packet(self.s,'P02')['assistance']['allowed'])
   with self.assertRaisesRegex(self.h.r.GateError,'PHASE_BOUNDARY'):
@@ -179,5 +198,7 @@ class EndToEndScenarios(unittest.TestCase):
    decision=cli('propose',node,proposal)
    cli('confirm',node,self.h.receipt(decision['proposal_hash'],'project'))
   packet=cli('phase-prepare','type',[self.h.evidence()])
+  with self.assertRaisesRegex(self.h.r.GateError,'PHASE_GATE_REQUIRED'):
+   cli('structure','P02',self.h.receipt(self.r.structure_hash('P02'),'structure'))
   cli('phase-accept','type',self.h.receipt(packet['gate_packet_hash'],'phase'))
   self.assertTrue(self.r.phase_current(self.h.r.load_state(ledger),'type'))

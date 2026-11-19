@@ -416,9 +416,20 @@ class Telemetry:
             return None
         if len(existing) + len(events) > contract.MAX_BATCH_EVENTS:
             return None
-        if not self._write_spool(newest, existing + events):
+        # A pre-lock client may still acknowledge and unlink the old pathname.
+        # Publish a different generation before retiring the old one. If a
+        # crash leaves both, the collector deduplicates their event IDs.
+        name, _ = _allocate_spool_name("outbox", files, newest.parent / _SPOOL_CLOCK_NAME)
+        replacement = newest.with_name(name)
+        if not self._write_spool(replacement, existing + events):
             return False
-        return newest
+        try:
+            newest.unlink(missing_ok=True)
+        except OSError:
+            # The replacement is durable. The predecessor can replay later.
+            pass
+        self._protected_spool.discard(newest)
+        return replacement
 
     def _spool_batch(
         self,
@@ -516,12 +527,23 @@ class Telemetry:
             return False
         ok = True
         for path in files:
-            try:
-                snapshot = path.read_bytes()
-            except FileNotFoundError:
-                continue
-            except OSError:
-                return False
+            with self._spool_lock() as locked:
+                if not locked:
+                    return False
+                try:
+                    snapshot = path.read_bytes()
+                except FileNotFoundError:
+                    continue
+                except PermissionError:
+                    # Only isolate a file whose read access is still denied.
+                    # Transient I/O failures leave the queue in causal order.
+                    if os.access(path, os.R_OK) or not self._quarantine(path):
+                        return False
+                    self._protected_spool.discard(path)
+                    ok = False
+                    continue
+                except OSError:
+                    return False
             try:
                 events = contract.validate_batch(json.loads(snapshot))
             except (ValueError, RecursionError):
@@ -536,8 +558,8 @@ class Telemetry:
                     return False
                 try:
                     if path.read_bytes() != snapshot:
-                        # A producer extended this batch during the POST. Keep
-                        # that generation intact for an idempotent replay.
+                        # A concurrent reader may have isolated rejected rows
+                        # during the POST. Leave its changed batch for replay.
                         return False
                 except FileNotFoundError:
                     continue  # Evicted while in flight at the configured cap.
