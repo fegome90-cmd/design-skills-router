@@ -45,3 +45,9 @@ GitHub Actions ejecuta **Secrets and private paths** al recibir un push o un pul
 Si ya publicaste una credencial, revócala en el proveedor antes de sanear el historial. Para avisar al mantenedor, usa el [reporte privado de seguridad](https://github.com/fegome90-cmd/design-skills-router/security/advisories/new) e indica el archivo y el commit. Omite el valor de la clave.
 
 En el PR que introduce el escáner, el workflow identifica el commit de base inicial y verifica las huellas SHA-256 de los tres archivos de política antes de ejecutarlos. En los PR posteriores usa la política del commit base de cada PR.
+
+## Licencias
+
+El contenido propio de este repositorio se distribuye bajo la licencia MIT; el texto completo está en [LICENSE](LICENSE).
+
+Las fuentes fijadas de terceros conservan sus licencias y avisos. El manifiesto de `vendor/` registra la procedencia y las licencias de cada componente (MIT, Apache-2.0, CC0, BSD-3-Clause y OFL-1.1, entre otras). La licencia MIT de este repositorio no relicencia ese material: cada componente se rige por su propia licencia.
