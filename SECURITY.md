@@ -16,12 +16,9 @@ Omití el valor de cualquier credencial. Si ya publicaste una, revocala en el pr
 
 ## Alcance
 
-Cubre el contenido propio del repositorio: `board/`, `offline/`, `scripts/`, `.github/` y la documentación.
+Cubre las vulnerabilidades del código propio y de las integraciones mantenidas en este repositorio, incluidos `plugin/`, `telemetry/`, `board/`, `offline/`, `tools/`, `scripts/`, `.github/` y la documentación. La enumeración no limita el alcance a esas rutas.
 
-Queda fuera de alcance:
-
-- `vendor/`: las fuentes fijadas de terceros que el repositorio archive bajo esa ruta se reportan al proyecto de origen;
-- las dependencias embebidas con su propia licencia, como Shoelace y Lit (BSD-3-Clause) y las fuentes tipográficas (OFL-1.1).
+Los problemas exclusivos del código de terceros (`vendor/`, si se incorpora, dependencias como Shoelace y Lit, o fuentes tipográficas) corresponden también a sus proyectos de origen. Si el problema afecta a cómo se incorpora, configura o utiliza una dependencia en este repositorio, se acepta su reporte privado aquí.
 
 ## Expectativas
 
