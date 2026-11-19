@@ -22,7 +22,7 @@ La protección clásica no se modifica: sigue exigiendo el check con `strict` y 
 
 ## Considered Options
 
-- **Mutar la protección clásica por GraphQL**: se descartó porque la API no expone un campo separado para "requerir pull request" y un PUT completo del template de la skill borraría el check requerido y `enforce_admins`.
+- **Mutar la protección clásica por GraphQL**: se descartó porque la API de rama no expone un campo separado para "requerir pull request" —el bloque de revisiones con 0 aprobaciones lo implica— y un PUT completo del template de la skill borraría el check requerido y `enforce_admins`. Se prefirió un ruleset para aislar la regla sin mutar la protección clásica.
 - **Ruleset con `deletion` y `non_fast_forward`**: se descartó porque la protección clásica ya cubre esos bloqueos y duplicarlos agrega superficie.
 - **CODEOWNERS con revisión obligatoria de code owners**: se descartó porque, con un solo mantenedor y `enforce_admins`, la rama quedaría inmergeable por pull request.
 - **`release.yml`**: se descartó porque el historial tiene un solo pull request mergeado y el changelog se mantiene a mano.
@@ -33,5 +33,6 @@ La protección clásica no se modifica: sigue exigiendo el check con `strict` y 
 - El push directo a `main` deja de ser posible: todo cambio entra por pull request.
 - Los threads de revisión, incluidos los de bots, bloquean el merge hasta resolverse.
 - La licencia MIT no relicencia `vendor/`; cada componente conserva su licencia.
-- Los metadatos de licencia de `package.json`, `pyproject.toml` y `plugin/.codex-plugin/plugin.json` quedan pendientes para después de integrar el pull request #2, porque esos archivos no existen en `main`.
-- Reversión: `PUT /repos/{owner}/{repo}/rulesets/{id}` con `{"enforcement":"disabled"}`, `PATCH` del repositorio con `{"delete_branch_on_merge":false}`, y restauración del comentario y del thread por separado. La protección clásica no requiere reversión.
+- Los metadatos de licencia del `package.json` de la raíz, de `board/desktop-demo/package.json`, de `pyproject.toml` y de `plugin/.codex-plugin/plugin.json` quedan pendientes. El `package.json` de la raíz y el del plugin llegan con el pull request #2; el del demo existe en `main` y todavía no declara licencia.
+- La API agregó `require_extra_approval_for_unattributed_changes: true` al ruleset; con 0 aprobaciones no tiene efecto.
+- Reversión: leer el ruleset con `GET`, cambiar `enforcement` a `disabled` y enviar el objeto completo con `PUT` (el endpoint reemplaza el recurso, así que un payload parcial puede vaciarlo); `PATCH` del repositorio con `{"delete_branch_on_merge":false}`; y restauración del comentario y del thread por separado. La protección clásica no requiere reversión.
