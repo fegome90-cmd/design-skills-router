@@ -10,6 +10,7 @@
 
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const { randomUUID } = require('node:crypto');
 const { mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const http = require('node:http');
@@ -52,6 +53,111 @@ function serveBoard(html) {
       origin: `http://127.0.0.1:${server.address().port}`
     }));
   });
+}
+
+async function checkQuotaRecovery(browser, boardOrigin, collectorOrigin) {
+  const context = await browser.newContext();
+  const counts = async () => (await (await fetch(collectorOrigin + '/v1/metrics?window=all')).json()).event_counts;
+  try {
+    const before = await counts();
+    const writer = await context.newPage();
+    const reader = await context.newPage();
+    for (const page of [writer, reader]) {
+      await page.goto(boardOrigin);
+      await page.evaluate(endpoint => {
+        window.client = DesignRouterTelemetry.createClient({ endpoint });
+      }, collectorOrigin);
+    }
+    const now = Date.now();
+    await writer.clock.install({ time: new Date(now) });
+    await writer.clock.pauseAt(new Date(now + 1000));
+    await writer.evaluate(endpoint => {
+      // Leave room for the smaller selection record. A peer may flush before
+      // the producer gets another chance to persist its larger invocation.
+      const selection = { selectedFunctions: ['type-choice'], support: { read: [{ skill: { id: 's' } }] } };
+      const scope = { route: 'tipografia', scope: 'function' };
+      const probe = DesignRouterTelemetry.createClient({ endpoint, storage: sessionStorage });
+      probe.schedule = () => {};
+      const [invocation, child] = probe.trackEvaluation(selection, scope);
+      const size = event => {
+        const key = Object.keys(sessionStorage).find(key => key.endsWith(event.event_id));
+        return key.length + sessionStorage.getItem(key).length;
+      };
+      const childSize = size(child);
+      if (childSize >= size(invocation)) throw new Error('fixture requires a smaller selection');
+      localStorage.setItem('sync', '0');
+      let low = 0, high = 8 * 1024 * 1024;
+      while (high - low > 1) {
+        const length = Math.floor((low + high) / 2);
+        try {
+          localStorage.setItem('filler', 'x'.repeat(length));
+          low = length;
+        } catch (error) {
+          if (error.name !== 'QuotaExceededError') throw error;
+          high = length;
+        }
+      }
+      localStorage.setItem('filler', 'x'.repeat(low - childSize));
+      window.client.trackEvaluation(selection, scope);
+      localStorage.setItem('sync', '1');
+    }, collectorOrigin);
+    await reader.waitForFunction(() => localStorage.getItem('sync') === '1');
+    await reader.evaluate(() => window.client.flush());
+    await writer.evaluate(() => localStorage.removeItem('filler'));
+    assert.equal(await writer.evaluate(() => window.client.flush()), true);
+    const after = await counts();
+    for (const name of ['router.invoked', 'skill.selected']) {
+      assert.equal(after[name], (before[name] || 0) + 1, name + ' must reach SQLite exactly once');
+    }
+  } finally {
+    await context.close();
+  }
+}
+
+async function checkDashboardRange(browser, origin) {
+  const post = await fetch(origin + '/v1/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schema: telemetry.SCHEMA, events: [{
+      name: 'router.invoked', command: 'status', source: 'cli',
+      event_id: randomUUID(), evaluation_id: randomUUID(), instance_id: randomUUID(),
+      occurred_at: new Date(Date.now() - 15 * 86400000).toISOString(),
+      tree_version: '0.4', router_version: '1.4.0'
+    }] })
+  });
+  assert.equal(post.status, 202);
+  const url = origin + '/v1/metrics?window=';
+  const week = await (await fetch(url + '7d')).json();
+  const all = await (await fetch(url + 'all')).json();
+  assert.equal(all.totals.invocations, week.totals.invocations + 1);
+
+  for (const status of [200, 503]) {
+    const page = await browser.newPage();
+    let release;
+    const resume = new Promise(resolve => { release = resolve; });
+    try {
+      await page.route(url + 'all', async route => {
+        await resume;
+        await route.fulfill({ status, json: all });
+      });
+      await Promise.all([page.waitForRequest(url + 'all'), page.goto(origin, { waitUntil: 'domcontentloaded' })]);
+      await page.locator('[data-window="7d"]').click();
+      await page.waitForFunction(count => document.querySelector('#k-invocations').textContent === String(count),
+        week.totals.invocations);
+      const bounds = await page.locator('#bounds').innerText();
+      const response = page.waitForResponse(url + 'all');
+      release();
+      await (await response).finished();
+      await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+      assert.equal(await page.locator('[data-window="7d"]').getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('#k-invocations').innerText(), String(week.totals.invocations));
+      assert.equal(await page.locator('#bounds').innerText(), bounds);
+      assert.equal(await page.locator('#status').getAttribute('data-kind'), 'info');
+    } finally {
+      release();
+      await page.close();
+    }
+  }
 }
 
 (async () => {
@@ -126,6 +232,8 @@ function serveBoard(html) {
     assert.match(statusText, /Datos reales: \d+ eventos aceptados/);
 
     await page.close();
+    await checkDashboardRange(browser, collector.origin);
+    await checkQuotaRecovery(browser, fixture.origin, collector.origin);
     console.log('PASS colector real: eventos válidos contados una vez, veneno aislado, política de origen aplicada');
   } finally {
     await browser.close();

@@ -121,6 +121,7 @@
   'use strict';
   const byId = id => document.getElementById(id);
   let currentWindow = 'all';
+  let latestRequest = 0;
 
   const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -173,7 +174,7 @@
         { label: 'Fallidas', key: 'executions_failed', num: true }
       ],
       executionState === 'schema_supported_no_emitter'
-        ? 'No observable: no existe un emisor de ejecuciones conectado al host.'
+        ? 'No observable: el colector aún no ha recibido eventos de ejecución de un host.'
         : 'Sin ejecuciones registradas en esta ventana.'
     );
 
@@ -252,13 +253,15 @@
   };
 
   const load = async () => {
+    const request = ++latestRequest;
     setStatus('Cargando métricas…');
     try {
       const response = await fetch(`/v1/metrics?window=${encodeURIComponent(currentWindow)}`, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      render(data);
+      if (request === latestRequest) render(data);
     } catch (error) {
+      if (request !== latestRequest) return;
       setStatus(`No se pudo consultar el colector: ${error.message}. No se muestran datos simulados.`, 'error');
       for (const id of ['k-invocations','k-evals','k-skills','k-nodes','k-branches','k-started','k-completed','k-failed']) fill(id, '—');
       byId('skills-selected').innerHTML = '<p class="empty">Sin conexión.</p>';

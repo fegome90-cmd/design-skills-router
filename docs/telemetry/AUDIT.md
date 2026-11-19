@@ -178,14 +178,11 @@ escalabilidad horizontal.
 
 ## 7. Límites no verificables en este entorno
 
-- **Ejecución real de skills**: el router no la recibe. No hay contadores de
-  ejecución hasta que un host use `host_adapter.py`. El dashboard muestra
-  `schema_supported_no_emitter`, no un cero disfrazado de dato. Los estados de
-  observabilidad se deciden con evidencia **histórica**, no por ventana:
-  `observed` (eventos en la ventana), `observed_zero_events` (cero en la
-  ventana, pero existe evidencia real fuera de ella) y
-  `schema_supported_no_emitter` (nunca se aceptó un evento de ejecución: no
-  hay emisor acreditable).
+- **Ejecución real de skills**. El host puede reportarla mediante
+  `host_adapter.py`. Para estos eventos, `observed` indica que el subtipo aparece en
+  la ventana. `observed_zero_events` indica cero eventos de ese subtipo en la
+  ventana cuando el colector ya recibió al menos un inicio de ejecución.
+  `schema_supported_no_emitter` indica que aún falta esa evidencia histórica.
 - La observación del CLI requiere `observe.py` con telemetría habilitada.
   El runner clásico es el predeterminado y `--exec design-skills-router`
   ejecuta el Typer instalado. Las invocaciones directas quedan fuera del conteo.
@@ -203,13 +200,13 @@ escalabilidad horizontal.
 
 | Comando | Resultado |
 | --- | --- |
-| `python3 -B -m unittest discover -s telemetry/tests` | 120 pruebas OK, incluidas la entrega a dos colectores con un directorio compartido, la salida del CLI en streaming, la preservación del spool ante reintentos 503/rollback en `0300`, la retención de diagnósticos rechazados en `0500` y la precedencia de opciones repetidas en el wrapper. |
-| `node --test tests/telemetry-board.test.cjs` | 33 pruebas OK, incluido el aislamiento de colas por destino, la ausencia de escrituras con el cliente desactivado o `endpoint` vacío y el aislamiento sin bucles de eventos malformados sin `event_id` bajo cuota llena. |
-| `npm run test:telemetry:e2e` | PASS: tablero real en Chromium (6 eventos, sin nodos inferidos, cero ejecuciones inventadas), colector HTTP E2E y dashboard con datos reales, cero y `schema_supported_no_emitter`. |
+| `python3 -B -m unittest discover -s telemetry/tests` | 128 pruebas OK. Incluyen un acuse tardío tras la compactación, un archivo ilegible delante de lotes válidos y un fallo transitorio de lectura. |
+| `node --test tests/telemetry-board.test.cjs` | 44 pruebas OK. Cubren el límite compartido de 1.000 eventos, la cuota de almacenamiento, el orden entre invocación y selección, la convivencia de versiones, la revocación y el reintento tras 429. |
+| `npm run test:telemetry:e2e` | Pizarra y dashboard en Chromium con colector HTTP y SQLite. Dos pestañas ante una cuota insuficiente entregan una invocación y su selección exactamente una vez. Incluye revocación y selección de ventana ante respuestas fuera de orden. |
 | `npm test` | 8 pruebas del núcleo + 11/11 del contrato semántico sobre v1.4. |
 | `npm run test:golden` | 11/11 del contrato semántico y prueba offline sobre v1.3 congelada. |
 | `npm run test:preview` | 11/11 semánticas, 7/7 mapa, 13/13 Playwright y offline sin solicitudes HTTP. |
-| `(cd plugin && python3 -B -m unittest discover -s tests)` | 182 pruebas OK. |
+| `(cd plugin && python3 -B -m unittest discover -s tests)` | 187 pruebas OK. Incluyen los límites de fase y la renovación del paquete pendiente con un nuevo recibo humano. |
 | `python3 -B tools/verify_sources.py` | 238 propios, 2.096 externos, 71 del plugin y pizarra v1.3 verificados (requiere checkout completo con `vendor/`). |
 | `python3 -B plugin/skills/design-tree/scripts/doctor.py --format json` | `exit_code=0`, sin hallazgos, paquete `CHECKED`. |
 | Colector real + wrapper CLI | 2 invocaciones, 2 evaluaciones, 1 nodo, 0 selecciones CLI; ejecuciones en `schema_supported_no_emitter`. |

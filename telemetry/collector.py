@@ -200,6 +200,7 @@ class TelemetryHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", allow_origin)
             self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Headers", "content-type, authorization")
+            self.send_header("Access-Control-Expose-Headers", "Retry-After")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         for key, value in (extra or {}).items():
             self.send_header(key, value)

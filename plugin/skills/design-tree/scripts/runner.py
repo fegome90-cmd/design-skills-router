@@ -210,32 +210,41 @@ class Router:
         n=self.node(node_id)
         return any(str(n.get(k,'')).startswith('BLOCKED') for k in ('terminal_status','proposal_status'))
 
-    def _bounded_prerequisite_node(self,state,node_id):
+    def _bounded_prerequisite_node(self,state,phase,node_id):
         if (state.get('phase_map') or {}).get('project_kind')!='bounded':return False
-        mapped={nid for p in state.get('phases',{}).values() for nid in p.get('node_instance_ids',[])}
-        if node_id in mapped:return False
-        needed=set();stack=list(mapped)
-        while stack:
-            cur=stack.pop()
-            parent=self.parents.get(cur)
-            if parent and parent not in needed:
-                needed.add(parent);stack.append(parent)
-            for dep in self.nodes.get(cur,{}).get('requires',[]):
-                if dep not in needed:
-                    needed.add(dep);stack.append(dep)
-        return node_id in needed
+        # Ancestors only open the path to a mapped node. An explicit prerequisite
+        # must also finish the same selected subtree that complete() checks.
+        pending = [(nid, False) for nid in phase['node_instance_ids']]
+        visited = set()
+        while pending:
+            current, must_complete = pending.pop()
+            if (current, must_complete) in visited:
+                continue
+            if current == node_id:
+                return True
+            visited.add((current, must_complete))
+            parent = self.parents.get(current)
+            if parent:
+                pending.append((parent, False))
+            pending.extend((dep, True) for dep in self.nodes[current].get('requires', []))
+            if must_complete and self.record_current(state, current):
+                pending.extend((child, True) for child in self.completion_children(state, current))
+        return False
 
     def check_open(self,state,node_id):
         require(node_id in self.active(state), 'NODE_NOT_ACTIVE:'+node_id)
         require(not self.blocked(node_id),'BLOCKED_ROUTE:'+node_id)
         if state.get('phase_map'):
             pid=self.phase_for(state,node_id)
+            active_pid = state.get('active_phase_id')
+            phase = state['phases'].get(active_pid)
             if pid is None:
-                require(self._bounded_prerequisite_node(state,node_id),'PHASE_BOUNDARY:None')
+                require(phase and self._bounded_prerequisite_node(state,phase,node_id),'PHASE_BOUNDARY:None')
             else:
-                require(pid==state.get('active_phase_id'),'PHASE_BOUNDARY:'+str(pid))
-                require(state['phases'][pid]['status']=='ACTIVE','PHASE_GATE_REQUIRED')
-                require(all(self.phase_current(state,d) for d in state['phases'][pid]['dependency_ids']),'PHASE_DEPENDENCY_PENDING')
+                require(pid==active_pid,'PHASE_BOUNDARY:'+str(pid))
+            # A stale bounded phase can recover its previously invalidated prerequisites manually.
+            require(phase['status']=='ACTIVE' or (pid is None and phase['status']=='STALE'),'PHASE_GATE_REQUIRED')
+            require(all(self.phase_current(state,d) for d in phase['dependency_ids']),'PHASE_DEPENDENCY_PENDING')
         for dep in self.node(node_id).get('requires',[]):
             require(self.complete(state,dep), 'PREREQUISITE_PENDING:'+dep)
 
@@ -540,17 +549,18 @@ class Router:
 
     def resolve_refs(self,state,refs):
         require(isinstance(refs,list) and refs and all(nonblank(x) for x in refs),'EVIDENCE_REFERENCE_REQUIRED')
-        sources={v['source_ref']:v for v in state['sources'].values()}
-        result={}
-        for ref in refs:
-            if ref in sources:
-                item=sources[ref];path=item['path'];expected=item['sha256']
-            else:
-                path=ref;expected=None
+        sources = {}
+        for source in state['sources'].values():
+            sources.setdefault(source['source_ref'], set()).add((source['path'], source['sha256']))
+        result = []
+        for ref in sorted(set(refs)):
+            candidates = sources.get(ref, set())
+            require(len(candidates) <= 1, 'EVIDENCE_REFERENCE_AMBIGUOUS:' + ref)
+            path, expected = next(iter(candidates), (ref, None))
             try:h=file_hash(self.artifact_path(state,path))
             except (GateError,OSError,TypeError):raise GateError('EVIDENCE_REFERENCE_UNRESOLVED:'+ref)
             require(expected is None or expected==h,'EVIDENCE_CHANGED_OR_MISSING')
-            result[path]=h
+            result.append({'ref': ref, 'path': path, 'sha256': h})
         return result
 
     def set_fact(self,state,fact_id,fact):
@@ -686,16 +696,30 @@ class Router:
 
     def prepare_phase(self,state,phase_id,deliverables):
         self.check_state(state);phase=state['phases'].get(phase_id,{})
-        require(phase_id==state.get('active_phase_id') and phase.get('status')=='ACTIVE','PHASE_NOT_ACTIVE')
+        require(phase_id==state.get('active_phase_id') and phase.get('status') in ('ACTIVE','AWAITING_HUMAN'),'PHASE_NOT_ACTIVE')
+        proposal = state.get('inventory_proposal')
+        pending = phase['status']=='AWAITING_HUMAN'
+        if pending:
+            require(proposal and phase.get('packet',{}).get('inventory_hash'),'PHASE_NOT_ACTIVE')
+            # Before evidence bindings, an inventory digest covered only these three fields.
+            legacy_hash = digest({'baseline':self.inventory_hash,'rows':proposal['rows'],'context':self.scope_hash(state)})
+            require(phase['packet']['inventory_hash']==legacy_hash and proposal['hash']!=legacy_hash,'PHASE_NOT_ACTIVE')
         act=self.active(state);ids=[nid for nid in act if nid in phase['node_instance_ids']]
         require(ids and all(self.record_current(state,nid) and not self.blocked(nid) for nid in ids),'PHASE_OBLIGATIONS_PENDING')
         for nid in ids:self.check_gate(state,nid,state['records'][nid]['proposal'])
         self.check_evidence(deliverables,state)
         require(len(deliverables)>=len(phase['deliverables']),'PHASE_DELIVERABLES_MISSING')
-        self.bind_evidence_paths(state, deliverables)
+        inventory_hash = self.checked_inventory_hash(state, proposal) if proposal else None
         packet={'phase_id':phase_id,'revision':phase['revision'],'phase_map_hash':state['phase_map_hash'],'scope_hash':self.scope_hash(state),
                 'records':{nid:state['records'][nid]['proposal_hash'] for nid in sorted(ids)},'deliverables':copy.deepcopy(deliverables),
-                'grant_id':phase.get('grant_id'),'inventory_hash':state.get('inventory_proposal',{}).get('hash') if state.get('inventory_proposal') else None}
+                'grant_id':phase.get('grant_id'),'inventory_hash':inventory_hash}
+        if pending:
+            previous = {**packet, 'inventory_hash':legacy_hash}
+            require(phase['packet']==previous and phase['gate_packet_hash']==digest(previous)
+                    and phase['delivered']==deliverables,'PHASE_NOT_ACTIVE')
+            state['history'].append({'event':'phase_inventory_binding_upgraded','phase_id':phase_id,
+                                     'previous':copy.deepcopy(phase),'at':now()})
+        self.bind_evidence_paths(state, deliverables)
         h=digest(packet);phase.update(status='AWAITING_HUMAN',packet=packet,gate_packet_hash=h,delivered=copy.deepcopy(deliverables))
         return {'gate_packet_hash':h,'packet':packet,'decisions':[{'node_id':nid,**copy.deepcopy(state['records'][nid])} for nid in ids],
                 'notice':'One phase acceptance; no individual human receipts are fabricated.'}
@@ -713,8 +737,7 @@ class Router:
         for nid in ids:self.check_gate(work,nid,work['records'][nid]['proposal'])
         ip=work.get('inventory_proposal')
         if packet.get('inventory_hash'):
-            require(ip and ip['hash']==packet['inventory_hash'],'INVENTORY_CHANGED')
-            self.validate_inventory(work,ip['rows']);self.check_evidence(ip['evidence'],work)
+            require(ip and self.checked_inventory_hash(work, ip) == packet['inventory_hash'], 'INVENTORY_CHANGED')
         for nid in ids:
             rec=work['records'][nid]
             if rec['status']=='DECIDED_DELEGATED':
@@ -757,12 +780,16 @@ class Router:
         # Starting/revising requires a new scoped mandate, never reuse consumed one.
         return sorted(affected)
 
+    def completion_children(self, state, node_id):
+        node = self.node(node_id)
+        if node['kind'] == 'decision':
+            return [state['records'][node_id]['proposal']['selected']]
+        return [edge['node']['id'] for edge in node['children']]
+
     @read_snapshot
     def complete(self,state,node_id):
         if node_id not in self.nodes or not self.record_current(state,node_id) or self.blocked(node_id):return False
-        n=self.node(node_id);rec=state['records'][node_id]
-        if n['kind']=='decision':return self.complete(state,rec['proposal']['selected'])
-        return all(self.complete(state,c['node']['id']) for c in n['children'])
+        return all(self.complete(state, child) for child in self.completion_children(state, node_id))
 
     def invalidate(self,state,node_id,reason):
         require(nonblank(reason),'INVALIDATION_REASON_REQUIRED');self.node(node_id)
@@ -784,35 +811,45 @@ class Router:
 
     def validate_inventory(self,state,rows):
         require(isinstance(rows,list) and len(rows)==len(self.inventory) and all(isinstance(r,dict) for r in rows) and {r.get('skill_id') for r in rows}==set(self.inventory),'INVENTORY_COVERAGE_REQUIRED')
-        evidence={}
+        refs = set()
         for row in rows:
             require(row.get('disposition') in ('APPLICABLE','NOT_APPLICABLE','DEFERRED','GOVERNANCE_ONLY') and nonblank(row.get('reason')),'INVENTORY_REASON_REQUIRED')
-            evidence.update(self.resolve_refs(state,row.get('evidence_refs')))
-        return [{'path':p,'sha256':h,'note':'Inventory disposition evidence'} for p,h in sorted(evidence.items())]
+            row_refs = row.get('evidence_refs')
+            require(isinstance(row_refs, list) and row_refs and all(nonblank(ref) for ref in row_refs), 'EVIDENCE_REFERENCE_REQUIRED')
+            refs.update(row_refs)
+        return [{**item, 'note': 'Inventory disposition evidence'} for item in self.resolve_refs(state, sorted(refs))]
 
-    def inventory_hash_for(self,state,rows):
-        return digest({'baseline':self.inventory_hash,'rows':rows,'context':self.scope_hash(state)})
+    def inventory_hash_for(self, state, rows, evidence=None):
+        if evidence is None:
+            evidence = self.validate_inventory(state, rows)
+        return digest({'baseline': self.inventory_hash, 'rows': rows,
+                       'context': self.scope_hash(state), 'evidence': evidence})
+
+    def checked_inventory_hash(self, state, proposal):
+        evidence = self.validate_inventory(state, proposal['rows'])
+        require(evidence == proposal['evidence'], 'INVENTORY_EVIDENCE_CHANGED')
+        expected = self.inventory_hash_for(state, proposal['rows'], evidence)
+        require(proposal['hash'] == expected, 'INVENTORY_CHANGED')
+        return expected
 
     def propose_inventory(self,state,rows):
         self.check_state(state);evidence=self.validate_inventory(state,rows)
         self.bind_evidence_paths(state, evidence)
-        h=self.inventory_hash_for(state,rows)
+        h=self.inventory_hash_for(state,rows,evidence)
         state['inventory_proposal']={'hash':h,'rows':copy.deepcopy(rows),'evidence':evidence};state['inventory_confirmation']=None
         return h
 
     def confirm_inventory(self,state,receipt):
         p=state.get('inventory_proposal');require(p is not None,'INVENTORY_PROPOSAL_REQUIRED')
-        self.validate_inventory(state,p['rows']);self.check_evidence(p['evidence'],state)
-        require(p['hash']==self.inventory_hash_for(state,p['rows']),'INVENTORY_CHANGED')
-        state['inventory_confirmation']=human_receipt(receipt,p['hash'],'inventory')
+        expected = self.checked_inventory_hash(state, p)
+        state['inventory_confirmation']=human_receipt(receipt,expected,'inventory')
 
     @read_snapshot
     def inventory_confirmed(self,state):
         p=state.get('inventory_proposal');r=state.get('inventory_confirmation')
         if not p or not r:return False
         try:
-            self.validate_inventory(state,p['rows']);self.check_evidence(p['evidence'],state)
-            expected=self.inventory_hash_for(state,p['rows']);require(p['hash']==expected,'INVENTORY_CHANGED')
+            expected = self.checked_inventory_hash(state, p)
             if r.get('kind')=='phase':
                 phase=state['phases'][r['phase_id']]
                 require(r['inventory_hash']==expected and phase['packet']['inventory_hash']==expected,'INVENTORY_CHANGED')

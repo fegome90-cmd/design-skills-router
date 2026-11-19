@@ -133,6 +133,7 @@
       eventsUrl,
       outbox: OUTBOX_KEY + scope,
       shardPrefix: OUTBOX_KEY + scope + ':tab.',
+      entryPrefix: OUTBOX_KEY + scope + ':event.',
       rejected: REJECTED_KEY + scope
     };
   }
@@ -243,10 +244,13 @@
     }
   }
 
-  function listShardKeys(storage, prefix) {
+  function listStorageKeys(storage, prefix) {
     if (!canEnumerateStorage(storage)) return [];
     const keys = [];
     try {
+      if (typeof Storage !== 'undefined' && storage instanceof Storage) {
+        return Object.keys(storage).filter(key => key.startsWith(prefix)).sort();
+      }
       for (let i = 0; i < storage.length; i++) {
         const key = storage.key(i);
         if (typeof key === 'string' && key.startsWith(prefix)) {
@@ -324,16 +328,32 @@
     return fn();
   }
 
-  function createClient(options) {
+  async function confirmed(response, count) {
+    if (response.status !== 202) return false;
+    const body = await response.json();
+    return body && body.schema === SCHEMA &&
+      Number.isSafeInteger(body.accepted) && body.accepted >= 0 &&
+      Number.isSafeInteger(body.duplicates) && body.duplicates >= 0 &&
+      body.accepted + body.duplicates === count;
+  }
+
+  function retryAfter(response) {
+    const header = response.headers && response.headers.get('Retry-After');
+    const delay = header && /^\d+$/.test(header) ? Number(header) * 1000 : Date.parse(header) - Date.now();
+    return Number.isFinite(delay) ? Math.max(1000, delay) : 60000;
+  }
+
+  function createClient(options, persisted = {}) {
     const config = options || {};
     const storage = safeStorage(config.storage);
     const fetcher = config.fetch || (typeof fetch === 'function' ? fetch : null);
     const hasEndpointOption = Object.prototype.hasOwnProperty.call(config, 'endpoint');
     const endpoint = hasEndpointOption ? (config.endpoint || null) : (storage ? read(storage, ENDPOINT_KEY) : null);
     const enabled = Boolean(config.enabled !== false && endpoint && fetcher);
-    const { eventsUrl, outbox, shardPrefix, rejected: rejectedKey } = collectorKeys(endpoint);
-    const supportsShards = enabled && canEnumerateStorage(storage);
-    const shardKey = supportsShards ? shardPrefix + uuid().slice(0, 12) : null;
+    const followsStorage = persisted.endpoint ?? !hasEndpointOption;
+    const active = () => enabled && (!followsStorage || read(storage, ENDPOINT_KEY) === endpoint);
+    const { eventsUrl, outbox, shardPrefix, entryPrefix, rejected: rejectedKey } = collectorKeys(endpoint);
+    const enumerable = enabled && canEnumerateStorage(storage);
 
     // Delivered or permanently rejected event identities kept in memory so a
     // full/unwritable localStorage can never resurrect and resend them—even for
@@ -376,8 +396,9 @@
 
     let queue = [];
     let queueUnsynced = false;
-    let shardQueue = [];
-    let shardUnsynced = false;
+    // Failed synchronous writes stay with the producer until a send or a
+    // later write succeeds. Stored events each have one immutable key.
+    const volatileEntries = new Map();
     // Events the collector rejected permanently. Kept for inspection so a
     // rejection is never a silent loss; never retried.
     let rejected = enabled ? readList(storage, rejectedKey, MAX_REJECTED) || [] : [];
@@ -391,23 +412,150 @@
     let flushTimer = null;
     let inFlightFlush = null;
 
-    const loadOutbox = () => {
-      const stored = readList(storage, outbox, MAX_OUTBOX);
-      if (stored === null) return excludeRetired(queue);
-      let merged = stored;
-      if (supportsShards) {
-        for (const key of listShardKeys(storage, shardPrefix)) {
-          const shard = readList(storage, key, MAX_OUTBOX);
-          if (shard && shard.length) {
-            merged = appendUnique(merged, shard, MAX_OUTBOX);
+    let retryAt = 0;
+    const cancelTimer = () => {
+      if (flushTimer !== null) clearTimeout(flushTimer);
+      flushTimer = null;
+    };
+
+    function readLegacy(keys) {
+      const stored = readList(storage, outbox, MAX_OUTBOX) || [];
+      // Older boards used a mirror plus per-tab shards. At a full mirror,
+      // shard-only records are the first candidates for eviction.
+      let shards = [];
+      for (const key of keys) {
+        shards = appendUnique(shards, readList(storage, key, MAX_OUTBOX) || [], Infinity);
+      }
+      const extra = filterOutBatch(shards, stored);
+      return excludeRetired(stored.length === MAX_OUTBOX ? extra.concat(stored) : stored.concat(extra));
+    }
+
+    function removeLegacy(keys, items) {
+      if (!items.length) return;
+      for (const key of [outbox, ...keys]) {
+        const stored = readList(storage, key, MAX_OUTBOX);
+        if (!stored || !stored.length) continue;
+        const remaining = filterOutBatch(stored, items);
+        if (remaining.length === stored.length) continue;
+        if (remaining.length || key === outbox) write(storage, key, JSON.stringify(remaining));
+        else remove(storage, key);
+      }
+    }
+
+    function snapshot() {
+      const keys = listStorageKeys(storage, outbox + ':');
+      const legacyKeys = keys.filter(key => key.startsWith(shardPrefix));
+      let legacy = readLegacy(legacyKeys);
+      const entries = keys.filter(key => key.startsWith(entryPrefix) && !retiredIds.has(entryId(key)));
+      const excess = legacy.length + entries.length - MAX_OUTBOX;
+      if (excess > 0) {
+        let entryCount = Math.min(entries.length, excess);
+        let dropped = [];
+        if (legacy.length) {
+          // Legacy tabs still write while a newer tab is open. Compare the
+          // occurrence times of the two formats. Within an immutable queue,
+          // the key already records capture order (even on clock rollback).
+          const oldest = legacy.slice().sort((a, b) => eventTime(a) - eventTime(b));
+          let fromLegacy = 0;
+          entryCount = 0;
+          while (fromLegacy + entryCount < excess) {
+            const key = entries[entryCount];
+            if (!key || (fromLegacy < oldest.length && eventTime(oldest[fromLegacy]) < storedTime(key))) {
+              fromLegacy++;
+            } else {
+              entryCount++;
+            }
+          }
+          dropped = oldest.slice(0, fromLegacy);
+        }
+        removeLegacy(legacyKeys, dropped);
+        markRetired(dropped);
+        legacy = filterOutBatch(legacy, dropped);
+        for (const key of entries.splice(0, entryCount)) {
+          markRetired([{ event_id: entryId(key) }]);
+          remove(storage, key);
+        }
+      }
+      // RAM-only writes can use free event slots, but cannot evict a durable
+      // record: if the producer closes, its in-memory replacement vanishes.
+      const spare = MAX_OUTBOX - legacy.length - entries.length;
+      if (volatileEntries.size > spare) {
+        for (const key of [...volatileEntries.keys()].slice(spare)) volatileEntries.delete(key);
+      }
+      if (volatileEntries.size) {
+        entries.push(...volatileEntries.keys());
+        entries.sort();
+      }
+      return { legacy, entries };
+    }
+
+    function eventTime(event) {
+      const stamp = event && Date.parse(event.occurred_at);
+      return Number.isFinite(stamp) ? stamp : -Infinity;
+    }
+
+    function storedTime(key) {
+      try { return eventTime(JSON.parse(read(storage, key))); } catch (_) { return -Infinity; }
+    }
+
+    function legacyInDeliveryOrder(events) {
+      // A full legacy mirror prioritizes shard-only events for eviction, not
+      // transmission. A selected skill must follow its invocation even if a
+      // full mirror cannot be rewritten under storage pressure.
+      const parents = new Set(events.filter(event => event && event.name === 'router.invoked')
+        .map(event => event.evaluation_id));
+      const seen = new Set();
+      const held = new Map();
+      const ordered = [];
+      for (const event of events) {
+        const id = event && event.evaluation_id;
+        if (id && parents.has(id) && event.name !== 'router.invoked' && !seen.has(id)) {
+          if (!held.has(id)) held.set(id, []);
+          held.get(id).push(event);
+          continue;
+        }
+        ordered.push(event);
+        if (id && event.name === 'router.invoked') {
+          seen.add(id);
+          if (held.has(id)) {
+            ordered.push(...held.get(id));
+            held.delete(id);
           }
         }
       }
-      if (queueUnsynced || shardUnsynced) {
-        merged = appendUnique(merged, queue, MAX_OUTBOX);
+      return ordered;
+    }
+
+    function loadOutbox(limit = 100) {
+      if (!enumerable) {
+        const stored = readList(storage, outbox, MAX_OUTBOX);
+        let pending = stored ?? queue;
+        if (stored && queueUnsynced) pending = appendUnique(stored, queue, MAX_OUTBOX);
+        return excludeRetired(pending).slice(0, limit);
       }
-      return excludeRetired(merged);
-    };
+      const { legacy, entries } = snapshot();
+      const pending = legacyInDeliveryOrder(legacy).slice(0, limit);
+      for (const key of entries) {
+        if (pending.length >= limit) break;
+        let event = volatileEntries.get(key);
+        if (!event) {
+          const raw = read(storage, key);
+          if (raw === null) continue; // Another tab already removed it.
+          try { event = JSON.parse(raw); } catch (_) {}
+        }
+        if (!event || event.event_id !== entryId(key)) {
+          // Locally corrupt bytes cannot be acknowledged by the collector.
+          // Keep a diagnostic, without copying arbitrary data from storage.
+          const diagnostic = { event_id: entryId(key), error: 'INVALID_STORED_EVENT' };
+          recordRejected([diagnostic]);
+          markRetired([diagnostic]);
+          remove(storage, key);
+          continue;
+        }
+        pending.push(event);
+      }
+      return pending;
+    }
 
     const loadRejected = () => {
       const stored = readList(storage, rejectedKey, MAX_REJECTED);
@@ -430,53 +578,73 @@
       }
     };
 
-    const appendToShard = (events) => {
-      if (!supportsShards || !shardKey) return;
-      const existing = shardUnsynced ? shardQueue : (readList(storage, shardKey, MAX_OUTBOX) || []);
-      shardQueue = excludeRetired(appendUnique(existing, events, MAX_OUTBOX));
-      shardUnsynced = !write(storage, shardKey, JSON.stringify(shardQueue));
-    };
+    function entryId(key) {
+      return key.slice(key.lastIndexOf('.') + 1);
+    }
 
-    const removeBatchFromShards = (items) => {
-      if (!supportsShards) return;
-      if (shardQueue.length) {
-        shardQueue = excludeRetired(filterOutBatch(shardQueue, items));
+    function persistVolatile() {
+      for (const [key, event] of volatileEntries) {
+        // Another tab may send this prefix immediately. Never publish a
+        // skill.selected if its preceding router.invoked failed to persist.
+        if (!write(storage, key, JSON.stringify(event))) break;
+        volatileEntries.delete(key);
       }
-      for (const key of listShardKeys(storage, shardPrefix)) {
-        const shard = readList(storage, key, MAX_OUTBOX);
-        if (!shard) continue;
-        const remaining = excludeRetired(filterOutBatch(shard, items));
-        if (remaining.length === shard.length) continue;
-        if (remaining.length === 0) {
-          remove(storage, key);
-          if (key === shardKey) shardUnsynced = false;
-        } else {
-          const ok = write(storage, key, JSON.stringify(remaining));
-          if (key === shardKey) shardUnsynced = !ok;
-        }
-      }
-    };
+    }
 
+    function enqueue(events) {
+      if (!enumerable) {
+        saveOutbox(appendUnique(loadOutbox(MAX_OUTBOX), events, MAX_OUTBOX));
+        return;
+      }
+      // A sortable batch prefix preserves evaluation order, including events
+      // generated in the same millisecond. Concurrent tabs never overwrite
+      // one another's payload, even without the Web Locks API.
+      const fresh = events.slice(-MAX_OUTBOX);
+      const { legacy, entries } = snapshot();
+      const lastKey = entries[entries.length - 1];
+      const lastOrder = lastKey ? Number(lastKey.slice(entryPrefix.length, entryPrefix.length + 16)) : 0;
+      const order = String(Math.max(Date.now(), lastOrder + 1)).padStart(16, '0');
+      const prefix = entryPrefix + order + '.' + fresh[0].evaluation_id + '.';
+      for (let i = 0; i < fresh.length; i++) {
+        const key = prefix + String(i).padStart(8, '0') + '.' + fresh[i].event_id;
+        volatileEntries.set(key, fresh[i]);
+      }
+      persistVolatile();
+      // Admit first. Only successful writes can displace older persisted
+      // entries. The same reconciliation runs on reload after interruption.
+      if (legacy.length + entries.length + fresh.length > MAX_OUTBOX) snapshot();
+    }
+
+    let reconciliationPending = false;
     const reconcileOutbox = (changedKey) => {
-      if (!supportsShards || (changedKey !== undefined && !changedKey.startsWith(shardPrefix))) return;
-      const merged = loadOutbox();
-      const current = readList(storage, outbox, MAX_OUTBOX);
-      if (current === null) return;
-      const currentIds = new Set(current.map(e => e && e.event_id).filter(Boolean));
-      const missing = merged.some(e => e && e.event_id && !currentIds.has(e.event_id));
-      if (missing) {
-        saveOutbox(merged);
+      if (!active()) {
+        cancelTimer();
+        retryAt = 0;
+      } else if (enumerable && changedKey && changedKey.startsWith(outbox + ':') && !reconciliationPending) {
+        reconciliationPending = true;
+        setTimeout(() => {
+          reconciliationPending = false;
+          if (active()) snapshot();
+        }, 0);
       }
     };
 
     const removeBatchFromQueue = (items) => {
       markRetired(items);
-      removeBatchFromShards(items);
-      const current = loadOutbox();
-      saveOutbox(filterOutBatch(current, items));
-      if (rejectedUnsynced) {
-        saveRejected(loadRejected());
+      if (enumerable) {
+        const keys = listStorageKeys(storage, outbox + ':');
+        removeLegacy(keys.filter(key => key.startsWith(shardPrefix)), items);
+        const ids = new Set(items.map(item => item && item.event_id));
+        for (const key of [...keys, ...volatileEntries.keys()]) {
+          if (key.startsWith(entryPrefix) && ids.has(entryId(key))) {
+            volatileEntries.delete(key);
+            remove(storage, key);
+          }
+        }
+      } else {
+        saveOutbox(loadOutbox(MAX_OUTBOX));
       }
+      if (rejectedUnsynced) saveRejected(loadRejected());
     };
 
     const recordRejected = (items) => {
@@ -485,12 +653,12 @@
     };
 
     const client = {
-      enabled,
+      get enabled() { return active(); },
       endpoint,
       instanceId,
       reconcileOutbox,
       trackEvaluation(selection, context) {
-        if (!enabled) return [];
+        if (!active()) return [];
         const events = buildEvaluationEvents(selection, {
           evaluationId: uuid(),
           instanceId,
@@ -501,27 +669,31 @@
           newId: uuid
         });
         if (!events.length) return [];
-        // Persist first to this tab's uncontended shard (when enumerable
-        // localStorage is available), then mirror the merged queue for
-        // concurrent tabs using the same collector.
-        appendToShard(events);
-        const current = loadOutbox();
-        saveOutbox(appendUnique(current, events, MAX_OUTBOX));
+        enqueue(events);
         client.schedule();
         return events;
       },
       schedule() {
-        if (!enabled || flushTimer !== null || typeof setTimeout !== 'function') return;
-        flushTimer = setTimeout(() => { flushTimer = null; client.flush(); }, 120);
+        if (!active() || flushTimer !== null || typeof setTimeout !== 'function') return;
+        const delay = retryAt ? Math.max(1, retryAt - Date.now()) : 120;
+        flushTimer = setTimeout(() => { flushTimer = null; client.flush(); }, Math.min(delay, 2147483647));
       },
       flush() {
-        if (!enabled) return Promise.resolve(true);
+        if (!active()) {
+          cancelTimer();
+          return Promise.resolve(true);
+        }
+        if (Date.now() < retryAt) {
+          client.schedule();
+          return Promise.resolve(false);
+        }
+        retryAt = 0;
+        persistVolatile();
         if (inFlightFlush) return inFlightFlush;
         if (rejectedUnsynced) {
           saveRejected(loadRejected());
         }
-        queue = loadOutbox();
-        if (!queue.length) return Promise.resolve(true);
+        if (!loadOutbox(1).length) return Promise.resolve(true);
         let settled = false;
         let run;
         run = (async () => {
@@ -532,13 +704,14 @@
               // so a poisoned event can never wedge the loop or the queue.
               let attempts = 0;
               while (attempts++ < MAX_OUTBOX) {
-                queue = loadOutbox();
-                if (!queue.length) break;
-                const batch = queue.slice(0, 100);
+                if (!active()) break;
+                const batch = loadOutbox();
+                if (!batch.length) break;
                 let outcome; // 'delivered' | 'retry' | { reject: index|null }
                 try {
                   const headers = { 'Content-Type': 'application/json' };
-                  if (config.token) headers.Authorization = 'Bearer ' + config.token;
+                  const token = persisted.token ? storedTokenFor(storage, endpoint) : config.token;
+                  if (token) headers.Authorization = 'Bearer ' + token;
                   const response = await fetcher(eventsUrl, {
                     method: 'POST',
                     headers,
@@ -550,18 +723,28 @@
                   if (!response) {
                     outcome = 'retry';
                   } else if (response.ok) {
-                    outcome = 'delivered';
+                    outcome = await confirmed(response, batch.length) ? 'delivered' : 'retry';
+                  } else if (response.status === 429) {
+                    retryAt = Date.now() + retryAfter(response);
+                    cancelTimer();
+                    client.schedule();
+                    outcome = 'retry';
                   } else if (response.status === 400 || response.status === 422) {
-                    // The collector validates transactionally and names the index of
-                    // the first offending event; only that event is at fault.
-                    let index = null;
+                    // A truncated or unknown response cannot prove that the
+                    // collector rejected the payload. Keep events for retry.
                     try {
                       const body = await response.json();
                       if (Number.isInteger(body && body.index) && body.index >= 0 && body.index < batch.length) {
-                        index = body.index;
+                        outcome = { reject: body.index };
+                      } else if (body && ['INVALID_BATCH_SCHEMA', 'EVENTS_REQUIRED',
+                          'BATCH_TOO_LARGE', 'INVALID_JSON'].includes(body.error)) {
+                        outcome = { reject: null };
+                      } else {
+                        outcome = 'retry';
                       }
-                    } catch (_) { index = null; }
-                    outcome = { reject: index };
+                    } catch (_) {
+                      outcome = 'retry';
+                    }
                   } else if (response.status === 413 || response.status === 415) {
                     outcome = { reject: null };
                   } else {
@@ -575,7 +758,6 @@
                   continue;
                 }
                 if (outcome === 'retry') {
-                  reconcileOutbox();
                   allDelivered = false;
                   break;
                 }
@@ -592,7 +774,7 @@
                   }
                 }
               }
-              if (loadOutbox().length > 0) {
+              if (loadOutbox(1).length > 0) {
                 allDelivered = false;
               }
               return allDelivered;
@@ -606,10 +788,7 @@
         return run;
       }
     };
-    if (enabled) {
-      queue = loadOutbox();
-      if (queue.length) client.schedule();
-    }
+    if (active() && loadOutbox(1).length) client.schedule();
     return client;
   }
 
@@ -637,6 +816,15 @@
     return endpoint;
   }
 
+  function storedTokenFor(storage, endpoint) {
+    const storedToken = read(storage, TOKEN_KEY);
+    const storedOrigin = read(storage, TOKEN_ORIGIN_KEY);
+    const currentOrigin = endpointOrigin(endpoint);
+    return (storedToken && storedOrigin && currentOrigin && storedOrigin === currentOrigin)
+      ? storedToken
+      : undefined;
+  }
+
   function automaticConfig(win) {
     const inline = win && win.DESIGN_ROUTER_TELEMETRY;
     if (inline && inline.endpoint) return inline;
@@ -645,15 +833,9 @@
     const storage = safeStorage(winStorage);
     const endpoint = storage ? read(storage, ENDPOINT_KEY) : null;
     if (!endpoint) return null;
-    const storedToken = read(storage, TOKEN_KEY);
-    const storedOrigin = read(storage, TOKEN_ORIGIN_KEY);
-    const currentOrigin = endpointOrigin(endpoint);
-    const token = (storedToken && storedOrigin && currentOrigin && storedOrigin === currentOrigin)
-      ? storedToken
-      : undefined;
     return {
       endpoint,
-      token,
+      token: storedTokenFor(storage, endpoint),
       routerVersion: ROUTER_VERSION
     };
   }
@@ -677,7 +859,14 @@
         }
       }
     }
-    const client = createClient(merged);
+    const followsStorage = !hasOverrideEndpoint && !(win.DESIGN_ROUTER_TELEMETRY && win.DESIGN_ROUTER_TELEMETRY.endpoint);
+    if (followsStorage && !merged.storage) {
+      try { merged.storage = win.localStorage; } catch (_) {}
+    }
+    const client = createClient(merged, {
+      endpoint: followsStorage,
+      token: followsStorage && !Object.prototype.hasOwnProperty.call(overrides, 'token')
+    });
     if (!client.enabled) return client;
 
     const evaluate = () => {
@@ -712,7 +901,7 @@
         client.flush();
       });
       win.addEventListener('storage', event => {
-        if (event && typeof event.key === 'string') {
+        if (event && (event.key === null || typeof event.key === 'string')) {
           client.reconcileOutbox(event.key);
         }
       });

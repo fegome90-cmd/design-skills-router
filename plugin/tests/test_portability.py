@@ -21,6 +21,10 @@ class PortabilityTests(unittest.TestCase):
      'criterion_reviews':[{'rule_id':c['id'],'disposition':'APPLIED','reason':'fixture','evidence_refs':[str(self.e)]} for c in packet['criteria']],
      'permission':'read_only','verification':'OBSERVED','candidate':None}
   ph=self.r.propose(self.s,'Q00',p);self.r.confirm_decision(self.s,'Q00',receipt(ph,'project'))
+  rows=[{'skill_id':sid,'disposition':'DEFERRED','reason':'Awaiting review',
+         'evidence_refs':['fixture:source']} for sid in self.r.inventory]
+  inventory=self.r.propose_inventory(self.s,rows)
+  self.r.confirm_inventory(self.s,receipt(inventory,'inventory'))
   runner.save_state(self.state,self.s,None)
  def cli(self,*args):
   return subprocess.run([sys.executable,str(Path(runner.__file__)),*map(str,args)],capture_output=True,text=True)
@@ -35,6 +39,7 @@ class PortabilityTests(unittest.TestCase):
   res=self.cli('--state',new,'resume','--bundle',moved)
   self.assertEqual(res.returncode,0,res.stderr)
   s=runner.load_state(new);self.assertEqual(self.r.frontier(s),['F00'])
+  self.assertTrue(self.r.inventory_confirmed(s))
  def test_tampered_export_evidence_rejected_on_resume(self):
   out=self.base/'export';self.cli('--state',self.state,'export','--output',out)
   next((out/'evidence').iterdir()).write_text('tampered')

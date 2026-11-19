@@ -510,7 +510,7 @@ class HttpTests(unittest.TestCase):
         request = urllib.request.Request(
             server.base + "/v1/events",
             data=json.dumps({"schema": contract.SCHEMA, "events": second}).encode(),
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "Origin": "http://localhost:8000"},
             method="POST",
         )
         try:
@@ -520,6 +520,7 @@ class HttpTests(unittest.TestCase):
             self.assertEqual(error.code, 429)
             self.assertEqual(json.loads(error.read())["error"], "RATE_LIMITED")
             self.assertEqual(error.headers.get("Retry-After"), "60")
+            self.assertIn("Retry-After", error.headers["Access-Control-Expose-Headers"])
         metrics = json.loads(server.get("/v1/metrics?window=all")[1])
         self.assertEqual(metrics["totals"]["events"], 2,
                          "a rate-limited batch must never be counted")

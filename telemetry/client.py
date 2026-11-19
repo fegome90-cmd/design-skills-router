@@ -11,12 +11,17 @@ idempotency and multi-instance tests honest; it is not a user identity.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
 import re
+import sqlite3
+import stat
 import tempfile
 import threading
 import time
@@ -38,6 +43,14 @@ _LAST_SPOOL_SEQ = 0
 _SPOOL_NAME_RE = re.compile(r"^[a-z]+-(\d{13})-(\d{6})-(\d{6})-")
 _SPOOL_CLOCK_NAME = "spool-clock"
 _SPOOL_CLOCK_RE = re.compile(r"^(\d+):(\d+)$")
+
+
+def _read_response_json(response: http.client.HTTPResponse | urllib.error.HTTPError) -> object:
+    raw = response.read(contract.MAX_BODY_BYTES + 1)
+    length = response.headers.get("Content-Length")
+    if len(raw) > contract.MAX_BODY_BYTES or (length is not None and int(length) != len(raw)):
+        raise ValueError("invalid collector response length")
+    return json.loads(raw)
 
 
 def _read_spool_clock(clock_path: Path) -> tuple[int, int] | None:
@@ -131,15 +144,6 @@ def _allocate_spool_name(
     return name, clock_persisted
 
 
-def _next_spool_name(
-    prefix: str,
-    existing: list[Path] | None = None,
-    clock_path: Path | None = None,
-) -> str:
-    name, _ = _allocate_spool_name(prefix, existing, clock_path=clock_path)
-    return name
-
-
 @dataclass
 class Telemetry:
     config: contract.TelemetryConfig
@@ -204,21 +208,31 @@ class Telemetry:
             return True
         return bool(files)
 
-    def _spool_name(
-        self,
-        prefix: str,
-        existing: list[Path] | None = None,
-        clock_path: Path | None = None,
-    ) -> str:
-        return _next_spool_name(prefix, existing, clock_path=clock_path)
+    @contextmanager
+    def _spool_lock(self, *, replay: bool = False) -> Iterator[bool]:
+        """Serialize mutations of one collector's files, including replay.
 
-    def _record_rejected(self, events: list[dict]) -> bool:
-        if self._spool(events, prefix="rejected"):
-            return True
-        self._rejected.extend(events)
-        if len(self._rejected) > contract.MAX_BATCH_EVENTS:
-            del self._rejected[:-contract.MAX_BATCH_EVENTS]
-        return False
+        BEGIN IMMEDIATE uses SQLite's OS-level writer lock across processes
+        and releases it on close or process exit. Only one process replays
+        over HTTP. Producers can still acquire the separate mutation lock and
+        persist events while replay waits for the collector. Fixed lock names
+        inside the outbox work even when directory listing is forbidden.
+        """
+        directory = self._outbox_dir()
+        connection = None
+        try:
+            try:
+                directory.mkdir(parents=True, exist_ok=True)
+                path = directory / ("replay.lock" if replay else "spool.lock")
+                connection = sqlite3.connect(path, timeout=0 if replay else 10)
+                connection.execute("BEGIN IMMEDIATE")
+            except (OSError, sqlite3.Error):
+                yield False
+                return
+            yield True
+        finally:
+            if connection is not None:
+                connection.close()
 
     def _flush_rejected(self) -> None:
         while self._rejected:
@@ -260,7 +274,9 @@ class Telemetry:
             idx = self._last_reject_index
             if idx is not None and 0 <= idx < len(remaining):
                 poisoned = remaining.pop(idx)
-                self._record_rejected([poisoned])
+                if not self._spool([poisoned], prefix="rejected"):
+                    self._rejected.append(poisoned)
+                    del self._rejected[:-contract.MAX_BATCH_EVENTS]
                 had_reject = True
                 continue
             return POST_REJECT, remaining, True
@@ -324,19 +340,29 @@ class Telemetry:
             request.add_header("Authorization", f"Bearer {self.config.token}")
         try:
             with urllib.request.urlopen(request, timeout=self.config.timeout_seconds) as response:
-                return POST_OK if 200 <= response.status < 300 else POST_REJECT
+                if response.status != 202:
+                    return POST_RETRY
+                ack = _read_response_json(response)
+                if not isinstance(ack, dict) or ack.get("schema") != contract.SCHEMA:
+                    return POST_RETRY
+                accepted, duplicates = ack.get("accepted"), ack.get("duplicates")
+                if (type(accepted) is int and type(duplicates) is int
+                        and accepted >= 0 and duplicates >= 0
+                        and accepted + duplicates == len(events)):
+                    return POST_OK
+                return POST_RETRY
         except urllib.error.HTTPError as error:
-            if error.code in (400, 422):
-                try:
-                    raw = error.read()
-                    parsed = json.loads(raw.decode("utf-8"))
+            with error:
+                if error.code in (400, 422):
+                    try:
+                        parsed = _read_response_json(error)
+                    except (http.client.HTTPException, OSError, ValueError, RecursionError):
+                        return POST_RETRY
                     idx = parsed.get("index") if isinstance(parsed, dict) else None
                     if type(idx) is int and 0 <= idx < len(events):
                         self._last_reject_index = idx
-                except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
-                    pass
-            return POST_REJECT if error.code in PERMANENT_HTTP else POST_RETRY
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+                return POST_REJECT if error.code in PERMANENT_HTTP else POST_RETRY
+        except (http.client.HTTPException, OSError, ValueError, RecursionError):
             return POST_RETRY
 
     def _outbox_dir(self) -> Path:
@@ -391,18 +417,33 @@ class Telemetry:
             return None
         if len(existing) + len(events) > contract.MAX_BATCH_EVENTS:
             return None
-        clock_path = newest.parent / _SPOOL_CLOCK_NAME
-        target = newest.parent / self._spool_name("outbox", files, clock_path=clock_path)
-        if not self._write_spool(target, existing + events):
+        # A pre-lock client may still acknowledge and unlink the old pathname.
+        # Publish a different generation before retiring the old one. If a
+        # crash leaves both, the collector deduplicates their event IDs.
+        name, _ = _allocate_spool_name("outbox", files, newest.parent / _SPOOL_CLOCK_NAME)
+        replacement = newest.with_name(name)
+        if not self._write_spool(replacement, existing + events):
             return False
         try:
-            newest.unlink()
+            newest.unlink(missing_ok=True)
         except OSError:
+            # The replacement is durable. The predecessor can replay later.
             pass
         self._protected_spool.discard(newest)
-        return target
+        return replacement
 
     def _spool_batch(
+        self,
+        events: list[dict],
+        prefix: str = "outbox",
+        protected: set[Path] | None = None,
+    ) -> Path | None:
+        with self._spool_lock() as locked:
+            if not locked:
+                return None
+            return self._spool_batch_locked(events, prefix, protected)
+
+    def _spool_batch_locked(
         self,
         events: list[dict],
         prefix: str = "outbox",
@@ -411,11 +452,7 @@ class Telemetry:
         """Persist one batch and return the written Path, or None if it could
         not be persisted (disk failure or protected cap reached).
         """
-        try:
-            directory = self._outbox_dir()
-            directory.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            return None
+        directory = self._outbox_dir()
         clock_path = directory / _SPOOL_CLOCK_NAME
         files = self._list_spool_files(directory, prefix)
         if files is None and prefix == "outbox":
@@ -478,55 +515,90 @@ class Telemetry:
         return True
 
     def flush_spool(self) -> bool:
-        if not self.enabled:
+        if not self.enabled or not self._has_pending_outbox():
             return True
+        with self._spool_lock(replay=True) as acquired:
+            if not acquired:
+                return False
+            return self._replay_spool()
+
+    def _replay_spool(self) -> bool:
         files = self._list_spool_files(self._outbox_dir(), "outbox")
         if files is None:
             return False
         ok = True
         for path in files:
-            try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-                events = contract.validate_batch(payload)
-            except (OSError, ValueError, json.JSONDecodeError, contract.ContractError):
-                # A locally invalid entry cannot be sent. Quarantine it and keep
-                # processing later entries; it must not block the outbox.
-                if self._quarantine(path):
+            with self._spool_lock() as locked:
+                if not locked:
+                    return False
+                try:
+                    # os.listdir includes directories and symlinks with spool
+                    # names. Isolate those entries instead of blocking valid
+                    # files or reading through a link to an unrelated path.
+                    if not stat.S_ISREG(path.lstat().st_mode):
+                        if not self._quarantine(path):
+                            return False
+                        self._protected_spool.discard(path)
+                        ok = False
+                        continue
+                    snapshot = path.read_bytes()
+                except FileNotFoundError:
+                    continue
+                except PermissionError:
+                    # Only isolate a file whose read access is still denied.
+                    # Transient I/O failures leave the queue in causal order.
+                    if os.access(path, os.R_OK) or not self._quarantine(path):
+                        return False
                     self._protected_spool.discard(path)
-                ok = False
-                continue
-            status, remaining, had_reject = self._deliver_batch(events)
-            if had_reject:
-                ok = False
-            if status == POST_OK:
+                    ok = False
+                    continue
+                except OSError:
+                    return False
+            try:
+                events = contract.validate_batch(json.loads(snapshot))
+            except (ValueError, RecursionError):
+                # An invalid local batch cannot be delivered.
+                events = []
+                status, remaining, had_reject = POST_REJECT, events, True
+            else:
+                status, remaining, had_reject = self._deliver_batch(events)
+
+            with self._spool_lock() as locked:
+                if not locked:
+                    return False
+                try:
+                    if path.read_bytes() != snapshot:
+                        # A concurrent reader may have isolated rejected rows
+                        # during the POST. Leave its changed batch for replay.
+                        return False
+                except FileNotFoundError:
+                    # Compaction can replace this generation while a response
+                    # is in flight. A transient POST failure is still a retry.
+                    if status == POST_RETRY:
+                        return False
+                    continue  # Its replacement must remain untouched.
+                except OSError:
+                    return False
+
+                if had_reject:
+                    ok = False
+                if status == POST_RETRY:
+                    if len(remaining) < len(events):
+                        self._write_spool(path, remaining)
+                    return False
+                if status == POST_REJECT:
+                    if len(remaining) == len(events) or self._spool_batch_locked(
+                        remaining, prefix="rejected"
+                    ) is None:
+                        if self._quarantine(path):
+                            self._protected_spool.discard(path)
+                        ok = False
+                        continue
                 try:
                     path.unlink()
                     self._protected_spool.discard(path)
                 except OSError:
                     ok = False
-            elif status == POST_REJECT:
-                if len(remaining) == len(events):
-                    if self._quarantine(path):
-                        self._protected_spool.discard(path)
-                else:
-                    if self._spool(remaining, prefix="rejected"):
-                        try:
-                            path.unlink()
-                            self._protected_spool.discard(path)
-                        except OSError:
-                            pass
-                    else:
-                        if self._quarantine(path):
-                            self._protected_spool.discard(path)
-                ok = False
-                continue
-            else:
-                if len(remaining) < len(events):
-                    # Update the spooled batch so already-isolated bad events
-                    # are not resent on retry.
-                    self._write_spool(path, remaining)
-                ok = False
-                break
         return ok
 
 

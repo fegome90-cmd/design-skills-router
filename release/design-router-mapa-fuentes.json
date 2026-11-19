@@ -14,7 +14,7 @@
       "symbol": "main",
       "summary": "Interpreta el comando, construye Router y comprueba que el expediente esté fuera del plugin. Cada comando es una llamada explícita del host.",
       "group": "Código del flujo",
-      "line": 908,
+      "line": 945,
       "source": "def main(argv=None):\n    parser=argparse.ArgumentParser(description=__doc__)\n    parser.add_argument('--state',type=Path,help='Project-owned portable ledger, outside plugin directory')\n    sub=parser.add_subparsers(dest='cmd',required=True)\n    def command(name, summary, description=None):\n        return sub.add_parser(name, help=summary, description=description or summary)\n\n    p = command('init', 'Create a new project ledger.')\n    p.add_argument('--project-id', required=True)\n    p.add_argument('--scope', required=True)\n    p.add_argument('--mode', choices=['design', 'audit'], default='design')\n    p.add_argument('--medium', default='web')\n    command('status', 'Show the ledger revision, open decisions and outstanding checks.')\n    command('verify-package', 'Verify the tree baseline and report inventory and node counts.')"
     },
     {
@@ -74,7 +74,7 @@
       "symbol": "load_state",
       "summary": "Rechaza archivo ausente o enlace simbólico y verifica el hash de integridad y esquema antes del despacho.",
       "group": "Código del flujo",
-      "line": 870,
+      "line": 907,
       "source": "def load_state(path, allow_legacy=False):\n    p=Path(path);require(p.is_file() and not p.is_symlink(),'STATE_MISSING_OR_SYMLINK')\n    s=json.loads(p.read_text())\n    require(isinstance(s,dict),'STATE_OBJECT_REQUIRED')\n    claimed=s.pop('integrity',None)\n    require(claimed==digest(s),'STATE_INTEGRITY_MISMATCH')\n    require(s.get('schema')==SCHEMA or (allow_legacy and s.get('schema')==LEGACY_SCHEMA),'STATE_SCHEMA_MISMATCH_USE_UPGRADE_STATE')\n    return s"
     },
     {
@@ -84,7 +84,7 @@
       "symbol": "save_state",
       "summary": "Usa un lock exclusivo, comprueba revisión esperada, recalcula integridad y reemplaza el archivo de forma atómica fuera del plugin.",
       "group": "Código del flujo",
-      "line": 880,
+      "line": 917,
       "source": "def save_state(path,state,expected_revision):\n    p=Path(path);p.parent.mkdir(parents=True,exist_ok=True)\n    require(not p.is_symlink(),'STATE_SYMLINK_FORBIDDEN')\n    lock=p.with_suffix(p.suffix+'.lock')\n    try:fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)\n    except FileExistsError:raise GateError('STATE_BUSY_RETRY_AFTER_OWNER_FINISHES')\n    temp=None\n    try:\n        os.close(fd)\n        if p.exists():\n            require(expected_revision is not None,'STATE_ALREADY_EXISTS')\n            current=load_state(p)\n            require(current['revision']==expected_revision,'STATE_REVISION_CONFLICT')\n            next_revision=current['revision']+1"
     },
     {
@@ -94,7 +94,7 @@
       "symbol": "Router.status",
       "summary": "Resume frontera, bloqueos, etapas, inventario y comprobaciones. Solo marca listo para entrega humana si pasan todas las condiciones de estado.",
       "group": "Código del flujo",
-      "line": 826,
+      "line": 863,
       "source": "    def status(self,state):\n        act=self.active(state);f=self.frontier(state);ic=self.inventory_confirmed(state)\n        deferred=[]\n        if ic:\n            deferred=[r['skill_id'] for r in state['inventory_proposal']['rows'] if r['disposition']=='DEFERRED']\n        applied={r['skill_id'] for nid in act if self.record_current(state,nid)\n                 for r in state['records'][nid]['proposal']['skill_reviews'] if r['status']=='APPLIED'}\n        unreviewed=[];conflicts=[]\n        if ic:\n            for row in state['inventory_proposal']['rows']:\n                if row['disposition']=='APPLICABLE' and row['skill_id'] not in applied:\n                    unreviewed.append(row['skill_id'])\n                if row['disposition']=='NOT_APPLICABLE' and row['skill_id'] in applied:\n                    conflicts.append(row['skill_id'])"
     },
     {
@@ -114,7 +114,7 @@
       "symbol": "Router.record_current",
       "summary": "Revalida datos, recibos o mandato correspondiente para APPROVED, DECIDED_DELEGATED y RATIFIED_IN_PHASE. También comprueba dependencias de fase.",
       "group": "Código del flujo",
-      "line": 447,
+      "line": 456,
       "source": "    def record_current(self,state,node_id):\n        rec=state['records'].get(node_id,{})\n        if rec.get('status') not in ('APPROVED','DECIDED_DELEGATED','RATIFIED_IN_PHASE'):return False\n        if not self.record_data_valid(state,node_id):return False\n        try:\n            if rec['status']=='APPROVED':\n                human_receipt(rec.get('receipt'),rec['proposal_hash'],'project')\n            elif rec['status']=='DECIDED_DELEGATED':\n                gid=rec['authority'].get('grant_id');g=state['grants'].get(gid,{})\n                pid=self.phase_for(state,node_id)\n                require(gid==state.get('active_grant_id') and g.get('status')=='ACTIVE','DELEGATION_REVOKED')\n                require(state['phases'][pid]['status'] in ('ACTIVE','AWAITING_HUMAN'),'PHASE_NOT_ACTIVE')\n                require(g['scope_hash']==self.scope_hash(state),'DELEGATION_CONTEXT_CHANGED')\n                require(node_id not in g.get('reserved_decisions',[]),'RESERVED_DECISION')"
     },
     {
@@ -154,7 +154,7 @@
       "symbol": "Router.register_source",
       "summary": "Comprueba commit, Git blob y hash local de bytes completos. Registra evidencia de recepción. Si cambian bytes ya vinculados, invalida los registros afectados.",
       "group": "Código del flujo",
-      "line": 248,
+      "line": 257,
       "source": "    def register_source(self,state,skill_id,path,commit,expected_git_blob,source_ref):\n        self.check_state(state)\n        require(skill_id in self.inventory,'UNKNOWN_SKILL')\n        require(commit==self.inventory[skill_id]['candidate_commit'],'SOURCE_COMMIT_MISMATCH')\n        require(nonblank(source_ref),'SOURCE_REFERENCE_REQUIRED')\n        h=file_hash(path);data=Path(path).read_bytes()\n        blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest()\n        require(blob==expected_git_blob,'SOURCE_BLOB_MISMATCH')\n        text=data.decode('utf-8')\n        review=self.contracts.get('source_reviews',{}).get(skill_id,{})\n        policy=review.get('invocation_policy','UNKNOWN') if review.get('git_blob')==blob else 'UNKNOWN'\n        explicit=True if policy=='EXPLICIT' else False if policy=='IMPLICIT_ALLOWED' else None\n        old=state['sources'].get(skill_id)\n        if old and old['sha256']!=h:"
     },
     {
@@ -164,7 +164,7 @@
       "symbol": "Router.confirm_structure",
       "summary": "Exige nodo abierto y recibo humano structure ligado al hash de estructura. La confirmación habilita propuestas, sin decidir el proyecto.",
       "group": "Código del flujo",
-      "line": 242,
+      "line": 251,
       "source": "    def confirm_structure(self,state,node_id,receipt):\n        self.check_open(state,node_id)\n        r=human_receipt(receipt,self.structure_hash(node_id),'structure')\n        state['structures'][node_id]={'status':'CONFIRMED','hash':self.structure_hash(node_id),'receipt':r}\n        state['history'].append({'event':'structure_confirmed','node_id':node_id,'receipt':r})"
     },
     {
@@ -174,7 +174,7 @@
       "symbol": "Router.confirm_structure_set",
       "summary": "Admite un recibo structure_set para un conjunto exacto de nodos, con hash del manifiesto.",
       "group": "Código del flujo",
-      "line": 523,
+      "line": 532,
       "source": "    def confirm_structure_set(self,state,node_ids,receipt):\n        self.check_state(state);h=self.structure_set_hash(node_ids)\n        r=human_receipt(receipt,h,'structure_set')\n        state['structure_sets'][h]={'nodes':{nid:self.structure_hash(nid) for nid in node_ids},'receipt':r}"
     },
     {
@@ -184,8 +184,8 @@
       "symbol": "Router.check_open",
       "summary": "Exige nodo activo y ruta habilitada, prerrequisitos completos y, cuando hay mapa de fases, fase activa con dependencias vigentes.",
       "group": "Código del flujo",
-      "line": 228,
-      "source": "    def check_open(self,state,node_id):\n        require(node_id in self.active(state), 'NODE_NOT_ACTIVE:'+node_id)\n        require(not self.blocked(node_id),'BLOCKED_ROUTE:'+node_id)\n        if state.get('phase_map'):\n            pid=self.phase_for(state,node_id)\n            if pid is None:\n                require(self._bounded_prerequisite_node(state,node_id),'PHASE_BOUNDARY:None')\n            else:\n                require(pid==state.get('active_phase_id'),'PHASE_BOUNDARY:'+str(pid))\n                require(state['phases'][pid]['status']=='ACTIVE','PHASE_GATE_REQUIRED')\n                require(all(self.phase_current(state,d) for d in state['phases'][pid]['dependency_ids']),'PHASE_DEPENDENCY_PENDING')\n        for dep in self.node(node_id).get('requires',[]):\n            require(self.complete(state,dep), 'PREREQUISITE_PENDING:'+dep)"
+      "line": 234,
+      "source": "    def check_open(self,state,node_id):\n        require(node_id in self.active(state), 'NODE_NOT_ACTIVE:'+node_id)\n        require(not self.blocked(node_id),'BLOCKED_ROUTE:'+node_id)\n        if state.get('phase_map'):\n            pid=self.phase_for(state,node_id)\n            active_pid = state.get('active_phase_id')\n            phase = state['phases'].get(active_pid)\n            if pid is None:\n                require(phase and self._bounded_prerequisite_node(state,phase,node_id),'PHASE_BOUNDARY:None')\n            else:\n                require(pid==active_pid,'PHASE_BOUNDARY:'+str(pid))\n            # A stale bounded phase can recover its previously invalidated prerequisites manually.\n            require(phase['status']=='ACTIVE' or (pid is None and phase['status']=='STALE'),'PHASE_GATE_REQUIRED')\n            require(all(self.phase_current(state,d) for d in phase['dependency_ids']),'PHASE_DEPENDENCY_PENDING')"
     },
     {
       "id": "py-runner-configure-phases",
@@ -194,7 +194,7 @@
       "symbol": "Router.configure_phases",
       "summary": "Valida el mapa y su recibo exacto. La plantilla distingue bases, visual, componentes y revisión. El mapa confirmado crea fases PLANNED.",
       "group": "Código del flujo",
-      "line": 594,
+      "line": 604,
       "source": "    def configure_phases(self,state,phase_map,receipt):\n        self.check_state(state)\n        require(not state.get('phase_map'),'PHASE_MAP_ALREADY_CONFIGURED')\n        require(isinstance(phase_map,dict) and phase_map.get('schema')=='design-tree-phases/1','PHASE_MAP_INVALID')\n        phases=phase_map.get('phases',[]);kind=phase_map.get('project_kind')\n        require(kind in ('bounded','multi_phase') and isinstance(phases,list) and phases,'PHASE_MAP_INVALID')\n        if kind=='multi_phase':require(len(phases)>=2,'ONE_SHOT_FORBIDDEN')\n        seen=set();covered=set()\n        for p in phases:\n            require(nonblank(p.get('id')) and p['id'] not in seen,'PHASE_ID_INVALID')\n            ids=p.get('node_instance_ids');deps=p.get('dependency_ids')\n            require(isinstance(ids,list) and ids and len(ids)==len(set(ids)) and not set(ids)-set(self.nodes),'PHASE_NODES_INVALID')\n            require(not covered.intersection(ids),'PHASE_OVERLAP')\n            families={self.phase_family(nid) for nid in ids}"
     },
     {
@@ -214,7 +214,7 @@
       "symbol": "Router.grant_assistance",
       "summary": "Exige recibo delegation con hash del mandato, alcance y mapa, además de dependencias aceptadas. Activa fase y nivel solicitados.",
       "group": "Código del flujo",
-      "line": 632,
+      "line": 642,
       "source": "    def grant_assistance(self,state,grant,receipt):\n        self.check_state(state);require(not validate_assistance(grant,state.get('phase_map') or {}),'ASSISTANCE_GRANT_INVALID')\n        require(grant['id'] not in state['grants'],'GRANT_ID_ALREADY_USED')\n        require(grant['scope_id']==state['project_id'] and grant['scope_hash']==self.scope_hash(state),'GRANT_SCOPE_MISMATCH')\n        require(grant['phase_map_hash']==state['phase_map_hash'] and grant['phase_id']==grant['stop_at'],'GRANT_PHASE_MISMATCH')\n        pid=grant['phase_id'];phase=state['phases'][pid]\n        require(phase['status'] in ('PLANNED','ACTIVE','BLOCKED','STALE'),'PHASE_CANNOT_START')\n        require(all(self.phase_current(state,d) for d in phase['dependency_ids']),'PHASE_DEPENDENCY_PENDING')\n        oldphase=state.get('active_phase_id')\n        if oldphase and oldphase!=pid:require(self.phase_current(state,oldphase),'PHASE_GATE_PENDING')\n        h=self.grant_hash(state,grant);r=human_receipt(receipt,h,'delegation')\n        old=state.get('active_grant_id')\n        if old:state['grants'][old]['status']='REVOKED'\n        state['grants'][grant['id']]={**copy.deepcopy(grant),'status':'ACTIVE','authorization_hash':h,'receipt':r}"
     },
     {
@@ -234,7 +234,7 @@
       "symbol": "Router.propose",
       "summary": "Exige estructura confirmada y nodo abierto. Valida y conserva la propuesta, la vincula a contexto, política y fuentes, y registra AWAITING_HUMAN.",
       "group": "Código del flujo",
-      "line": 409,
+      "line": 418,
       "source": "    def propose(self,state,node_id,proposal):\n        self.check_open(state,node_id)\n        require(self.structure_confirmed(state,node_id),'STRUCTURE_CONFIRMATION_REQUIRED')\n        self.validate_proposal(state,node_id,proposal)\n        self.bind_evidence_paths(state, proposal['evidence'])\n        if node_id in state['records']:\n            state['history'].append({'event':'proposal_replaced','node_id':node_id,'record':copy.deepcopy(state['records'][node_id]),'at':now()})\n            self.invalidate(state,node_id,'Proposal revision')\n        authority={'decided_by':'human','grant_id':None,'grant_hash':None}\n        if assistance_action(state,self.node(node_id),'delegate')['allowed']:\n            g=state['grants'][state['active_grant_id']]\n            authority={'decided_by':'agent_delegated','grant_id':g['id'],'grant_hash':g['authorization_hash']}\n        p=copy.deepcopy(proposal)\n        binding=self.binding(state,node_id,authority)"
     },
     {
@@ -244,7 +244,7 @@
       "symbol": "Router.validate_proposal",
       "summary": "Exige razones y cobertura de alternativas, skills y criterios, evidencia y relaciones exigibles. Bloquea escrituras en auditoría y mantiene identidad de candidato cuando aplica.",
       "group": "Código del flujo",
-      "line": 327,
+      "line": 336,
       "source": "    def validate_proposal(self,state,node_id,p):\n        require(isinstance(p,dict) and nonblank(p.get('summary')),'DECISION_SUMMARY_REQUIRED')\n        n=self.node(node_id)\n        choices=[c['node']['id'] for c in n['children']]\n        if n['kind']=='decision': require(p.get('selected') in choices,'SELECTION_REQUIRED')\n        else:require(p.get('selected') is None,'ALL_OR_RESULT_CANNOT_SELECT_ONE')\n        alts=p.get('alternatives',[])\n        require(isinstance(alts,list) and all(isinstance(a,dict) for a in alts) and len(alts)==len(choices) and {a.get('node_id') for a in alts}==set(choices),'ALTERNATIVES_COVERAGE_REQUIRED')\n        for a in alts:\n            expected='REQUIRED' if n['kind']=='all' else 'SELECTED' if a['node_id']==p.get('selected') else 'REJECTED'\n            require(a.get('disposition')==expected and nonblank(a.get('reason')),'ALTERNATIVES_DISPOSITION_INVALID')\n        skills=self.skills_for(node_id);reviews=p.get('skill_reviews',[])\n        require(isinstance(reviews,list) and all(isinstance(r,dict) for r in reviews) and len(reviews)==len(skills) and {r.get('skill_id') for r in reviews}==set(skills),'SKILL_COVERAGE_REQUIRED')\n        for r in reviews:"
     },
     {
@@ -264,7 +264,7 @@
       "symbol": "Router.confirm_decision",
       "summary": "Revalida propuesta, evidencia y verificaciones, exige recibo project del hash propuesto y registra APPROVED.",
       "group": "Código del flujo",
-      "line": 432,
+      "line": 441,
       "source": "    def confirm_decision(self,state,node_id,receipt):\n        self.check_open(state,node_id)\n        rec=state['records'].get(node_id,{})\n        require(rec.get('status') in ('AWAITING_HUMAN','DECIDED_DELEGATED'),'PROPOSAL_REQUIRED')\n        self.validate_proposal(state,node_id,rec['proposal'])\n        self.check_gate(state,node_id,rec['proposal'])\n        require(self.record_data_valid(state,node_id),'PROPOSAL_STALE')\n        r=human_receipt(receipt,rec['proposal_hash'],'project')\n        rec['status']='APPROVED';rec['receipt']=r\n        rec['authority']['acceptance_ref']=r['message_ref']\n        state['history'].append({'event':'decision_confirmed','node_id':node_id,'receipt':r})"
     },
     {
@@ -274,7 +274,7 @@
       "symbol": "Router.delegate_decision",
       "summary": "Revalida la delegación, autoridad y vigencia de la propuesta. Registra DECIDED_DELEGATED; la fase todavía requiere aceptación humana.",
       "group": "Código del flujo",
-      "line": 657,
+      "line": 667,
       "source": "    def delegate_decision(self,state,node_id):\n        self.check_open(state,node_id)\n        gate=assistance_action(state,self.node(node_id),'delegate')\n        require(gate['allowed'],gate['stop_reason'] or 'DELEGATION_FORBIDDEN')\n        rec=state['records'].get(node_id,{})\n        require(rec.get('status')=='AWAITING_HUMAN' and rec.get('authority',{}).get('decided_by')=='agent_delegated','DELEGATED_PROPOSAL_REQUIRED')\n        active_gid=state.get('active_grant_id')\n        active_grant=state['grants'].get(active_gid,{})\n        require(rec['authority'].get('grant_id')==active_gid and active_grant.get('status')=='ACTIVE'\n                and rec['authority'].get('grant_hash')==active_grant.get('authorization_hash'),'DELEGATION_REVOKED')\n        require(self.record_data_valid(state,node_id),'PROPOSAL_STALE')\n        rec['status']='DECIDED_DELEGATED'\n        state['history'].append({'event':'decided_delegated','node_id':node_id,'grant_id':active_gid,'at':now()})"
     },
     {
@@ -284,7 +284,7 @@
       "symbol": "Router.check_gate",
       "summary": "Bloquea cierre con NOT_VERIFIED o comprobaciones obligatorias pendientes. Evalúa resultados declarados y evidencias ligadas al expediente.",
       "group": "Código del flujo",
-      "line": 311,
+      "line": 320,
       "source": "    def check_gate(self,state,node_id,proposal):\n        require(proposal.get('verification')!='NOT_VERIFIED','PHASE_VERIFICATION_PENDING')\n        evaluation=self.check_outcomes(state,node_id,proposal)\n        require(not evaluation['blocking_ids'],'CHECK_REQUIRED_PENDING:'+','.join(evaluation['blocking_ids']))\n        return evaluation"
     },
     {
@@ -294,8 +294,8 @@
       "symbol": "Router.prepare_phase",
       "summary": "Exige fase activa, registros vigentes, comprobaciones completas y entregables con evidencia. Devuelve paquete exacto y hash; la fase pasa a AWAITING_HUMAN.",
       "group": "Código del flujo",
-      "line": 687,
-      "source": "    def prepare_phase(self,state,phase_id,deliverables):\n        self.check_state(state);phase=state['phases'].get(phase_id,{})\n        require(phase_id==state.get('active_phase_id') and phase.get('status')=='ACTIVE','PHASE_NOT_ACTIVE')\n        act=self.active(state);ids=[nid for nid in act if nid in phase['node_instance_ids']]\n        require(ids and all(self.record_current(state,nid) and not self.blocked(nid) for nid in ids),'PHASE_OBLIGATIONS_PENDING')\n        for nid in ids:self.check_gate(state,nid,state['records'][nid]['proposal'])\n        self.check_evidence(deliverables,state)\n        require(len(deliverables)>=len(phase['deliverables']),'PHASE_DELIVERABLES_MISSING')\n        self.bind_evidence_paths(state, deliverables)\n        packet={'phase_id':phase_id,'revision':phase['revision'],'phase_map_hash':state['phase_map_hash'],'scope_hash':self.scope_hash(state),\n                'records':{nid:state['records'][nid]['proposal_hash'] for nid in sorted(ids)},'deliverables':copy.deepcopy(deliverables),\n                'grant_id':phase.get('grant_id'),'inventory_hash':state.get('inventory_proposal',{}).get('hash') if state.get('inventory_proposal') else None}\n        h=digest(packet);phase.update(status='AWAITING_HUMAN',packet=packet,gate_packet_hash=h,delivered=copy.deepcopy(deliverables))\n        return {'gate_packet_hash':h,'packet':packet,'decisions':[{'node_id':nid,**copy.deepcopy(state['records'][nid])} for nid in ids],"
+      "line": 697,
+      "source": "    def prepare_phase(self,state,phase_id,deliverables):\n        self.check_state(state);phase=state['phases'].get(phase_id,{})\n        require(phase_id==state.get('active_phase_id') and phase.get('status') in ('ACTIVE','AWAITING_HUMAN'),'PHASE_NOT_ACTIVE')\n        proposal = state.get('inventory_proposal')\n        pending = phase['status']=='AWAITING_HUMAN'\n        if pending:\n            require(proposal and phase.get('packet',{}).get('inventory_hash'),'PHASE_NOT_ACTIVE')\n            # Before evidence bindings, an inventory digest covered only these three fields.\n            legacy_hash = digest({'baseline':self.inventory_hash,'rows':proposal['rows'],'context':self.scope_hash(state)})\n            require(phase['packet']['inventory_hash']==legacy_hash and proposal['hash']!=legacy_hash,'PHASE_NOT_ACTIVE')\n        act=self.active(state);ids=[nid for nid in act if nid in phase['node_instance_ids']]\n        require(ids and all(self.record_current(state,nid) and not self.blocked(nid) for nid in ids),'PHASE_OBLIGATIONS_PENDING')\n        for nid in ids:self.check_gate(state,nid,state['records'][nid]['proposal'])\n        self.check_evidence(deliverables,state)"
     },
     {
       "id": "py-runner-accept-phase",
@@ -304,8 +304,8 @@
       "symbol": "Router.accept_phase",
       "summary": "Valida el recibo phase y revalida el paquete. Cambia decisiones delegadas a RATIFIED_IN_PHASE, marca fase ACCEPTED, consume el mandato y puede ratificar inventario.",
       "group": "Código del flujo",
-      "line": 703,
-      "source": "    def accept_phase(self,state,phase_id,receipt):\n        # Validate every field before committing any ratification.\n        work=copy.deepcopy(state);phase=work['phases'].get(phase_id,{})\n        require(phase.get('status')=='AWAITING_HUMAN','PHASE_GATE_REQUIRED')\n        packet=phase['packet'];h=phase['gate_packet_hash'];r=human_receipt(receipt,h,'phase')\n        require(digest(packet)==h and packet['scope_hash']==self.scope_hash(work),'PHASE_PACKET_STALE')\n        self.check_evidence(phase['delivered'],work)\n        require(packet['deliverables']==phase['delivered'],'PHASE_DELIVERABLES_CHANGED')\n        ids=[nid for nid in self.active(work) if nid in phase['node_instance_ids']]\n        require(set(ids)==set(packet['records']) and all(self.record_current(work,nid) and packet['records'][nid]==work['records'][nid]['proposal_hash'] for nid in ids),'PHASE_PACKET_STALE')\n        for nid in ids:self.check_gate(work,nid,work['records'][nid]['proposal'])\n        ip=work.get('inventory_proposal')\n        if packet.get('inventory_hash'):\n            require(ip and ip['hash']==packet['inventory_hash'],'INVENTORY_CHANGED')"
+      "line": 727,
+      "source": "    def accept_phase(self,state,phase_id,receipt):\n        # Validate every field before committing any ratification.\n        work=copy.deepcopy(state);phase=work['phases'].get(phase_id,{})\n        require(phase.get('status')=='AWAITING_HUMAN','PHASE_GATE_REQUIRED')\n        packet=phase['packet'];h=phase['gate_packet_hash'];r=human_receipt(receipt,h,'phase')\n        require(digest(packet)==h and packet['scope_hash']==self.scope_hash(work),'PHASE_PACKET_STALE')\n        self.check_evidence(phase['delivered'],work)\n        require(packet['deliverables']==phase['delivered'],'PHASE_DELIVERABLES_CHANGED')\n        ids=[nid for nid in self.active(work) if nid in phase['node_instance_ids']]\n        require(set(ids)==set(packet['records']) and all(self.record_current(work,nid) and packet['records'][nid]==work['records'][nid]['proposal_hash'] for nid in ids),'PHASE_PACKET_STALE')\n        for nid in ids:self.check_gate(work,nid,work['records'][nid]['proposal'])\n        ip=work.get('inventory_proposal')\n        if packet.get('inventory_hash'):\n            require(ip and self.checked_inventory_hash(work, ip) == packet['inventory_hash'], 'INVENTORY_CHANGED')"
     },
     {
       "id": "py-runner-phase-current",
@@ -314,7 +314,7 @@
       "symbol": "Router.phase_current",
       "summary": "Revalida recibo, paquete, contexto, evidencia, decisiones requeridas y dependencias de una fase aceptada.",
       "group": "Código del flujo",
-      "line": 672,
+      "line": 682,
       "source": "    def phase_current(self,state,phase_id):\n        try:\n            phase=state['phases'][phase_id];require(phase['status']=='ACCEPTED','PHASE_NOT_ACCEPTED')\n            packet=phase['packet'];require(digest(packet)==phase['gate_packet_hash'],'PHASE_PACKET_CHANGED')\n            human_receipt(phase['acceptance'],phase['gate_packet_hash'],'phase')\n            require(packet['scope_hash']==self.scope_hash(state) and packet['phase_map_hash']==state['phase_map_hash'],'PHASE_CONTEXT_CHANGED')\n            self.check_evidence(phase['delivered'],state)\n            require(packet['deliverables']==phase['delivered'],'PHASE_DELIVERABLES_CHANGED')\n            for nid,h in packet['records'].items():\n                require(state['records'][nid]['proposal_hash']==h and self.record_data_valid(state,nid),'PHASE_DECISION_STALE')\n                self.check_gate(state,nid,state['records'][nid]['proposal'])\n                require(state['records'][nid]['status'] in ('APPROVED','RATIFIED_IN_PHASE'),'PHASE_DECISION_NOT_ACCEPTED')\n            return all(self.phase_current(state,d) for d in phase['dependency_ids'])\n        except (GateError,KeyError,ValueError,TypeError,OSError,RecursionError):return False"
     },
     {
@@ -324,7 +324,7 @@
       "symbol": "Router.reopen_phase",
       "summary": "Exige razón y recibo reopen ligado al paquete vigente. Archiva revisiones previas, revoca mandato y marca fase, dependientes y decisiones STALE.",
       "group": "Código del flujo",
-      "line": 732,
+      "line": 755,
       "source": "    def reopen_phase(self,state,phase_id,reason,receipt):\n        self.check_state(state);require(nonblank(reason),'REOPEN_REASON_REQUIRED')\n        require(phase_id in state['phases'],'UNKNOWN_PHASE')\n        phase=state['phases'][phase_id]\n        require(phase['status'] in ('ACTIVE','BLOCKED','AWAITING_HUMAN','ACCEPTED','STALE'),'PHASE_CANNOT_REOPEN')\n        r=human_receipt(receipt,digest({'phase_id':phase_id,'gate_packet_hash':phase.get('gate_packet_hash'),'reason':reason}),'reopen')\n        affected={phase_id}\n        while True:\n            more={pid for pid,p in state['phases'].items() if set(p['dependency_ids'])&affected}\n            if more<=affected:break\n            affected|=more\n        previous=copy.deepcopy(phase)\n        self.revoke_delegation(state,'Phase reopened: '+reason)\n        for pid in sorted(affected):"
     },
     {
@@ -334,7 +334,7 @@
       "symbol": "Router.revoke_delegation",
       "summary": "Revoca el mandato activo con razón, pasa a asistencia manual y conserva historial.",
       "group": "Código del flujo",
-      "line": 650,
+      "line": 660,
       "source": "    def revoke_delegation(self,state,reason):\n        require(nonblank(reason),'REVOCATION_REASON_REQUIRED')\n        gid=state.get('active_grant_id')\n        if gid:state['grants'][gid]['status']='REVOKED'\n        state['active_grant_id']=None;state['assistance_level']='manual'\n        state['history'].append({'event':'delegation_revoked','grant_id':gid,'reason':reason,'at':now()})"
     },
     {
@@ -344,7 +344,7 @@
       "symbol": "Router.set_fact",
       "summary": "Exige identidad, alcance, estado, revisión y evidencia cuando aplica. Invalida decisiones cuyo contexto normativo cambió.",
       "group": "Código del flujo",
-      "line": 556,
+      "line": 566,
       "source": "    def set_fact(self,state,fact_id,fact):\n        self.check_state(state);require(nonblank(fact_id) and isinstance(fact,dict),'FACT_INVALID')\n        require(fact.get('state') in ('PRESENT','ABSENT','UNKNOWN'),'FACT_STATE_INVALID')\n        require(fact.get('scope') in ('project','component','requirement','host'),'FACT_SCOPE_INVALID')\n        require(nonblank(fact.get('subject')) and type(fact.get('revision')) is int and fact['revision']>0,'FACT_IDENTITY_REQUIRED')\n        require(isinstance(fact.get('applies_to'),list) and fact['applies_to'] and all(isinstance(x,str) for x in fact['applies_to']) and set(fact['applies_to']) <= (set(self.nodes)|{n['definition_id'] for n in self.nodes.values()}|{'*'}),'FACT_BINDING_REQUIRED')\n        if fact['state']=='PRESENT':require('value' in fact,'FACT_VALUE_REQUIRED')\n        if fact['state']!='UNKNOWN':self.check_evidence(fact.get('evidence'),state)\n        previous=state['facts'].get(fact_id)\n        require(previous is None or fact['revision']>previous['revision'],'FACT_REVISION_CONFLICT')\n        self.bind_evidence_paths(state, fact.get('evidence', []))\n        before={nid:self.context_hash(state,nid) for nid in state['records']}\n        state['facts'][fact_id]=copy.deepcopy(fact)\n        state['facts'][fact_id]['evidence_refs']=[e['path'] for e in fact.get('evidence',[])]"
     },
     {
@@ -354,7 +354,7 @@
       "symbol": "Router.invalidate",
       "summary": "Marca STALE el nodo, sus descendientes y dependientes por prerrequisito; elimina candidatos vinculados y conserva historial y paquetes anteriores.",
       "group": "Código del flujo",
-      "line": 767,
+      "line": 794,
       "source": "    def invalidate(self,state,node_id,reason):\n        require(nonblank(reason),'INVALIDATION_REASON_REQUIRED');self.node(node_id)\n        impacted={node_id};changed=True\n        while changed:\n            changed=False\n            for nid,n in self.nodes.items():\n                if nid not in impacted and (self.parents.get(nid) in impacted or bool(set(n.get('requires',[]))&impacted)):\n                    impacted.add(nid);changed=True\n        for nid in impacted:\n            if nid in state['records']:state['records'][nid]['status']='STALE'\n            k=self.nodes[nid].get('candidate_key')\n            if k:state['candidates'].pop(k,None)\n        for pid,phase in state.get('phases',{}).items():\n            if set(phase['node_instance_ids']) & impacted and phase.get('status') in ('AWAITING_HUMAN','ACCEPTED'):"
     },
     {
@@ -364,8 +364,8 @@
       "symbol": "Router.propose_inventory",
       "summary": "Valida disposiciones y evidencia del inventario y genera hash exacto para confirmación o inclusión en un gate de fase.",
       "group": "Código del flujo",
-      "line": 796,
-      "source": "    def propose_inventory(self,state,rows):\n        self.check_state(state);evidence=self.validate_inventory(state,rows)\n        self.bind_evidence_paths(state, evidence)\n        h=self.inventory_hash_for(state,rows)\n        state['inventory_proposal']={'hash':h,'rows':copy.deepcopy(rows),'evidence':evidence};state['inventory_confirmation']=None\n        return h"
+      "line": 835,
+      "source": "    def propose_inventory(self,state,rows):\n        self.check_state(state);evidence=self.validate_inventory(state,rows)\n        self.bind_evidence_paths(state, evidence)\n        h=self.inventory_hash_for(state,rows,evidence)\n        state['inventory_proposal']={'hash':h,'rows':copy.deepcopy(rows),'evidence':evidence};state['inventory_confirmation']=None\n        return h"
     },
     {
       "id": "py-runner-inventory-confirm",
@@ -374,8 +374,8 @@
       "symbol": "Router.confirm_inventory",
       "summary": "Valida y liga el recibo inventory al inventario propuesto. Confirma disposiciones; las fuentes siguen sujetas a revisión.",
       "group": "Código del flujo",
-      "line": 803,
-      "source": "    def confirm_inventory(self,state,receipt):\n        p=state.get('inventory_proposal');require(p is not None,'INVENTORY_PROPOSAL_REQUIRED')\n        self.validate_inventory(state,p['rows']);self.check_evidence(p['evidence'],state)\n        require(p['hash']==self.inventory_hash_for(state,p['rows']),'INVENTORY_CHANGED')\n        state['inventory_confirmation']=human_receipt(receipt,p['hash'],'inventory')"
+      "line": 842,
+      "source": "    def confirm_inventory(self,state,receipt):\n        p=state.get('inventory_proposal');require(p is not None,'INVENTORY_PROPOSAL_REQUIRED')\n        expected = self.checked_inventory_hash(state, p)\n        state['inventory_confirmation']=human_receipt(receipt,expected,'inventory')"
     },
     {
       "id": "py-ledger-export",
@@ -434,7 +434,7 @@
       "title": "Comprobar la evidencia de una propuesta",
       "summary": "Reúne requisitos y referencias, valida los resultados y evalúa su efecto según los hechos del expediente.",
       "group": "Código del flujo",
-      "line": 292,
+      "line": 301,
       "source": "    def check_outcomes(self,state,node_id,proposal):\n        \"\"\"Inspect bound check outcomes, preserving method/outcome distinction.\n\n        Failing outcomes are valid diagnostic data, not validation failures;\n        external file bytes are re-read on every gate evaluation.\n        \"\"\"\n        reqs=self.check_requirements(node_id)\n        refs={e['path'] for e in proposal.get('evidence',[]) if isinstance(e,dict)}\n        refs.update(state['sources'][skill_id]['source_ref']\n                    for skill_id in self.skills_for(node_id)\n                    if isinstance(state['sources'].get(skill_id),dict)\n                    and isinstance(state['sources'][skill_id].get('source_ref'),str))\n        results=proposal.get('verification_results')\n        issues=validate_results(results,reqs,refs)"
     },
     {
@@ -583,7 +583,7 @@
       "summary": "export, resume y upgrade-state trabajan con estado externo. Recuperación valida evidencia y vuelve a manual.",
       "group": "Entrada del plugin",
       "line": 107,
-      "source": "La respuesta AWAITING_HUMAN bloquea cambios hasta aceptar o reabrir. El recibo phase acepta el hash del paquete exacto. No crea aprobaciones humanas por nodo. Para continuar: nuevo grant explícito de la próxima fase. Puede registrarse desde la misma respuesta si el usuario aceptó el cierre y autorizó ese siguiente alcance.\n\nPara reabrir: el target_hash del recibo reopen es el digest canónico de `{phase_id,gate_packet_hash,reason}` del estado actual. `phase-reopen ID --reason ... --file receipt.json`. Se archivan los paquetes previos, se revoca el mandato activo y la fase y sus dependientes quedan STALE. Registrar un mandato nuevo antes de volver a proponer; no borrar el historial. `revoke --reason ...` vuelve a manual sin perder fuentes.\n\n## Persistencia y migración\n\n```sh\npython3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json export --output /salida/bundle-nuevo"
+      "source": "La respuesta AWAITING_HUMAN bloquea cambios hasta aceptar o reabrir. El recibo phase acepta el hash del paquete exacto. No crea aprobaciones humanas por nodo. Para continuar: nuevo grant explícito de la próxima fase. Puede registrarse desde la misma respuesta si el usuario aceptó el cierre y autorizó ese siguiente alcance.\n\nSi una fase ya estaba en AWAITING_HUMAN al actualizar el runner y su paquete contiene una huella de inventario anterior que sólo cubría las filas, vuelve a presentar esas mismas filas con `inventory --file`. Ejecuta `phase-prepare ID --file` con los entregables originales. El runner conserva las decisiones y archiva el paquete anterior. Revisa la evidencia del inventario y el nuevo paquete antes de emitir un recibo humano `phase` para la nueva huella y ejecutar `phase-accept`. Si cambian las filas, los entregables o las decisiones, utiliza el procedimiento de reapertura.\n\nEn un mapa acotado, la fase activa permite resolver a mano los prerrequisitos de sus propios nodos, incluida la rama seleccionada de un prerrequisito. Las fases futuras se habilitan al recibir su mandato y sólo mientras sus dependencias sigan vigentes.\n\nPara reabrir: el target_hash del recibo reopen es el digest canónico de `{phase_id,gate_packet_hash,reason}` del estado actual. `phase-reopen ID --reason ... --file receipt.json`. Se archivan los paquetes previos, se revoca el mandato activo y la fase y sus dependientes quedan STALE. Registrar un mandato nuevo antes de volver a proponer; no borrar el historial. `revoke --reason ...` vuelve a manual sin perder fuentes.\n"
     },
     {
       "id": "ctx-protocol",
@@ -7255,7 +7255,7 @@
       "symbol": "Archivo completo",
       "group": "Archivos del plugin",
       "summary": "Comandos y contratos del helper.",
-      "source": "SHA-256 del archivo\nc176bc27d966c79ce8814a1e30eca99ae299f7cb395d4c1ebc59e5da0b405d1b"
+      "source": "SHA-256 del archivo\n76171664c8a09af2f1e44d0855e942f0848755799be482a63b29211cccd30bd9"
     },
     {
       "id": "file-skills-design-tree-references-maintenance-md",
@@ -7399,7 +7399,7 @@
       "symbol": "Archivo completo",
       "group": "Archivos del plugin",
       "summary": "Helper de expediente y transiciones supervisadas.",
-      "source": "SHA-256 del archivo\nce388f016e3f87de5852a8289abe0f4959dd026ef361bda34c0008d4a7f844d7"
+      "source": "SHA-256 del archivo\n925d43f2ded1d6bb16941b114e9224cdb78193ec2788c03d4b9bf80c1e98f4d1"
     },
     {
       "id": "file-skills-design-tree-scripts-tree-model-py",

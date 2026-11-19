@@ -86,7 +86,7 @@ No ejecutar las dos alternativas como receta automática. La segunda deja DECIDE
 
 ## Inventario y hechos
 
-`inventory` muestra el catálogo sin modificar el expediente. `inventory --file propuesta.json` registra una propuesta pendiente de revisión humana. El archivo debe contener una lista JSON con una entrada por skill y los campos `skill_id`, `disposition`, `reason` y `evidence_refs`. Los valores admitidos para `disposition` son APPLICABLE, NOT_APPLICABLE, DEFERRED y GOVERNANCE_ONLY. Cada evidencia debe existir.
+`inventory` muestra el catálogo sin modificar el expediente. `inventory --file propuesta.json` registra una propuesta pendiente de revisión humana. El archivo debe contener una lista JSON con una entrada por skill y los campos `skill_id`, `disposition`, `reason` y `evidence_refs`. Los valores admitidos para `disposition` son APPLICABLE, NOT_APPLICABLE, DEFERRED y GOVERNANCE_ONLY. Cada evidencia debe existir. La huella de la propuesta vincula cada referencia con su ruta lógica y el SHA-256 de sus bytes. Si una referencia de fuente identifica varios archivos, asígnales referencias distintas antes de presentar el inventario. Los expedientes anteriores conservan sus filas. Para renovar una confirmación cuya huella no incluía evidencia, vuelve a presentar las filas con `inventory --file` y solicita aceptación de la nueva huella.
 
 Si el archivo contiene `null`, el CLI devuelve `INVENTORY_COVERAGE_REQUIRED` con código 2 y conserva el expediente. Si el propio expediente contiene una raíz JSON distinta de un objeto, el error es `STATE_OBJECT_REQUIRED`.
 
@@ -105,6 +105,10 @@ python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json ph
 ```
 
 La respuesta AWAITING_HUMAN bloquea cambios hasta aceptar o reabrir. El recibo phase acepta el hash del paquete exacto. No crea aprobaciones humanas por nodo. Para continuar: nuevo grant explícito de la próxima fase. Puede registrarse desde la misma respuesta si el usuario aceptó el cierre y autorizó ese siguiente alcance.
+
+Si una fase ya estaba en AWAITING_HUMAN al actualizar el runner y su paquete contiene una huella de inventario anterior que sólo cubría las filas, vuelve a presentar esas mismas filas con `inventory --file`. Ejecuta `phase-prepare ID --file` con los entregables originales. El runner conserva las decisiones y archiva el paquete anterior. Revisa la evidencia del inventario y el nuevo paquete antes de emitir un recibo humano `phase` para la nueva huella y ejecutar `phase-accept`. Si cambian las filas, los entregables o las decisiones, utiliza el procedimiento de reapertura.
+
+En un mapa acotado, la fase activa permite resolver a mano los prerrequisitos de sus propios nodos, incluida la rama seleccionada de un prerrequisito. Las fases futuras se habilitan al recibir su mandato y sólo mientras sus dependencias sigan vigentes.
 
 Para reabrir: el target_hash del recibo reopen es el digest canónico de `{phase_id,gate_packet_hash,reason}` del estado actual. `phase-reopen ID --reason ... --file receipt.json`. Se archivan los paquetes previos, se revoca el mandato activo y la fase y sus dependientes quedan STALE. Registrar un mandato nuevo antes de volver a proponer; no borrar el historial. `revoke --reason ...` vuelve a manual sin perder fuentes.
 
