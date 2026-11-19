@@ -347,8 +347,8 @@ test('the outbox evicts the oldest events beyond its bound', async () => {
   const client = telemetry.createClient({
     storage, endpoint: 'http://127.0.0.1:8787',
     instanceId: '22222222-2222-4222-8222-222222222222',
-    // A fetch that never settles: nothing leaves the queue during the test.
-    fetch: () => new Promise(() => {})
+    // Collector returns 503 so nothing leaves the queue and no Web Lock is leaked.
+    fetch: async () => ({ ok: false, status: 503 })
   });
   const returned = [];
   for (let index = 0; index < 340; index++) {
@@ -865,4 +865,98 @@ test('canonical repo/name skill_id is emitted when present and online event trig
   listeners.online();
   await new Promise(r => setTimeout(r, 20));
   assert.ok(delivered >= 1, 'online event should flush queued events automatically');
+});
+
+test('empty endpoint override disables telemetry instead of falling back to cross-origin stored collector with inline token', async () => {
+  const storage = memoryStorage();
+  storage.setItem(telemetry.keys.ENDPOINT_KEY, 'http://stored-collector.local:9001');
+  const win = {
+    DESIGN_ROUTER_TELEMETRY: {
+      endpoint: 'http://inline-collector.local:8787',
+      token: 'secret-inline-token'
+    },
+    addEventListener() {},
+    __minimalRouterPreview: {
+      getState: () => ({ route: 'tipografia', scope: 'route' }),
+      getSelection: () => selection
+    }
+  };
+  const doc = { readyState: 'complete', addEventListener() {} };
+  const requests = [];
+  const client = telemetry.init(win, doc, {
+    storage,
+    endpoint: '',
+    fetch: async (url, opts) => {
+      requests.push({ url, headers: opts.headers });
+      return { ok: true, status: 202 };
+    }
+  });
+  assert.equal(client.enabled, false);
+  assert.equal(client.endpoint, null);
+  client.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
+  await client.flush();
+  assert.deepEqual(requests, [], 'empty endpoint override must never post to stored collector or leak inline token');
+
+  // createClient({ endpoint: '' }) directly must also not fall back to stored endpoint.
+  const direct = telemetry.createClient({
+    endpoint: '',
+    token: 'secret-direct-token',
+    storage,
+    fetch: async (url, opts) => {
+      requests.push({ url, headers: opts.headers });
+      return { ok: true, status: 202 };
+    }
+  });
+  assert.equal(direct.enabled, false);
+  assert.equal(direct.endpoint, null);
+  direct.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
+  await direct.flush();
+  assert.deepEqual(requests, []);
+});
+
+test('malformed stored event without event_id does not loop under quota errors and flushes rejected diagnostics once writable', async () => {
+  const malformed = { name: 'router.invoked', source: 'board', command: 'board' };
+  const map = new Map([[localKeys.outbox, JSON.stringify([malformed])]]);
+  let failWrites = true;
+  const storage = {
+    getItem: k => (map.has(k) ? map.get(k) : null),
+    setItem: (k, v) => {
+      if (failWrites) throw new Error('QuotaExceededError');
+      map.set(k, String(v));
+    },
+    removeItem: k => {
+      if (failWrites) throw new Error('QuotaExceededError');
+      map.delete(k);
+    }
+  };
+  const posted = [];
+  const delivered = [];
+  const client = telemetry.createClient({
+    endpoint: 'http://127.0.0.1:8787',
+    storage,
+    fetch: async (_url, opts) => {
+      const batch = JSON.parse(opts.body).events;
+      posted.push(batch);
+      const badIdx = batch.findIndex(e => !e.event_id);
+      if (badIdx >= 0) {
+        return { ok: false, status: 422, json: async () => ({ error: 'MISSING_EVENT_ID', index: badIdx }) };
+      }
+      delivered.push(...batch);
+      return { ok: true, status: 202 };
+    }
+  });
+  client.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
+  const ok = await client.flush();
+  assert.equal(ok, true);
+  assert.equal(posted.length, 2, 'must isolate missing-event_id entry in 2 POSTs without looping');
+  assert.ok(delivered.length >= 2, 'valid neighbors must be delivered');
+  assert.equal(map.has(localKeys.rejected), false, 'quota error prevented initial rejected write');
+
+  // Once storage becomes writable again, next flush persists the retained diagnostic.
+  failWrites = false;
+  assert.equal(await client.flush(), true);
+  const savedRejected = JSON.parse(map.get(localKeys.rejected) || '[]');
+  assert.equal(savedRejected.length, 1);
+  assert.equal(savedRejected[0].name, 'router.invoked');
+  assert.equal(savedRejected[0].event_id, undefined);
 });

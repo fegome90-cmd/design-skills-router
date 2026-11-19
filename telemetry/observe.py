@@ -100,18 +100,26 @@ def option_value(argv: list[str], name: str) -> str | None:
     cmd_index = _find_command_index(argv)
     start = cmd_index + 1 if cmd_index is not None else 0
     index = start
+    result: str | None = None
     while index < len(argv):
         value = argv[index]
         if value == "--":
             break
         if _matches_option(value, name) and index + 1 < len(argv):
-            return argv[index + 1]
+            result = argv[index + 1]
+            index += 2
+            continue
         if "=" in value:
             opt, opt_val = value.split("=", 1)
             if _matches_option(opt, name):
-                return opt_val
+                result = opt_val
+            index += 1
+            continue
+        if _matches_value_option(value, _SUBCOMMAND_VALUE_OPTIONS):
+            index += 2
+            continue
         index += 1
-    return None
+    return result
 
 
 def positional_after(argv: list[str], command: str) -> str | None:

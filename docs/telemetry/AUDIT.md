@@ -203,8 +203,8 @@ escalabilidad horizontal.
 
 | Comando | Resultado |
 | --- | --- |
-| `python3 -B -m unittest discover -s telemetry/tests` | 116 pruebas OK, incluidas la entrega a dos colectores con un directorio compartido y la salida del CLI en streaming. |
-| `node --test tests/telemetry-board.test.cjs` | 31 pruebas OK, incluido el aislamiento de colas por destino y la ausencia de escrituras con el cliente desactivado. |
+| `python3 -B -m unittest discover -s telemetry/tests` | 120 pruebas OK, incluidas la entrega a dos colectores con un directorio compartido, la salida del CLI en streaming, la preservación del spool ante reintentos 503/rollback en `0300`, la retención de diagnósticos rechazados en `0500` y la precedencia de opciones repetidas en el wrapper. |
+| `node --test tests/telemetry-board.test.cjs` | 33 pruebas OK, incluido el aislamiento de colas por destino, la ausencia de escrituras con el cliente desactivado o `endpoint` vacío y el aislamiento sin bucles de eventos malformados sin `event_id` bajo cuota llena. |
 | `npm run test:telemetry:e2e` | PASS: tablero real en Chromium (6 eventos, sin nodos inferidos, cero ejecuciones inventadas), colector HTTP E2E y dashboard con datos reales, cero y `schema_supported_no_emitter`. |
 | `npm test` | 8 pruebas del núcleo + 11/11 del contrato semántico sobre v1.4. |
 | `npm run test:golden` | 11/11 del contrato semántico y prueba offline sobre v1.3 congelada. |
@@ -232,6 +232,7 @@ python3 -B -m unittest discover -s telemetry/tests -v
 node --test tests/telemetry-board.test.cjs
 npm test
 (cd plugin && python3 -B -m unittest discover -s tests)
+python3 -B plugin/skills/design-tree/scripts/runner.py verify-package
 python3 -B plugin/skills/design-tree/scripts/doctor.py --format json
 python3 -B tools/verify_sources.py  # requiere checkout completo con vendor/
 ```

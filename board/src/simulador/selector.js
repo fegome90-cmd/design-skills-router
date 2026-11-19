@@ -44,7 +44,7 @@ __MIN_ROUTE_SELECTION_CORE__
    el('minDomain').value='';
    return;
   }
-  el('minDomain').innerHTML='<option value="">Pendiente de delimitar</option>'+domainOptions.map(g=>`<option value="${g}" ${g===domain?'selected':''}>${g} · ${escapeHtml(owners[g]?.name||'Especialista')}</option>`).join('');
+  el('minDomain').innerHTML='<option value="">Pendiente de delimitar</option>'+domainOptions.map(g=>{const id=escapeHtml(g);return `<option value="${id}" ${g===domain?'selected':''}>${id} · ${escapeHtml(owners[g]?.name||'Especialista')}</option>`;}).join('');
  }
  function renderPermission({audit,permit}){
   const select=el('minPermit');
@@ -109,17 +109,17 @@ __MIN_ROUTE_SELECTION_CORE__
  function renderCoverage({owners:primary,assessments,counts,completeness,validation}){
   const coverage=el('minCoverage');
   if(!coverage.firstElementChild){
-   coverage.innerHTML=Object.keys(assessments).map(g=>`
-    <div class="min-review-row" data-review-owner="${g}">
-     <div class="min-review-top"><strong>${g} · ${escapeHtml(owners[g]?.name||'')}</strong>
-      <select data-review-status="${g}" aria-label="Aplicabilidad de ${g}" aria-describedby="minReviewStatus-${g}">
+   coverage.innerHTML=Object.keys(assessments).map(g=>{const id=escapeHtml(g);return `
+    <div class="min-review-row" data-review-owner="${id}">
+     <div class="min-review-top"><strong>${id} · ${escapeHtml(owners[g]?.name||'')}</strong>
+      <select data-review-status="${id}" aria-label="Aplicabilidad de ${id}" aria-describedby="minReviewStatus-${id}">
        <option value="pending">Pendiente</option><option value="applies">Aplica</option><option value="not_applicable">No aplica</option>
       </select>
      </div>
      <p></p>
-     <input type="text" aria-label="Justificación ${g}" aria-describedby="minReviewStatus-${g}" data-review-reason="${g}" placeholder="Razón concreta de no aplicabilidad…" hidden>
-     <div id="minReviewStatus-${g}" class="min-review-status"></div>
-    </div>`).join('');
+     <input type="text" aria-label="Justificación ${id}" aria-describedby="minReviewStatus-${id}" data-review-reason="${id}" placeholder="Razón concreta de no aplicabilidad…" hidden>
+     <div id="minReviewStatus-${id}" class="min-review-status"></div>
+    </div>`;}).join('');
   }
   for(const row of coverage.querySelectorAll('[data-review-owner]')){
    const g=row.dataset.reviewOwner;

@@ -45,5 +45,9 @@ class PortabilityTests(unittest.TestCase):
   res=self.cli('--state',self.state,'resume','--bundle',out)
   self.assertNotEqual(res.returncode,0)
  def test_export_has_no_external_network_behavior(self):
-  source=Path(runner.__file__).read_text()
-  self.assertNotIn('import requests',source);self.assertNotIn('urlopen(',source)
+  scripts_dir=Path(runner.__file__).resolve().parent
+  forbidden=('import requests','import urllib','from urllib','import http','from http','import socket','import ssl','urlopen(')
+  for script in sorted(scripts_dir.glob('*.py')):
+   source=script.read_text(encoding='utf-8')
+   for token in forbidden:
+    self.assertNotIn(token,source,f'{script.name} must stay network-free')

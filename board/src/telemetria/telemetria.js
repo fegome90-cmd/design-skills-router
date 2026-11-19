@@ -260,13 +260,36 @@
     return keys;
   }
 
+  function eventSignature(item) {
+    try {
+      return JSON.stringify(item);
+    } catch (_) {
+      return null;
+    }
+  }
+
   function appendUnique(base, additions, max) {
     const merged = base.slice();
     const seen = new Set(merged.map(item => item && item.event_id).filter(Boolean));
+    const seenSigs = new Set();
+    for (const item of merged) {
+      if (item && !item.event_id) {
+        const sig = eventSignature(item);
+        if (sig) seenSigs.add(sig);
+      }
+    }
     for (const item of additions) {
       const id = item && item.event_id;
-      if (id && seen.has(id)) continue;
-      if (id) seen.add(id);
+      if (id) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+      } else if (item) {
+        const sig = eventSignature(item);
+        if (sig) {
+          if (seenSigs.has(sig)) continue;
+          seenSigs.add(sig);
+        }
+      }
       merged.push(item);
     }
     return merged.length > max ? merged.slice(-max) : merged;
@@ -275,7 +298,21 @@
   function filterOutBatch(list, items) {
     const refs = new Set(items);
     const ids = new Set(items.map(item => item && item.event_id).filter(Boolean));
-    return list.filter(item => !refs.has(item) && !(item && item.event_id && ids.has(item.event_id)));
+    const sigs = new Set();
+    for (const item of items) {
+      if (!item || item.event_id) continue;
+      const sig = eventSignature(item);
+      if (sig) sigs.add(sig);
+    }
+    return list.filter(item => {
+      if (refs.has(item)) return false;
+      if (item && item.event_id && ids.has(item.event_id)) return false;
+      if (item && !item.event_id && sigs.size) {
+        const sig = eventSignature(item);
+        if (sig && sigs.has(sig)) return false;
+      }
+      return true;
+    });
   }
 
   function runWithFlushLock(name, fn) {
@@ -291,15 +328,18 @@
     const config = options || {};
     const storage = safeStorage(config.storage);
     const fetcher = config.fetch || (typeof fetch === 'function' ? fetch : null);
-    const endpoint = config.endpoint || (storage ? read(storage, ENDPOINT_KEY) : null);
+    const hasEndpointOption = Object.prototype.hasOwnProperty.call(config, 'endpoint');
+    const endpoint = hasEndpointOption ? (config.endpoint || null) : (storage ? read(storage, ENDPOINT_KEY) : null);
     const enabled = Boolean(config.enabled !== false && endpoint && fetcher);
     const { eventsUrl, outbox, shardPrefix, rejected: rejectedKey } = collectorKeys(endpoint);
     const supportsShards = enabled && canEnumerateStorage(storage);
     const shardKey = supportsShards ? shardPrefix + uuid().slice(0, 12) : null;
 
     // Delivered or permanently rejected event identities kept in memory so a
-    // full/unwritable localStorage can never resurrect and resend them.
+    // full/unwritable localStorage can never resurrect and resend them—even for
+    // malformed stored entries lacking event_id that deserialize as new objects.
     const retiredIds = new Set();
+    const retiredSignatures = new Set();
     const retiredRefs = new WeakSet();
     const markRetired = (items) => {
       for (const item of items) {
@@ -311,6 +351,15 @@
             const oldest = retiredIds.values().next().value;
             retiredIds.delete(oldest);
           }
+        } else {
+          const sig = eventSignature(item);
+          if (sig) {
+            retiredSignatures.add(sig);
+            if (retiredSignatures.size > MAX_RETIRED) {
+              const oldest = retiredSignatures.values().next().value;
+              retiredSignatures.delete(oldest);
+            }
+          }
         }
       }
     };
@@ -318,6 +367,10 @@
       if (!item) return false;
       if (typeof item === 'object' && retiredRefs.has(item)) return false;
       if (item.event_id && retiredIds.has(item.event_id)) return false;
+      if (!item.event_id && retiredSignatures.size) {
+        const sig = eventSignature(item);
+        if (sig && retiredSignatures.has(sig)) return false;
+      }
       return true;
     });
 
@@ -421,6 +474,9 @@
       removeBatchFromShards(items);
       const current = loadOutbox();
       saveOutbox(filterOutBatch(current, items));
+      if (rejectedUnsynced) {
+        saveRejected(loadRejected());
+      }
     };
 
     const recordRejected = (items) => {
@@ -461,6 +517,9 @@
       flush() {
         if (!enabled) return Promise.resolve(true);
         if (inFlightFlush) return inFlightFlush;
+        if (rejectedUnsynced) {
+          saveRejected(loadRejected());
+        }
         queue = loadOutbox();
         if (!queue.length) return Promise.resolve(true);
         let settled = false;
@@ -605,11 +664,17 @@
     const config = automaticConfig(win);
     if (!config && !overrides.endpoint) return null;
     const merged = { ...(config || {}), ...overrides };
-    if (overrides.endpoint && !Object.prototype.hasOwnProperty.call(overrides, 'token')) {
-      const baseOrigin = config && config.endpoint ? endpointOrigin(config.endpoint) : null;
-      const overrideOrigin = endpointOrigin(overrides.endpoint);
-      if (!baseOrigin || !overrideOrigin || baseOrigin !== overrideOrigin) {
+    const hasOverrideEndpoint = Object.prototype.hasOwnProperty.call(overrides, 'endpoint');
+    if (hasOverrideEndpoint && !Object.prototype.hasOwnProperty.call(overrides, 'token')) {
+      if (!overrides.endpoint) {
+        merged.endpoint = null;
         merged.token = undefined;
+      } else {
+        const baseOrigin = config && config.endpoint ? endpointOrigin(config.endpoint) : null;
+        const overrideOrigin = endpointOrigin(overrides.endpoint);
+        if (!baseOrigin || !overrideOrigin || baseOrigin !== overrideOrigin) {
+          merged.token = undefined;
+        }
       }
     }
     const client = createClient(merged);

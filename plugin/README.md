@@ -1,6 +1,6 @@
 # Design Skills Router
 
-La versión vigente se consulta en `plugin.json`. Plugin privado para diseño UI web supervisado con el árbol v0.4, preservado sin cambios. Contiene una skill de entrada, inventario de 82 referencias, helper Python, doctor y manual de mantenimiento. No contiene la database externa, servidor ni ejecución automática de herramientas.
+La versión vigente se consulta en `plugin.json`. Plugin para diseño UI web supervisado con el árbol v0.4, preservado sin cambios. Contiene una skill de entrada, inventario de 82 referencias, helper Python, doctor y manual de mantenimiento. No contiene la database externa, servidor ni ejecución automática de herramientas.
 
 ## Experiencia de asistencia en nuevos encargos
 

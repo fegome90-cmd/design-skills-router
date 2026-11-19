@@ -36,14 +36,57 @@ _SPOOL_NAME_LOCK = threading.Lock()
 _LAST_SPOOL_NS = 0
 _LAST_SPOOL_SEQ = 0
 _SPOOL_NAME_RE = re.compile(r"^[a-z]+-(\d{13})-(\d{6})-(\d{6})-")
+_SPOOL_CLOCK_NAME = "spool-clock"
+_SPOOL_CLOCK_RE = re.compile(r"^(\d+):(\d+)$")
 
 
-def _next_spool_name(prefix: str, existing: list[Path] | None = None) -> str:
-    """Return a lexicographically monotonic spool filename.
+def _read_spool_clock(clock_path: Path) -> tuple[int, int] | None:
+    try:
+        raw = clock_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    match = _SPOOL_CLOCK_RE.match(raw)
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2))
 
-    Combines wall clock, a process-wide lock-protected sequence, and the highest
-    existing timestamp/sequence in the spool directory so clock rollbacks or
-    multiple client instances in the same tick can never reverse causal order.
+
+def _write_spool_clock(clock_path: Path, ns: int, seq: int) -> bool:
+    temp: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", dir=clock_path.parent, delete=False
+        ) as handle:
+            temp = Path(handle.name)
+            handle.write(f"{ns}:{seq}\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp, 0o600)
+        os.replace(temp, clock_path)
+        temp = None
+        return True
+    except OSError:
+        if temp is not None:
+            try:
+                temp.unlink()
+            except OSError:
+                pass
+        return False
+
+
+def _allocate_spool_name(
+    prefix: str,
+    existing: list[Path] | None = None,
+    clock_path: Path | None = None,
+) -> tuple[str, bool]:
+    """Return a lexicographically monotonic spool filename and whether the
+    persisted high-water clock file was updated.
+
+    Combines wall clock, a process-wide lock-protected sequence, the persisted
+    spool-clock high-water file (readable even in 0300 directories across
+    restarts), and the highest existing timestamp/sequence in the spool
+    directory so clock rollbacks or multiple client instances can never reverse
+    causal order.
     """
     global _LAST_SPOOL_NS, _LAST_SPOOL_SEQ
     now_ns = time.time_ns()
@@ -58,6 +101,12 @@ def _next_spool_name(prefix: str, existing: list[Path] | None = None) -> str:
                 if ns > floor_ns or (ns == floor_ns and seq > floor_seq):
                     floor_ns, floor_seq = ns, seq
     with _SPOOL_NAME_LOCK:
+        if clock_path is not None:
+            persisted = _read_spool_clock(clock_path)
+            if persisted is not None:
+                c_ns, c_seq = persisted
+                if c_ns > floor_ns or (c_ns == floor_ns and c_seq > floor_seq):
+                    floor_ns, floor_seq = c_ns, c_seq
         target_ns = max(now_ns, _LAST_SPOOL_NS, floor_ns)
         if target_ns == _LAST_SPOOL_NS and target_ns == floor_ns:
             seq = max(_LAST_SPOOL_SEQ, floor_seq) + 1
@@ -72,10 +121,23 @@ def _next_spool_name(prefix: str, existing: list[Path] | None = None) -> str:
             seq = 1
         _LAST_SPOOL_NS = target_ns
         _LAST_SPOOL_SEQ = seq
-    return (
+        clock_persisted = True
+        if clock_path is not None:
+            clock_persisted = _write_spool_clock(clock_path, target_ns, seq)
+    name = (
         f"{prefix}-{target_ns // 1_000_000:013d}-{target_ns % 1_000_000:06d}"
         f"-{seq:06d}-{os.getpid()}-{uuid.uuid4().hex[:8]}.jsonl"
     )
+    return name, clock_persisted
+
+
+def _next_spool_name(
+    prefix: str,
+    existing: list[Path] | None = None,
+    clock_path: Path | None = None,
+) -> str:
+    name, _ = _allocate_spool_name(prefix, existing, clock_path=clock_path)
+    return name
 
 
 @dataclass
@@ -83,6 +145,8 @@ class Telemetry:
     config: contract.TelemetryConfig
     instance_id: str | None = None
     _events: list[dict] = field(default_factory=list)
+    _rejected: list[dict] = field(default_factory=list, init=False, repr=False)
+    _protected_spool: set[Path] = field(default_factory=set, init=False, repr=False)
     _last_reject_index: int | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self):
@@ -110,6 +174,7 @@ class Telemetry:
             **fields,
         }
         contract.validate_event(event)
+        self._protected_spool.clear()
         self._events.append(event)
         return event
 
@@ -139,11 +204,31 @@ class Telemetry:
             return True
         return bool(files)
 
-    def _spool_name(self, prefix: str, existing: list[Path] | None = None) -> str:
-        return _next_spool_name(prefix, existing)
+    def _spool_name(
+        self,
+        prefix: str,
+        existing: list[Path] | None = None,
+        clock_path: Path | None = None,
+    ) -> str:
+        return _next_spool_name(prefix, existing, clock_path=clock_path)
+
+    def _record_rejected(self, events: list[dict]) -> bool:
+        if self._spool(events, prefix="rejected"):
+            return True
+        self._rejected.extend(events)
+        if len(self._rejected) > contract.MAX_BATCH_EVENTS:
+            del self._rejected[:-contract.MAX_BATCH_EVENTS]
+        return False
+
+    def _flush_rejected(self) -> None:
+        while self._rejected:
+            batch = self._rejected[:contract.MAX_BATCH_EVENTS]
+            if not self._spool(batch, prefix="rejected"):
+                return
+            del self._rejected[: len(batch)]
 
     def _spool_remaining(self, protected: set[Path] | None = None) -> bool:
-        guarded = protected if protected is not None else set()
+        guarded = protected if protected is not None else self._protected_spool
         while self._events:
             batch = self._events[:contract.MAX_BATCH_EVENTS]
             del self._events[:contract.MAX_BATCH_EVENTS]
@@ -175,7 +260,7 @@ class Telemetry:
             idx = self._last_reject_index
             if idx is not None and 0 <= idx < len(remaining):
                 poisoned = remaining.pop(idx)
-                self._spool([poisoned], prefix="rejected")
+                self._record_rejected([poisoned])
                 had_reject = True
                 continue
             return POST_REJECT, remaining, True
@@ -184,13 +269,15 @@ class Telemetry:
     def flush(self) -> bool:
         if not self.enabled:
             return True
+        self._flush_rejected()
         ok = self.flush_spool()
         if self._has_pending_outbox():
             # Older events remain queued (e.g., collector returned 429/503 or
             # spool dir is unreadable). Never post newer events ahead of them:
             # sending execution_completed before a spooled execution_started
-            # gets rejected (422).
-            self._spool_remaining()
+            # gets rejected (422). Protect chunks already spooled by this
+            # client so repeated retries without new emissions never evict them.
+            self._spool_remaining(protected=self._protected_spool)
             return False
         while self._events:
             # POST in collector-sized chunks: a body larger than
@@ -211,11 +298,12 @@ class Telemetry:
                 return False
             # POST_RETRY: spool the unsent batch and remainder behind it without
             # evicting chunks spooled during this same retryable flush.
-            written = self._spool_batch(remaining, prefix="outbox")
+            written = self._spool_batch(remaining, prefix="outbox", protected=self._protected_spool)
             if written is None:
                 self._events = remaining + self._events
                 return False
-            self._spool_remaining(protected={written})
+            self._protected_spool.add(written)
+            self._spool_remaining(protected=self._protected_spool)
             return False
         return ok
 
@@ -303,13 +391,15 @@ class Telemetry:
             return None
         if len(existing) + len(events) > contract.MAX_BATCH_EVENTS:
             return None
-        target = newest.parent / self._spool_name("outbox", files)
+        clock_path = newest.parent / _SPOOL_CLOCK_NAME
+        target = newest.parent / self._spool_name("outbox", files, clock_path=clock_path)
         if not self._write_spool(target, existing + events):
             return False
         try:
             newest.unlink()
         except OSError:
             pass
+        self._protected_spool.discard(newest)
         return target
 
     def _spool_batch(
@@ -326,7 +416,13 @@ class Telemetry:
             directory.mkdir(parents=True, exist_ok=True)
         except OSError:
             return None
+        clock_path = directory / _SPOOL_CLOCK_NAME
         files = self._list_spool_files(directory, prefix)
+        if files is None and prefix == "outbox":
+            if _read_spool_clock(clock_path) is None:
+                # Directory exists but cannot be listed and has no readable
+                # high-water clock: refuse to write an out-of-order filename.
+                return None
         if files is not None and prefix == "outbox":
             merged = self._merge_into_newest(files, events)
             if merged is False:
@@ -343,7 +439,10 @@ class Telemetry:
                 # Do not evict chunks spooled earlier during the same flush;
                 # caller keeps excess chunks in memory until the spool drains.
                 return None
-        target = directory / self._spool_name(prefix, files)
+        name, clock_persisted = _allocate_spool_name(prefix, files, clock_path=clock_path)
+        if files is None and prefix == "outbox" and not clock_persisted:
+            return None
+        target = directory / name
         if not self._write_spool(target, events):
             return None
         if need_evict:
@@ -392,7 +491,8 @@ class Telemetry:
             except (OSError, ValueError, json.JSONDecodeError, contract.ContractError):
                 # A locally invalid entry cannot be sent. Quarantine it and keep
                 # processing later entries; it must not block the outbox.
-                self._quarantine(path)
+                if self._quarantine(path):
+                    self._protected_spool.discard(path)
                 ok = False
                 continue
             status, remaining, had_reject = self._deliver_batch(events)
@@ -401,19 +501,23 @@ class Telemetry:
             if status == POST_OK:
                 try:
                     path.unlink()
+                    self._protected_spool.discard(path)
                 except OSError:
                     ok = False
             elif status == POST_REJECT:
                 if len(remaining) == len(events):
-                    self._quarantine(path)
+                    if self._quarantine(path):
+                        self._protected_spool.discard(path)
                 else:
                     if self._spool(remaining, prefix="rejected"):
                         try:
                             path.unlink()
+                            self._protected_spool.discard(path)
                         except OSError:
                             pass
                     else:
-                        self._quarantine(path)
+                        if self._quarantine(path):
+                            self._protected_spool.discard(path)
                 ok = False
                 continue
             else:

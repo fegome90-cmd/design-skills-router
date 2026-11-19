@@ -468,5 +468,127 @@ class ClientTests(unittest.TestCase):
         entries = sorted(p.name for p in fresh.iterdir())
         self.assertEqual(entries, ["instance-id"])
 
+    def test_repeated_503_retries_never_evict_protected_chunks_without_new_events(self):
+        client = Telemetry(self.config())
+        ev_id = str(uuid.uuid4())
+        ex_id = str(uuid.uuid4())
+        with patch("telemetry.client.MAX_SPOOL_FILES", 3):
+            # 4 full chunks (400 events, exceeding 3-file disk cap): chunk 1 starts execution.
+            client.emit("skill.execution_started", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
+            for _ in range(contract.MAX_BATCH_EVENTS - 1):
+                client.emit("router.invoked", evaluation_id=ev_id, command="node")
+            client.emit("skill.execution_completed", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
+            for _ in range(contract.MAX_BATCH_EVENTS * 3 - 1):
+                client.emit("router.invoked", evaluation_id=ev_id, command="node")
+
+            with patch.object(client, "_post", return_value=POST_RETRY):
+                self.assertFalse(client.flush())
+                first_pass = sorted(self.state.rglob("outbox-*.jsonl"))
+                self.assertEqual(len(first_pass), 3)
+                # Second and third retries with zero new emissions must NOT evict chunk 1.
+                self.assertFalse(client.flush())
+                self.assertFalse(client.flush())
+                after_retries = sorted(self.state.rglob("outbox-*.jsonl"))
+                self.assertEqual(after_retries, first_pass)
+                self.assertEqual(json.loads(after_retries[0].read_text())["events"][0]["name"], "skill.execution_started")
+                self.assertEqual(len(client._events), contract.MAX_BATCH_EVENTS)
+
+            delivered: list[dict] = []
+            with patch.object(client, "_post", side_effect=lambda batch: (delivered.extend(batch), POST_OK)[1]):
+                self.assertTrue(client.flush())
+            self.assertEqual(len(delivered), contract.MAX_BATCH_EVENTS * 4)
+            self.assertEqual(delivered[0]["name"], "skill.execution_started")
+            self.assertEqual(delivered[contract.MAX_BATCH_EVENTS]["name"], "skill.execution_completed")
+
+    def test_restart_and_clock_rollback_under_0300_spool_dir_preserves_order(self):
+        if os.geteuid() == 0:
+            self.skipTest("chmod 0300 does not restrict root")
+        import telemetry.client as tc
+        ex_id = str(uuid.uuid4())
+        c1 = Telemetry(self.config())
+        with patch("telemetry.client.time.time_ns", return_value=2_000_000_000_000_000_000):
+            c1.emit("skill.execution_started", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
+            with patch.object(c1, "_post", return_value=POST_RETRY):
+                self.assertFalse(c1.flush())
+        directory = c1._outbox_dir()
+        os.chmod(directory, 0o300)
+        self.addCleanup(lambda: os.chmod(directory, 0o700))
+
+        # Simulate a fresh process restart (zeroed module clock state) with a rolled-back clock.
+        saved_ns, saved_seq = tc._LAST_SPOOL_NS, tc._LAST_SPOOL_SEQ
+        try:
+            tc._LAST_SPOOL_NS = 0
+            tc._LAST_SPOOL_SEQ = 0
+            c2 = Telemetry(self.config())
+            with patch("telemetry.client.time.time_ns", return_value=1_000_000_000_000_000_000):
+                c2.emit("skill.execution_completed", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
+                with patch.object(c2, "_post", return_value=POST_RETRY):
+                    self.assertFalse(c2.flush())
+        finally:
+            tc._LAST_SPOOL_NS, tc._LAST_SPOOL_SEQ = saved_ns, saved_seq
+
+        os.chmod(directory, 0o700)
+        files = sorted(self.state.rglob("outbox-*.jsonl"))
+        self.assertEqual(len(files), 2)
+        names = [json.loads(p.read_text())["events"][0]["name"] for p in files]
+        self.assertEqual(names, ["skill.execution_started", "skill.execution_completed"])
+
+    def test_indexed_422_retains_rejected_diagnostic_when_spool_dir_is_readonly(self):
+        if os.geteuid() == 0:
+            self.skipTest("chmod 0500 does not restrict root")
+        ev_id = str(uuid.uuid4())
+        received: list[list[dict]] = []
+
+        class RejectFirstHandler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                length = int(self.headers.get("Content-Length", "0"))
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                events = body["events"]
+                for i, ev in enumerate(events):
+                    if ev["name"] == "skill.execution_completed":
+                        payload = json.dumps({"error": "EXECUTION_NOT_STARTED", "index": i}).encode()
+                        self.send_response(422)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(payload)))
+                        self.end_headers()
+                        self.wfile.write(payload)
+                        return
+                received.append(events)
+                self.send_response(202)
+                self.end_headers()
+            def log_message(self, format, *args):
+                pass
+
+        stub = http.server.ThreadingHTTPServer(("127.0.0.1", 0), RejectFirstHandler)
+        thread = threading.Thread(target=stub.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(stub.shutdown)
+        self.addCleanup(stub.server_close)
+
+        client = Telemetry(contract.TelemetryConfig(
+            enabled=True, endpoint=f"http://127.0.0.1:{stub.server_port}",
+            timeout_seconds=2, state_dir=self.state,
+        ))
+        directory = client._outbox_dir()
+        directory.mkdir(parents=True, exist_ok=True)
+        os.chmod(directory, 0o500)
+        self.addCleanup(lambda: os.chmod(directory, 0o700))
+
+        client.emit("skill.execution_completed", source="host", execution_id=str(uuid.uuid4()), skill_id="emilkowalski/skills/ask-emil")
+        client.emit("router.invoked", evaluation_id=ev_id, command="node")
+        self.assertFalse(client.flush())
+        self.assertEqual([e["command"] for batch in received for e in batch], ["node"])
+        self.assertEqual(list(self.state.rglob("rejected-*.jsonl")), [])
+        self.assertEqual(len(client._rejected), 1)
+
+        # Once directory becomes writable again, next flush persists the retained diagnostic.
+        os.chmod(directory, 0o700)
+        self.assertTrue(client.flush())
+        self.assertEqual(client._rejected, [])
+        rejected_files = list(self.state.rglob("rejected-*.jsonl"))
+        self.assertEqual(len(rejected_files), 1)
+        saved = json.loads(rejected_files[0].read_text())["events"]
+        self.assertEqual([e["name"] for e in saved], ["skill.execution_completed"])
+
 if __name__ == "__main__":
     unittest.main()

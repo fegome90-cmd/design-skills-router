@@ -251,5 +251,21 @@ class ObserveTests(unittest.TestCase):
             self.assertEqual([e["name"] for e in client.events], ["router.invoked", "decision.branch_selected"])
             self.assertEqual((client.events[1]["node_id"], client.events[1]["branch_id"]), ("Q00", "F00"))
 
+    def test_repeated_file_options_use_last_wins_matching_argparse(self):
+        first = self.base / "first.json"
+        second = self.base / "second.json"
+        first.write_text(json.dumps({"summary": "first", "selected": "F00"}))
+        second.write_text(json.dumps({"summary": "second", "selected": "F01"}))
+        for args in (
+            ["--state", "x", "propose", f"--file={first}", f"--fi={second}", "Q00"],
+            ["--state", "x", "propose", "--file", str(first), "--fi", str(second), "Q00"],
+        ):
+            client = FakeClient()
+            with patch.dict(os.environ, {"FAKE_OUTPUT": json.dumps({"proposal_hash": "abc"})}):
+                code, _, _ = self.run_observe(args, client)
+            self.assertEqual(code, 0)
+            self.assertEqual([e["name"] for e in client.events], ["router.invoked", "decision.branch_selected"])
+            self.assertEqual((client.events[1]["node_id"], client.events[1]["branch_id"]), ("Q00", "F01"))
+
 if __name__ == "__main__":
     unittest.main()
