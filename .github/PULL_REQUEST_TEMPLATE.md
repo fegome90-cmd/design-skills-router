@@ -7,7 +7,7 @@
 Marcá lo que corriste y anotá el resultado, no solo el tilde. Si un comando no existe en la base de este PR, indicá qué verificación hiciste en su lugar.
 
 - [ ] `python3 -B tools/build.py` y `git status --short` limpio
-- [ ] `npm test`
+- [ ] `npm test` (en la raíz, o en `board/desktop-demo/` si la raíz todavía no tiene `package.json`)
 - [ ] `(cd plugin && python3 -B -m unittest discover -s tests)`
 - [ ] `python3 -B -m unittest discover -s telemetry/tests` (si toca `telemetry/`)
 - [ ] `./scripts/check-secrets.sh staged`
