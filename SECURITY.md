@@ -20,7 +20,7 @@ Cubre el contenido propio del repositorio: `board/`, `offline/`, `scripts/`, `.g
 
 Queda fuera de alcance:
 
-- `vendor/`: las fuentes fijadas de terceros se reportan al proyecto de origen;
+- `vendor/`: las fuentes fijadas de terceros que el repositorio archive bajo esa ruta se reportan al proyecto de origen;
 - las dependencias embebidas con su propia licencia, como Shoelace y Lit (BSD-3-Clause) y las fuentes tipográficas (OFL-1.1).
 
 ## Expectativas
