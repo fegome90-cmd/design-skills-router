@@ -1,0 +1,136 @@
+/* Vista semántica: extension independiente de la pizarra v0.3 */
+#semanticPanel{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;min-height:0;background:#f5f2ed}
+.app.semantic-active #semanticPanel{display:flex}
+.app.semantic-active #nativeBoard,.app.semantic-active #drawioHost,.app.semantic-active .canvas-actions,.app.semantic-active .canvas-stamp{display:none!important}
+.app.semantic-active .toolbar .search,.app.semantic-active .toolbar .toggle-btn,.app.semantic-active .toolbar .zoom-controls,.app.semantic-active #engineButton{display:none!important}
+.semantic-head{background:#fffcf7;border-bottom:1px solid #d7d0c8;padding:13px 22px 11px;display:grid;gap:10px;flex:none}
+.semantic-headline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.semantic-headline strong{font:700 var(--text-md) var(--sans);letter-spacing:-.02em;color:#30344b}
+.semantic-headline small{font:500 var(--text-2xs) var(--sans);color:#736b73}
+.semantic-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.semantic-controls label{font:600 var(--text-2xs) var(--sans);text-transform:uppercase;letter-spacing:.02em;color:#605c6b;display:flex;align-items:center;gap:6px}
+.semantic-controls select,.semantic-controls input[type="search"]{height:34px;background:#fffefb;border:1px solid #c9c5c6;color:#283149;border-radius:8px;padding:0 9px;font:500 var(--text-xs) var(--sans);min-width:105px}
+.semantic-controls input[type="search"]{width:min(230px,29vw)}
+.semantic-controls select{max-width:184px}
+.semantic-check{display:flex;align-items:center;gap:5px;white-space:nowrap;font:500 var(--text-2xs) var(--sans);color:#5b5762}
+.semantic-check input{accent-color:#4b579c;width:15px;height:15px}
+.semantic-tool{height:34px;border:1px solid #c4c0ca;background:#fffdfa;color:#3f4567;border-radius:8px;padding:0 11px;font:700 var(--text-xs) var(--sans)}
+.semantic-tool:hover{background:#efedf9}
+.semantic-tool:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.semantic-search-panel{position:absolute;top:96px;right:14px;width:min(330px,calc(100% - 30px));max-height:320px;overflow:auto;z-index:9;background:#fffdfa;border:1px solid #c9bed0;box-shadow:0 10px 25px #11152725;border-radius:10px;padding:7px;display:none}
+.semantic-search-panel.show{display:grid;gap:3px}
+.semantic-search-panel button{border:0;border-radius:7px;background:transparent;padding:8px;text-align:left;color:#29314a;font-size:var(--text-xs)}
+.semantic-search-panel button:hover{background:#f3f0fb}
+.semantic-scroll{position:relative;flex:1;overflow:auto;min-height:0;scrollbar-color:#b4adb6 transparent;background-image:radial-gradient(#d3cbd1 0.8px,transparent .8px);background-size:19px 19px;outline:0;touch-action:pan-x pan-y}
+.semantic-world{position:relative;margin:0 auto;transform-origin:top left}
+#semanticSvg{width:1500px;display:block;transform-origin:top left}
+.skill-frame{fill:#fffdfa;stroke:#d7cfcb;stroke-width:1.5;filter:drop-shadow(0 3px 5px #33334e0b)}
+.skill-card{cursor:pointer;outline:none}
+.skill-card rect{transition:stroke .12s ease}
+.skill-card:hover rect,.skill-card:focus-visible rect{stroke:#4659b1;stroke-width:3}
+.skill-card.selected rect{stroke:#334c9c;stroke-width:3.5;filter:drop-shadow(0 6px 9px #38446722)}
+.skill-card.core rect{fill:#e6e9fa;stroke:#5a69b4}
+.skill-card.existing rect,.skill-card.own_specialist rect{fill:#fffdf7;stroke:#b9a89b}
+.skill-card.new_candidate rect{fill:#fff6e9;stroke:#b97055;stroke-dasharray:5 4}
+.skill-card.paused rect,.skill-card.out-of-scope rect{fill:#f1edef;stroke:#aa909c;stroke-dasharray:6 5}
+.skill-card .skill-name{font:700 var(--text-md) var(--sans);fill:#252e48}
+.skill-card .skill-owner{font:600 var(--text-2xs) var(--mono);letter-spacing:.02em;fill:#656481}
+.skill-card .skill-desc{font:400 var(--text-2xs) var(--sans);fill:#596174}
+.skill-card .skill-counter{font:650 var(--text-xl) var(--display);fill:#525f9c;font-variant-numeric:lining-nums tabular-nums}
+.skill-group-title{font:600 var(--text-xs) var(--sans);letter-spacing:.06em;fill:#606579}
+.skill-group-rule{stroke:#bfb8c0;stroke-width:1.3;stroke-dasharray:5 6}
+.skill-graph-edge{fill:none;stroke-width:1.6;stroke-opacity:.24;pointer-events:stroke}
+.skill-graph-edge.documented{stroke-opacity:.45;stroke-width:2}
+.skill-graph-edge.proposed{stroke-dasharray:5 4}
+.skill-graph-edge.active,.skill-graph-edge:hover{stroke-opacity:1;stroke-width:3.25}
+.skill-edge-hit{fill:none;stroke:transparent;stroke-width:13;cursor:pointer;pointer-events:stroke}
+.skill-graph-edge.cross{stroke-dasharray:3 5}
+.semantic-legend{display:flex;align-items:center;gap:15px;flex-wrap:wrap;background:#fffdfa;border-top:1px solid #d8d0c9;padding:9px 22px;color:#596172;font:500 var(--text-2xs) var(--sans);flex:none}
+.semantic-legend .swatch{display:inline-block;width:13px;height:10px;margin-right:5px;border-radius:3px;vertical-align:middle;border:1px solid #8f86a4}
+.semantic-legend .swatch.core{background:#e6e9fa;border-color:#5a69b4}
+.semantic-legend .swatch.old{background:#fffdf7;border-color:#b9a89b}
+.semantic-legend .swatch.proposed{background:#fff6e9;border:1px dashed #b97055}
+.semantic-legend .swatch.hold{background:#f1edef;border:1px dashed #aa909c}
+.semantic-legend .semantic-stats{margin-left:auto;font-family:var(--mono);color:#695e65}
+#inspectExtra .relation-list{display:grid;gap:6px;margin-top:9px}
+#inspectExtra .relation-btn{display:block;text-align:left;border:1px solid #ded3cc;border-radius:8px;background:#fffdfa;padding:8px 9px;font-size:var(--text-xs);color:#2d344d}
+#inspectExtra .relation-btn:hover{background:#f2f0fb}
+#inspectExtra .relation-btn span{display:block;margin-top:4px;color:#6e6b79;font-size:var(--text-2xs)}
+#inspectExtra .relation-badge{display:inline-block;font:600 var(--text-2xs) var(--mono);margin-left:5px;color:#836056}
+#inspectExtra .relation-badge.documented{color:#505c9d}
+#inspectExtra .relation-counts{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0}
+#inspectExtra .relation-counts span{border:1px solid #dcd7d1;background:#fffdfa;padding:5px 7px;border-radius:5px;font:600 var(--text-2xs) var(--mono)}
+#inspectExtra .srchint{font-size:var(--text-2xs);color:#746f78;line-height:var(--leading-body)}
+@media(max-width:1120px){.semantic-head{padding:11px 13px}.semantic-legend{padding:8px 13px}}
+@media(max-width:850px){.semantic-controls{gap:6px}.semantic-headline strong{font-size:var(--text-md)}.semantic-headline small{font-size:var(--text-2xs)}}
+@media(max-width:570px){.mode-switch button{font-size:var(--text-2xs);padding:0 8px}.semantic-head{padding:10px}.semantic-controls{gap:5px}.semantic-controls label{font-size:var(--text-2xs)}.semantic-controls select{max-width:125px;min-width:90px}.semantic-controls input[type="search"]{width:160px;max-width:calc(100vw - 105px)}.semantic-controls .semantic-tool{padding:0 7px;font-size:var(--text-2xs)}.semantic-check{font-size:var(--text-2xs)}.semantic-legend{gap:9px;padding:7px 10px;font-size:var(--text-2xs)}.semantic-legend .semantic-stats{width:100%;margin-left:0}}
+@media(prefers-reduced-motion:reduce){.skill-card rect{transition:none}}
+/* Móvil: la ficha se comporta como hoja inferior y deja libre el selector de vistas. */
+@media(max-width:850px){
+ .inspector.show{position:fixed;top:auto;bottom:10px;left:85px;right:10px;width:auto;height:min(45dvh,420px);max-height:calc(100dvh - 275px);overflow-y:auto;z-index:18;box-shadow:0 8px 28px #26263c36}
+}
+@media(max-width:570px){
+ .inspector.show{left:78px;right:7px;bottom:7px;height:min(44dvh,360px);max-height:calc(100dvh - 270px)}
+}
+
+.semantic-options{display:contents}.semantic-options summary{display:none}
+.semantic-extra-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:850px){
+ .semantic-options{display:block;width:100%;min-width:0}
+ .semantic-options summary{display:block;cursor:pointer;list-style:none;font:700 var(--text-2xs) var(--sans);color:#54517f;padding:7px 10px;background:#f3f0fa;border:1px solid #cfc8d9;border-radius:8px;width:max-content}
+ .semantic-options summary:after{content:'  +';font-weight:700}
+ .semantic-options[open] summary:after{content:'  −'}
+ .semantic-options:not([open]) .semantic-extra-controls{display:none}
+ .semantic-options[open] .semantic-extra-controls{display:flex;padding-top:9px;gap:7px}
+ .semantic-headline small{font-size:var(--text-2xs)}
+}
+@media(max-width:570px){
+ .semantic-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:7px}
+ .semantic-controls>label{display:flex;flex-direction:column;align-items:stretch;min-width:0;gap:3px}
+ .semantic-controls>label select,.semantic-controls>label input[type="search"]{width:100%;max-width:100%;min-width:0;height:32px}
+ .semantic-head{padding:8px 9px;gap:7px}
+ .semantic-headline small{display:none}
+ .semantic-options{grid-column:1/-1}
+ .semantic-legend{gap:5px;font-size:var(--text-2xs)}
+ .semantic-legend .semantic-stats{display:none}
+}
+
+.semantic-head-actions{display:flex;gap:6px;align-items:center}
+.semantic-head-actions .semantic-tool{height:29px;font-size:var(--text-2xs);padding:0 9px}
+.semantic-headline strong{line-height:var(--leading-snug)}
+@media(max-width:570px){.semantic-head-actions .semantic-tool{height:28px;padding:0 7px;font-size:var(--text-2xs)}}
+
+
+/* v0.5: small-screen semantic canvas gets viewport priority, without changing stages mode. */
+.semantic-short-stats{display:none;font:600 var(--text-2xs) var(--mono);color:#4b527d}
+.functional-contract{border:1px solid #d4cde2;border-left:3px solid #6976b3;border-radius:8px;background:#f7f5ff;padding:10px;margin:10px 0}
+.functional-contract .inspect-value{margin:7px 0 0}
+.functional-contract b{color:#3e4b82;margin-right:5px}
+/* Increase the usable semantic canvas height in desktop/tablet modes as well. */
+.app.semantic-active .workspace-header,.app.semantic-active .foot{display:none!important}
+.app.semantic-active .toolbar{flex:none;min-height:46px;padding-block:6px;align-items:center}
+.app.semantic-active .canvas-frame{min-height:0;flex:1}
+@media(max-width:570px){
+ .app.semantic-active{height:100dvh;min-height:0;overflow:hidden}
+ .app.semantic-active .workspace-header,.app.semantic-active .foot{display:none!important}
+ .app.semantic-active .toolbar{flex:none;min-height:46px;padding-block:6px;justify-content:flex-start;align-items:center}
+ .app.semantic-active #canvasFrame{flex:1;min-height:0;min-width:0;overflow:hidden}
+ .semantic-head{padding:8px 8px 7px;gap:7px;flex:none}
+ .semantic-headline{gap:4px;align-items:center}
+ .semantic-headline strong{font:700 var(--text-sm)/var(--leading-snug) var(--sans)}
+ .semantic-head-actions{gap:4px}
+ .semantic-head-actions .semantic-tool{height:28px;padding:0 7px;font-size:var(--text-2xs)}
+ .semantic-short-stats{display:block;font-size:var(--text-2xs)}
+ .semantic-legend{padding:5px 8px;gap:6px;min-height:28px;flex:none}
+ .semantic-legend>span:not(.semantic-stats):nth-child(n+4){display:none}
+ .semantic-legend .semantic-stats{display:none}
+ .semantic-controls{gap:5px}
+ .semantic-controls>label select,.semantic-controls>label input[type=search]{height:32px}
+ .semantic-options summary{padding:6px 9px}
+ .semantic-scroll{flex:1;min-height:0;overscroll-behavior:contain}
+ .inspector.show{left:5px;right:5px;bottom:5px;width:auto;height:min(52dvh,430px);max-height:calc(100dvh - 70px);z-index:24}
+}
+@media(min-width:571px) and (max-width:850px){.semantic-short-stats{display:block}}
+@media(max-height:650px) and (max-width:570px){.semantic-headline strong{font-size:var(--text-xs)}.semantic-head{gap:3px;padding:5px 7px}.semantic-controls{gap:4px}.semantic-legend{padding:4px 7px}}
+
+

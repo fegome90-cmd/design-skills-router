@@ -1,0 +1,8 @@
+test_interactive_selection_and_export (__main__.Smoke.test_interactive_selection_and_export) ... ok
+test_mobile (__main__.Smoke.test_mobile) ... ok
+test_structure_and_immutability (__main__.Smoke.test_structure_and_immutability) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 6.042s
+
+OK

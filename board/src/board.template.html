@@ -1,0 +1,197 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><meta name="description" content="Investigación de 47 skills externas: 6 capas de inserción bajo my-skills G0–G7. Propuesta sin alterar baseline canónico v0.4."><title>Design Skills Router · Selección mínima v1.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css">
+<style>@@BOARD:capas/base.css@@@@BOARD:reglas/reglas.css@@@@BOARD:relaciones/relaciones.css@@@@BOARD:propuestas/propuestas.css@@@@BOARD:revision-individual/revision.css@@@@BOARD:comparacion/comparacion.css@@@@BOARD:revisiones-pendientes/catalogo.css@@@@BOARD:mapa-funcional/mapa.css@@@@MIN_ROUTE_CSS@@</style></head><body>
+<div class="app">
+ <header class="top">
+  <div class="identity"><div class="logo" aria-hidden="true">R</div><div><div class="eyebrow">Estudio de sistemas / Research board 03</div><h1>Design Skills Router <span>· Anatomía de ejecución</span></h1></div></div>
+  <div class="top-right"><span class="tiny mono">17 NOV 2026 · V1.1 RUTA MÍNIMA · HIPÓTESIS</span><span class="pill">BASELINE v0.4 · SIN MODIFICAR</span><button id="measureToggle" class="top-button icon-only" type="button" aria-pressed="false" aria-keyshortcuts="R" aria-label="Reglas" title="Reglas en px y mm/cm, guías y medidas de componentes (tecla R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15.5 15.5 3 21 8.5 8.5 21z"/><path d="m7 11.5 1.8 1.8M10 8.5l2.6 2.6M13 5.5l1.8 1.8"/></svg></button><button id="engineButton" class="top-button plain-hide" type="button">Motor draw.io</button><button id="exportDrawio" class="top-button dark" type="button">↧ Exportar .drawio</button></div>
+ </header>
+ <aside id="stageNavigation" class="sidebar" data-board-sidebar aria-label="Navegación de etapas">
+   <div class="side-title">Cartografía del trabajo</div><nav id="stageButtons" class="stage-list" aria-label="Capas de ejecución"></nav>
+   <section class="legend" aria-label="Convenciones"><div class="side-title">Convenciones</div><div class="legend-row"><span class="dot l-core"></span> Skills propias · rectoras</div><div class="legend-row"><span class="dot l-external"></span> Apoyo externo (previo)</div><div class="legend-row"><span class="dot l-candidate"></span> Cuadro de inserción propuesto</div><div class="legend-row"><span class="dot l-paused"></span> No habilitada / descartada</div><div class="legend-row"><span class="dot l-gate"></span> Gates humanos</div><div class="legend-row"><span class="dot l-evidence"></span> Evidencia / registros</div><div class="legend-row"><span class="dot l-blocked"></span> Capacidad no modelada</div></section>
+   <section class="aside-note"><b>NOTA DE INVESTIGACIÓN / 01</b><p>Una referencia puede orientar una decisión. No gana autoridad sobre G0–G7 por estar incluida en el catálogo.</p></section>
+ </aside>
+ <main class="main">
+   <div class="toolbar">
+    <div class="view-controls">
+     <button id="stageNavigationToggle" type="button" class="tool-btn"
+       aria-controls="stageNavigation" aria-expanded="true">Ocultar paneles</button>
+<div class="mode-switch" aria-label="Vista del router" role="group"><button type="button" id="stageMapView" aria-pressed="true" aria-controls="nativeBoard">Capas</button><button type="button" id="skillNetworkView" aria-pressed="false" aria-controls="semanticPanel">Relaciones entre skills</button><button type="button" id="proposalBoardView" aria-pressed="false" aria-controls="proposalPanel">Cambios propuestos <span class="plan-dot" aria-hidden="true">15</span></button><button type="button" id="compareSkillsView" aria-pressed="false" aria-controls="comparisonPanel">Comparar skills <span class="plan-dot" aria-hidden="true">Δ</span></button><button type="button" id="capabilityMapView" aria-pressed="false" aria-controls="capabilityPanel">Mapa funcional <span class="plan-dot" aria-hidden="true">47</span></button><button type="button" id="allComparisonsView" aria-pressed="false" aria-controls="allComparisonsPanel">Revisiones pendientes <span class="plan-dot" aria-hidden="true">45</span></button></div>
+    </div>
+    <div class="search"><label class="hidden" for="searchInput">Buscar nodos</label><input id="searchInput" type="search" autocomplete="off" aria-controls="results" placeholder="Buscar skills: break-ui, G5, QA01…" aria-label="Buscar nodos, skills y decisiones"><div id="results" class="hidden" role="region" aria-live="polite" aria-label="Resultados de búsqueda"></div></div><button type="button" id="candidateToggle" class="toggle-btn" aria-pressed="true" aria-controls="nativeBoard">▧ Integraciones</button><button type="button" data-kind-toggle="external" aria-pressed="true" class="toggle-btn">◈ Apoyos</button><button type="button" data-kind-toggle="gate" aria-pressed="true" class="toggle-btn">◆ Gates</button><button type="button" data-kind-toggle="source" aria-pressed="true" class="toggle-btn">▤ Fuentes</button><div class="zoom-controls" aria-label="Zoom"><sl-tooltip content="Alejar"><button class="tool-btn" id="zoomOut" type="button" aria-label="Alejar">−</button></sl-tooltip><sl-tooltip content="Acercar"><button class="tool-btn" id="zoomIn" type="button" aria-label="Acercar">+</button></sl-tooltip><sl-tooltip content="Ajustar al ancho"><button class="tool-btn" id="zoomFit" type="button" aria-label="Ajustar ancho">⌗</button></sl-tooltip></div><span id="zoomValue" class="view-label">80%</span><button id="mobileInspect" type="button" class="tool-btn mobile-inspect hidden" aria-expanded="false" aria-controls="inspector">Ficha</button></div>
+   <div class="workspace-header"><div><div class="eyebrow">Exploración supervisada · prototipo documental</div><h2>El método antes que la herramienta.</h2><p>El router propio conserva el gobierno. Los cuadros con borde discontinuo muestran dónde se evaluarían 47 skills de diez fuentes externas, sin integrarlas ni instalarlas. Selecciona un cuadro para ver su activador y sus restricciones.</p><details class="intro-disclosure"><summary>Cómo leer esta pizarra</summary><p>Abre una etapa, selecciona un cuadro de inserción y lee el motivo, el activador y la limitación. Los bordes discontinuos identifican propuestas o referencias ya inventariadas; el trazo resaltado señala el nodo rector. No se han añadido skills al plugin.</p></details></div><div class="count-stack"><div class="count-block"><strong id="stageCount">06</strong><span>capas</span></div><div class="count-block"><strong id="nodeCount">88</strong><span>cuadros</span></div><div class="count-block"><strong id="candidateCount">47</strong><span>skills ubicadas</span></div><div class="count-block"><strong>08</strong><span>skills rectoras</span></div></div></div>
+   <section id="canvasFrame" class="canvas-frame" aria-label="Pizarra del router">
+ <section id="capabilityPanel" aria-label="Mapa de funciones y rutas de las 47 skills" role="region" aria-hidden="true">
+ <header class="cap-header">
+  <div class="cap-eyebrow">CUADERNO / 04 · MAPA FUNCIONAL</div>
+  <h2>No partimos por la skill. Partimos por el trabajo.</h2>
+  <p>Necesidad → función → nodo del árbol → G0–G7 → apoyo elegible. Una skill puede cubrir varias funciones, y una función puede recibir varias referencias. <strong>Esto es un mapa de propuestas, no un selector ejecutable.</strong></p>
+  <div class="cap-metrics" aria-label="Cobertura de mapa"><span><b id="capFunctionCount"></b> funciones</span><span><b id="capSkillCount"></b> skills</span><span><b id="capEdgeCount"></b> vínculos</span><span><b>82</b> fuentes del baseline sin alterar</span></div>
+ </header>
+ <div class="cap-rails">
+  <div class="cap-rail-label">Simular una petición</div>
+  <div id="capRouteButtons" class="cap-routes" role="group" aria-label="Escenarios de enrutamiento"></div>
+  <div id="capRouteDetails" class="cap-route-detail" aria-live="polite"></div>
+ </div>
+
+ <section id="minPanel" class="min-panel" aria-label="Selección mínima y revisión de aplicabilidad">
+  <div class="min-heading"><div><div class="min-kicker">RUTA FUNCIONAL / SIMULACIÓN SIN EJECUCIÓN</div><h3>Consulta lo necesario. Justifica lo demás.</h3><p>La selección muestra funciones y fuentes propuestas; <strong>no ejecuta skills, no confirma cobertura ni concede autorización de escritura</strong>.</p></div>
+    <div class="min-settings"><label for="minScope">Unidad de trabajo</label><select id="minScope"><option value="function">Solo la función seleccionada</option><option value="scenario">Todas las funciones del escenario</option></select>
+    <label for="minPermit">Simular permisos (no los concede)</label><select id="minPermit"><option value="read">Solo lectura / propuesta</option><option value="sandbox">Edición acotada en sandbox (hipotética)</option></select>
+    <button id="minExport" type="button" aria-label="Exportar selección y aplicabilidad en JSON">↧ Exportar expediente</button></div></div>
+  <p class="min-permit-note" id="minPermitNote" role="status" hidden></p>
+  <div class="min-flow" id="minFlow" aria-live="polite"></div>
+  <p class="min-note min-mode-note" id="minModeNote" hidden>Modo orientativo para la selección actual. G0 confirma el modo según el estado del proyecto, el alcance y los permisos disponibles.</p>
+  <div class="min-cards">
+    <div class="min-card min-card-primary"><div class="min-card-title">Especialistas propuestos</div><div id="minPrimary"></div><div class="min-domain-select" id="minDomainArea"><label for="minDomain">Aclarar dominio cuando hay varias opciones</label><select id="minDomain"><option value="">Pendiente de delimitar</option></select></div></div>
+    <div class="min-card"><div class="min-card-title">Dependencias que comprobar</div><div id="minPrereqs"></div></div>
+    <div class="min-card"><div class="min-card-title">Apoyos externos condicionales</div><div id="minSupport"></div></div>
+  </div>
+  <div class="min-cover-head"><div><strong>Cobertura por aplicabilidad · G1–G7</strong><p>Fuera de la ruta mínima no significa «aprobado» ni «no aplica». Marca la aplicabilidad y justifica cada exclusión.</p><div id="minCoverageSummary" aria-live="polite"></div></div><button type="button" id="minReviewToggle" aria-expanded="false" aria-controls="minCoverage">Revisar dominios</button></div>
+  <div id="minCoverage" class="min-coverage" hidden></div>
+  <div class="min-disclaimer">CONTRATO VISUAL PROPUESTO · Los estados representan hipótesis de alcance, no revisión completada. El árbol canónico v0.4, los permisos de herramientas y los gates humanos no se modifican.</div>
+ </section>
+ <div class="cap-controls">
+  <div class="cap-control-grow"><label for="capSearch">Buscar función o skill</label><input id="capSearch" type="search" placeholder="tipografía, break-ui, React, G7…" autocomplete="off" /></div>
+  <div><label for="capOwner">Autoridad</label><select id="capOwner"><option value="all">Todos los G</option></select></div>
+  <div><label for="capEffect">Tipo de aporte</label><select id="capEffect"><option value="all">Cualquier función</option><option value="consultar">Consulta</option><option value="analizar">Análisis</option><option value="auditar">Auditoría</option><option value="prototipar">Prototipado</option><option value="implementar">Implementación</option><option value="aprender">Aprendizaje</option><option value="externo">Fuera de ruta</option><option value="excluir">Excluida</option></select></div>
+  <button type="button" id="capShowAll" aria-pressed="false">Ver todas las funciones</button><button type="button" id="capReset">Limpiar filtros</button><button type="button" id="capExport">↧ JSON</button>
+ </div>
+ <div class="cap-body"><aside id="capabilityNavigation" class="cap-functions" data-board-sidebar><div class="cap-column-heading">Funciones encontradas <b id="capFound"></b></div><div id="capFunctionList" class="cap-function-list" role="listbox" aria-label="Seleccionar función"></div></aside><section class="cap-details"><div id="capDetail" aria-live="polite"></div></section></div>
+ <footer class="cap-footer">Todos los vínculos están propuestos y pendientes de aprobación. D10 exige revisar aplicabilidad; no obliga a invocar todas las skills. Las rutas S05 y S06 siguen sin contrato de ejecución.</footer>
+</section>
+<section id="allComparisonsPanel" role="region" aria-hidden="true" aria-label="Comparación de las 45 skills propuestas frente a sus responsables G0 a G7">
+ <div class="more-head"><div><div class="eyebrow">CUADERNO / 03 · COMPARACIÓN PROGRESIVA</div><h2>Cada skill, frente a su rector.</h2><p>45 análisis nuevos para examinar uno por uno. Comparación semántica de <b>responsabilidades</b>, no diff literal de archivos. Cada propuesta sigue pendiente; el mapa original y las comparaciones de v0.8 permanecen accesibles.</p></div><div class="more-counter"><strong>45 / 47</strong><span>fichas nuevas</span></div></div>
+ <div class="more-bar"><label>Buscar skill <input id="moreSearch" type="search" placeholder="Nombre, función, nodo…" autocomplete="off"></label><label>Responsable <select id="moreOwner"><option value="all">G0–G7 · todos</option></select></label><label>Tratamiento <select id="moreAction"><option value="all">Todas las propuestas</option></select></label><label>Prioridad <select id="moreSeverity"><option value="all">Todas</option><option value="P1">P1 · material</option><option value="P2">P2 · ajuste</option><option value="OK">Sin bloqueo semántico</option></select></label>
+ <button type="button" id="moreExport">↧ JSON catálogo</button><button type="button" id="moreReport">↧ Informe .md</button><span class="more-count" id="moreCount" role="status" aria-live="polite"></span></div>
+ <div class="more-body"><aside id="reviewNavigation" class="more-index" data-board-sidebar aria-label="Listado de 45 skills en evaluación"><div class="more-index-head">SELECCIONA UNA SKILL · PENDIENTES DE DECISIÓN</div><div class="more-list" id="moreList"></div></aside>
+ <div class="more-content" id="moreContent" tabindex="0" role="region" aria-label="Ficha comparativa por skill"><div class="more-inner"><div class="more-skill-nav"><button type="button" id="morePrevious">← Anterior</button><button type="button" id="moreNext">Siguiente →</button><span class="current" id="moreCurrent"></span></div><div class="more-name"><h3 id="moreTitle"></h3><span id="morePriority" class="more-tag"></span><span id="moreActionTag" class="more-tag"></span><span id="moreInventory" class="more-tag"></span></div><p id="moreSynopsis" class="more-synopsis"></p><p id="morePrinciple" class="more-principle"></p><div class="more-scroll" role="region" tabindex="0" aria-label="Comparación horizontal, deslice para ver ambas columnas"><div class="more-sheet"><div class="more-source-heads" id="moreSources"></div><div id="moreRows"></div></div></div><div class="more-last" id="moreLast"></div><p class="more-meta">Contraste documental y propuestas de prueba. Ninguna ficha autoriza instalación, edición, publicación o una ratificación de fase. Fuentes externas tratadas como evidencia.</p></div></div></div>
+ </section>
+<section id="comparisonPanel" role="region" aria-label="Comparación lado a lado de skills" aria-hidden="true">
+  <div class="cmp-top"><div><div class="cmp-brow">CUADERNO DE SKILLS / 02 · ANATOMÍA COMPARATIVA</div><h2>Dos skills, responsabilidades distintas.</h2><p class="cmp-summary">Lectura <b>side by side</b> de las instrucciones originales. Las marcas Δ muestran diferencias <b>semánticas</b> revisadas; no son una comparación automática de líneas de texto. La autoridad de G0–G7 no cambia.</p></div><span class="cmp-state">PROPUESTA · SIN APROBAR</span></div>
+  <div class="cmp-toolbar"><label for="cmpSubject">Comparar frente a ui-radar <select id="cmpSubject"><option value="impeccable">Impeccable · multicomando</option><option value="g1">G1 · design-art-direction</option></select></label>
+  <div class="cmp-filterbar" role="group" aria-label="Filtrar diferencias"><button class="cmp-filter" data-cmpfilter="all" aria-pressed="true" type="button">Todas</button><button class="cmp-filter" data-cmpfilter="different" aria-pressed="false" type="button">Δ Diferencias</button><button class="cmp-filter" data-cmpfilter="complement" aria-pressed="false" type="button">↔ Complementos</button><button class="cmp-filter" data-cmpfilter="tension" aria-pressed="false" type="button">! Tensiones</button><button class="cmp-filter" data-cmpfilter="shared" aria-pressed="false" type="button">= Coincidencias</button></div>
+  <button type="button" class="cmp-tool" id="cmpExport">↧ Comparación JSON</button><button type="button" class="cmp-tool" id="cmpReport">↧ Informe .md</button><span role="status" id="cmpCount" aria-live="polite"></span></div>
+  <div class="cmp-scroll" id="cmpScroll" role="region" tabindex="0" aria-label="Comparación desplazable"><div class="cmp-sheet" id="cmpSheet"><div class="cmp-column-heads" id="cmpHeaders"></div><div id="cmpRows" class="cmp-sheet"></div><div class="cmp-end" id="cmpBottom"></div></div></div>
+ </section>
+ <div id="proposalPanel" role="region" aria-label="Pizarra de propuestas de cambio" aria-hidden="true">
+  <div class="change-head">
+    <div class="change-header-left"><div class="eyebrow">ARCHIVO DE INVESTIGACIÓN / PROPUESTAS DE CORRECCIÓN</div>
+      <h2>De los hallazgos a los cambios.</h2><p>Quince intervenciones propuestas en seis capas. No son cambios ejecutados, aprobaciones ni una nueva versión del plugin. <strong>G0–G7 conservan la rectoría.</strong></p>
+    </div>
+    <div class="change-header-actions"><button type="button" id="changeExportJson" class="change-export">↧ Plan JSON</button><button type="button" id="changeExportDrawio" class="change-export accent">↧ Capas .drawio</button></div>
+  </div>
+  <div class="change-summary" id="changeSummary" aria-label="Resumen del plan"></div>
+  <div class="change-flow" aria-label="Del hallazgo a la autorización">
+    <span><b>01</b> Hallazgo observado</span><i aria-hidden="true">›</i><span><b>02</b> Propuesta acotada</span><i aria-hidden="true">›</i><span><b>03</b> Contrato + tests</span><i aria-hidden="true">›</i><span><b>04</b> Gate humano</span>
+  </div>
+  <div class="change-toolbar" role="group" aria-label="Filtros de propuestas">
+     <label>CAPA <select id="changeLayer" aria-label="Filtrar cambios por capa"><option value="all">Todas las capas</option></select></label>
+     <label>PRIORIDAD <select id="changePriority" aria-label="Filtrar cambios por prioridad"><option value="all">Todas</option><option value="P1">P1 · Prioritaria</option><option value="P2">P2 · Complementaria</option></select></label>
+     <label>PAQUETE <select id="changePhase" aria-label="Filtrar cambios por paquete"><option value="all">Todos</option><option value="F1">F1 · Política</option><option value="F2">F2 · Fuentes</option><option value="F3">F3 · Baseline</option><option value="F4">F4 · Verificación</option></select></label>
+     <label class="change-search"><span>BUSCAR</span><input id="changeQuery" type="search" autocomplete="off" placeholder="M01, break-ui, autoridad…" aria-label="Buscar en propuestas"></label>
+     <button id="changeClear" type="button" class="change-clear">Limpiar</button>
+  </div>
+  <div class="change-canvas-scroll" id="changeScroll" tabindex="0" aria-label="Capas con propuestas">
+    <details class="change-roadmap" id="changeRoadmap" open><summary>Paquetes de trabajo F1–F4 · ver secuencia de revisión</summary><div class="change-schedule" id="changeSchedule"></div></details>
+    <div id="changeNoResults" class="change-noresults" hidden>Sin propuestas para estos filtros. Puedes limpiar los filtros y volver a explorar.</div>
+    <section class="skill-review" id="skill-review-X05" role="region" aria-labelledby="skill-review-X05-title" data-skill-review="X05">
+ <div class="skill-review-head"><div><div class="skill-review-supra">Cuaderno de evaluación / Skill 01 de 47 · X05</div>
+ <h3 id="skill-review-X05-title">Revisión individual · <code>ui-radar</code></h3>
+ <p>¿Cómo recuperar evidencia visual sin crear una segunda dirección de arte ni duplicar al orquestador G0?</p>
+ <div class="skill-review-notes"><span class="skill-review-chip">G1 · ART01 + ART05</span><span class="skill-review-chip">Consulta sin escritura</span><span class="skill-review-chip warn">Sin instalar</span></div></div>
+ <span class="skill-review-status">PROPUESTA · NO APROBADA</span></div>
+ <div class="skill-review-main">
+ <div class="skill-review-paper"><h4>Función que conservaríamos</h4><p>Investigar una sola cuestión pendiente con capturas reales. Entregar referencia canónica, observación visual y la decisión que informa. Sin empezar otro workflow.</p>
+ <span class="skill-review-key">AUTORIDAD</span><p>G0 coordina · G1 decide la dirección visual · X05 aporta evidencia, nunca gobierna.</p>
+ <a class="skill-review-reference" href="https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/ui-radar/SKILL.md" target="_blank" rel="noopener noreferrer">Ver SKILL.md en commit fijado ↗</a></div>
+ <div class="skill-review-paper"><h4>Conflictos y límites</h4><ul>
+ <li>La skill propone <b>0 a 3</b> referencias: G1 mantiene el criterio de comparación del encargo.</li>
+ <li>No copiar marcas, fotografías o assets por tener la skill licencia MIT.</li>
+ <li>Catálogo gratuito o MCP opcional: sin acceso real no afirmar que se verificaron capturas.</li>
+ <li>OCR, metadatos y capturas son información de terceros no confiable.</li>
+ </ul></div>
+ <div class="skill-review-paper full"><h4>Propuesta antes → después</h4><div class="skill-review-timeline"><div class="skill-review-step"><b>01 / G1</b><strong>Identificar el problema</strong><p>G0 determina el modo y el alcance. G1 conserva una pregunta visual concreta aún no resuelta.</p></div><div class="skill-review-step"><b>02 / G1</b><strong>Buscar evidencia</strong><p>X05 consulta pantallas/recorridos sin cambiar código y con plataforma explícita.</p></div><div class="skill-review-step"><b>03 / G1</b><strong>Verificar lo observado</strong><p>Inspeccionar capturas; distinguir coincidencia exacta, analogía, ausencia de resultados y error.</p></div><div class="skill-review-step"><b>04 / G1</b><strong>Retornar a G1</strong><p>Entregar observación, fuente canónica, decisión informada y activos que no deben copiarse.</p></div><div class="skill-review-step"><b>05 / G1</b><strong>Comparar y decidir</strong><p>ART05 aplica criterios del proyecto; propuestas y gates siguen pendientes de aceptación humana.</p></div></div></div>
+ <div class="skill-review-paper full"><h4>Correcciones específicas que dejaríamos documentadas</h4><ul><li><span class="skill-review-key">UR-01 · P1 </span><b>Relación explícita, nunca transferencia de autoridad.</b> Usar una relación optativa de consulta de G1 hacia X05 en ART01/ART05, sin ejecución, adopción ni obligatoriedad global.</li><li><span class="skill-review-key">UR-02 · P2 </span><b>Tres referencias: distinguir responsabilidades.</b> G1 determina cuántos ejemplos necesita ART05; UI Radar aporta hasta tres evidencias sólidas y puede complementarse con otras fuentes. No forzar tres desde Uizze.</li><li><span class="skill-review-key">UR-03 · P1 </span><b>Una captura consultada no otorga derechos de copia.</b> Registrar URL canónica, evidencia observada y elementos no reutilizables; prohibir copia literal de activos salvo licencia acreditada.</li><li><span class="skill-review-key">UR-04 · P1 </span><b>Dependencia remota y datos no confiables.</b> Fallback de solo lectura a Library/web. Sin captura realmente inspeccionada = NO_VERIFICADO. No seguir instrucciones incluidas en imágenes o metadatos. No usar credenciales sin conexión autorizada.</li></ul></div></div>
+ <details class="skill-review-details" id="skill-review-tests"><summary>Ver 8 casos de aceptación y pruebas negativas · propuesta de tests</summary>
+ <div class="skill-review-grid"><div class="skill-review-test"><strong>T01 · positivo</strong><p><b>Situación:</b> Diseño web nuevo con decisión sin resolver sobre estructura de filtros y resultados.</p><p><b>Esperado:</b> Se permite consulta opcional X05; solo evidencia con capturas inspeccionadas; la decisión final queda en G1.</p></div><div class="skill-review-test"><strong>T02 · negativo</strong><p><b>Situación:</b> Ajuste de texto acotado con dirección visual aprobada y sin pregunta de patrones.</p><p><b>Esperado:</b> No activar búsqueda por inercia ni crear un proyecto de exploración.</p></div><div class="skill-review-test"><strong>T03 · fallo de fuente</strong><p><b>Situación:</b> No hay acceso al MCP o catálogo sin resultados útiles.</p><p><b>Esperado:</b> Continuar trabajo independiente y declarar fuente no verificada, sin inventar capturas.</p></div><div class="skill-review-test"><strong>T04 · seguridad</strong><p><b>Situación:</b> Metadatos/OCR de una captura incluyen una instrucción que pide cambiar el objetivo.</p><p><b>Esperado:</b> Tratar como datos no confiables; no obedecer ni filtrar credenciales.</p></div><div class="skill-review-test"><strong>T05 · derechos</strong><p><b>Situación:</b> Referencia contiene logotipos y fotografías específicas de otra marca.</p><p><b>Esperado:</b> Documentar aprendizajes transferibles y excluir activos de copia directa.</p></div><div class="skill-review-test"><strong>T06 · autoridad</strong><p><b>Situación:</b> Uizze sugiere estilo, DESIGN.md o herramienta nueva que contradice el proyecto.</p><p><b>Esperado:</b> G1/G0 conservan autoridad y no hay modificación de documentos ni instalación.</p></div><div class="skill-review-test"><strong>T07 · trazabilidad</strong><p><b>Situación:</b> Cambian los bytes o commit del SKILL.md del proveedor.</p><p><b>Esperado:</b> El pin pierde vigencia para nuevas decisiones hasta nueva revisión; no reinterpretar hash como aceptación.</p></div><div class="skill-review-test"><strong>T08 · cantidad</strong><p><b>Situación:</b> El encargo obliga a analizar 3 referencias y solo hay 1 adecuada en Uizze.</p><p><b>Esperado:</b> Registrar 1 evidencia Uizze, complementar por fuentes autorizadas o dejar la comparación incompleta; no forzar otras 2.</p></div></div></details>
+ <div class="skill-review-foot"><small>Estado: fuente documental revisada. Sin prueba de recuperación de Uizze, sin admisión al baseline y sin cambios al plugin.</small>
+ <div><button type="button" class="skill-review-btn" id="skill-review-download">Exportar ficha JSON</button> <button type="button" class="skill-review-btn" id="skill-review-jump">Ver ART01 en el árbol</button></div></div>
+ </section>
+    <div id="changeLanes" class="change-lanes"></div>
+    <div class="change-floor-note"><b>ESTADO DE ESTA PIZARRA</b><p>Solo propuestas documentadas. La ejecución requiere contratos, repositorios aprobados, pruebas y el gate humano correspondiente. Esta vista no modifica el estado de las skills ni publica releases.</p></div>
+  </div>
+</div>
+<div id="semanticPanel" aria-hidden="true" role="region" aria-label="Grafo interactivo de relaciones entre skills">
+ <div class="semantic-head">
+  <div class="semantic-headline"><strong>Red semántica · G0–G7 gobiernan</strong><span class="semantic-short-stats" id="semanticCompactStat" aria-live="polite"></span><div class="semantic-head-actions"><button class="semantic-tool" type="button" id="graphExportDrawio">↧ .drawio</button><button class="semantic-tool" type="button" id="graphExportJson">↧ JSON</button></div></div>
+  <div class="semantic-controls">
+   <label>Dominio <select id="graphOwner" aria-label="Elegir skill rectora o panorama"></select></label>
+   <label>Búsqueda <input id="graphSkillSearch" type="search" placeholder="Nombre de skill…" autocomplete="off" aria-label="Buscar skill en la red"></label>
+   <details class="semantic-options" open><summary>Filtros y exportación</summary><div class="semantic-extra-controls">
+   <label>Relación <select id="graphRelation" aria-label="Filtrar tipo de relación"></select></label><label>Ficha funcional <select id="graphFunctionNode" aria-label="Explorar función de un nodo del router"></select></label>
+   <label class="semantic-check"><input type="checkbox" id="graphShowPaused"> Pendientes</label>
+   <label class="semantic-check"><input type="checkbox" id="graphShowExcluded"> Exclusiones propuestas</label>
+   <label class="semantic-check"><input type="checkbox" id="graphOnlyDocumented"> Solo documentadas</label>
+   <button class="semantic-tool" type="button" id="graphZoomOut" aria-label="Reducir grafo">−</button>
+   <span class="tiny mono" id="graphZoomPct" aria-live="polite">72%</span>
+   <button class="semantic-tool" type="button" id="graphZoomIn" aria-label="Ampliar grafo">+</button>
+   <button class="semantic-tool" type="button" id="graphZoomFit">Ajustar</button>
+  </div></details>
+  </div>
+  <div id="graphSearchBox" class="semantic-search-panel" aria-label="Resultados de skills"></div>
+ </div>
+ <div class="semantic-scroll" id="semanticScroll" role="region" tabindex="0" aria-label="Grafo navegable; desplazamiento horizontal y vertical">
+  <div class="semantic-world" id="semanticWorld"><svg id="semanticSvg" width="1500" viewBox="0 0 1500 820" height="820" role="img" aria-label="Red de relaciones de skills del Design Skills Router" xmlns="http://www.w3.org/2000/svg"></svg></div>
+ </div>
+ <div class="semantic-legend"><span><i class="swatch core"></i> Rectoria G0–G7</span><span><i class="swatch old"></i> Inventario existente</span><span><i class="swatch proposed"></i> Nueva candidata</span><span><i class="swatch hold"></i> Ruta pendiente o exclusión propuesta</span><span>SVG local · Exportación draw.io XML · Línea continua: documentada · Discontinua: propuesta</span><span class="semantic-stats" id="semanticStat" aria-live="polite"></span></div>
+</div>
+
+    <div id="nativeBoard" class="canvas-scroll" role="region" aria-label="Exploración de la pizarra con desplazamiento"><div id="boardWorld" class="board-world"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa de seis etapas y nodos relacionados" class="board-svg" id="boardSVG" viewBox="0 0 2150 2220" width="2150" height="2220"></svg></div></div>
+    <div id="drawioHost" role="region" aria-label="Visor oficial draw.io, mxGraph"></div><div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <div class="canvas-stamp"><span id="stageFocus">MAPA COMPLETO</span> &nbsp;·&nbsp; <span id="engineBadge">SKILLS PROPUESTAS · SVG LOCAL</span></div>
+    <div class="canvas-actions"><button type="button" id="exportDrawioBottom" class="tool-btn" title="Exportar capa visible a draw.io">Descargar diagrama</button><button type="button" id="drawioExternal" class="tool-btn" title="Abrir editor draw.io en otra pestaña">↗ diagrams.net</button></div>
+   </section>
+   <footer class="foot"><span>PROPUESTA VISUAL DE POSICIONES · NO INSTALA SKILLS NI APRUEBA FASES</span><span>Usa etapas a la izquierda · selecciona nodos · exporta a .drawio</span></footer>
+ </main>
+ <aside id="inspector" class="inspector" aria-label="Ficha del nodo seleccionado">
+   <div style="display:flex;justify-content:space-between;align-items:center"><div class="eyebrow">Archivo de investigación / Ficha de nodo</div><button type="button" id="closeInspect" class="tool-btn" style="width:26px;height:26px;padding:0" aria-label="Cerrar panel">×</button></div>
+   <div id="inspectCode" style="font:600 var(--text-sm) var(--mono);color:#6a6691;margin-top:24px"></div><h3 id="inspectTitle" tabindex="-1" aria-live="polite">G0 · Orquestador propio</h3><p id="inspectDesc">Alcance y responsabilidad</p>
+   <div class="meta-strip"><span id="inspectKind" class="chip">Mi skill</span><span id="inspectStatus" class="chip status-chip">SKILL RECTORA</span></div>
+   <div class="inspect-box"><div class="inspect-label">Quién gobierna esta decisión</div><div class="inspect-value" id="inspectOwner"></div><div class="inspect-label" style="margin-top:18px">Capa de ejecución</div><div class="inspect-value" id="inspectStage"></div><a class="source-button hidden" id="inspectSource" rel="noopener noreferrer" target="_blank">Abrir fuente original ↗</a></div>
+   <section id="inspectExtra" hidden></section><div class="research-links"><div class="side-title">Tres referencias de diseño</div>
+      <div class="research-item"><a rel="noopener noreferrer" target="_blank" href="https://milanote.com/">01 · Milanote / Research boards ↗</a><p>Notas, tarjetas y evidencia en un espacio de investigación.</p></div>
+      <div class="research-item"><a rel="noopener noreferrer" target="_blank" href="https://whimsical.com/flowcharts">02 · Whimsical / Flowcharts ↗</a><p>Conectores, agrupación y lectura de decisiones.</p></div>
+      <div class="research-item"><a rel="noopener noreferrer" target="_blank" href="https://help.miro.com/hc/en-us/articles/20967864443410-Miro-s-new-simplified-user-interface">03 · Miro / Board controls ↗</a><p>Navegación y herramientas discretas, próximas al lienzo.</p></div>
+   </div>
+   <div class="research-links"><div class="side-title">Procedencia y límites</div><p>Suite rectora: <a target="_blank" rel="noopener noreferrer" href="https://github.com/fegome90-cmd/my-skills">fegome90-cmd/my-skills</a>. Router original: v0.4; 82 referencias inventariadas. Este mapa conserva 41 nodos de contexto y 47 fichas de inserción; la nueva vista semántica conecta 111 skills únicas y 171 relaciones clasificadas. Los 82 registros del inventario no se reemplazan, no se autoriza ejecución ni se modifica el baseline v0.4.</p><p>Diagrama: XML draw.io / mxGraph. Controles HTML: Shoelace (carga opcional) y elementos nativos para el modo sin conexión.</p><sl-tag size="small" pill variant="neutral">DOCUMENTO DE TRABAJO · NO APROBADO</sl-tag></div>
+ </aside>
+</div>
+<script>const DATA=@@BOARD:capas/datos.json@@;
+@@BOARD:capas/capas.js@@</script>
+<script id="semanticDataset" type="application/json">@@BOARD:relaciones/datos.json@@</script>
+<script>@@BOARD:relaciones/relaciones.js@@</script>
+<script type="application/json" id="changeBoardData">@@BOARD:propuestas/datos.json@@</script>
+<script type="application/json" id="changeDrawioData">@@BOARD:propuestas/diagrama.drawio@@</script>
+<script id="changeBoardLogic">@@BOARD:propuestas/propuestas.js@@</script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"></script>
+
+<script type="application/json" id="individualSkillReviewData">@@BOARD:revision-individual/datos.json@@</script>
+<script id="individualSkillReviewLogic">@@BOARD:revision-individual/revision.js@@</script>
+<script id="cmpData" type="application/json">@@BOARD:comparacion/datos.json@@</script>
+<script id="cmpLogic">@@BOARD:comparacion/comparacion.js@@</script>
+<script id="moreCatalogData" type="application/json">@@BOARD:revisiones-pendientes/datos.json@@</script>
+<script id="moreCatalogLogic">@@BOARD:revisiones-pendientes/catalogo.js@@</script>
+
+<script id="capabilityMapData" type="application/json">@@BOARD:mapa-funcional/datos.json@@</script>
+<script>@@BOARD:mapa-funcional/mapa.js@@</script>
+<script id="measureLib">@@BOARD:reglas/guides.min.js@@</script>
+<script id="measureLogic">@@BOARD:reglas/reglas.js@@</script>
+<script type="application/json" id="minRouteData">@@MIN_ROUTE_POLICY@@</script>
+<script>
+@@MIN_ROUTE_SELECTOR@@
+
+</script>
+<script>@@BOARD:telemetria/telemetria.js@@</script>
+</body></html>

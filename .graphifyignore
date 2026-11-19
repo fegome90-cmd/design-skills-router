@@ -1,0 +1,14 @@
+/vendor/
+/history/
+/evidence/
+/release/
+/graphify-out/
+/decision-authoring/original/
+/map/tree_data.json
+/offline/local-ui/
+/plugin/evidence/
+/plugin/PACKAGE-HASHES.json
+/plugin/skills/design-tree/references/tree-v0.4/
+/package-lock.json
+/board/desktop-demo/package-lock.json
+/board/desktop-demo/dist/

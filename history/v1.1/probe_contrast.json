@@ -1,0 +1,172 @@
+[
+  {
+    "text": "RUTA FUNCIONAL / SIMULACIÓN SIN EJECUCIÓN",
+    "fontSize": "10px",
+    "fontWeight": "700",
+    "fg": "rgb(123, 85, 137)",
+    "bg": "rgb(255, 253, 250)",
+    "ratio": 5.9,
+    "sel": ".min-kicker",
+    "needs_4_5": true
+  },
+  {
+    "text": "La selección muestra funciones y fuentes prop",
+    "fontSize": "12px",
+    "fontWeight": "400",
+    "fg": "rgb(91, 88, 100)",
+    "bg": "rgb(255, 253, 250)",
+    "ratio": 6.84,
+    "sel": ".min-heading p",
+    "needs_4_5": true
+  },
+  {
+    "text": "Lightweight→Elección y emparejamiento tipográ",
+    "fontSize": "11px",
+    "fontWeight": "650",
+    "fg": "rgb(73, 67, 92)",
+    "bg": "rgb(255, 253, 250)",
+    "ratio": 9.23,
+    "sel": ".min-flow",
+    "needs_4_5": true
+  },
+  {
+    "text": "Revisión propuesta del nodo; no consta consul",
+    "fontSize": "11px",
+    "fontWeight": "400",
+    "fg": "rgb(88, 85, 98)",
+    "bg": "rgb(240, 238, 247)",
+    "ratio": 6.32,
+    "sel": ".min-owner-row .min-owner-note",
+    "needs_4_5": true
+  },
+  {
+    "text": "SKILL.md fijada",
+    "fontSize": "10px",
+    "fontWeight": "400",
+    "fg": "rgb(89, 68, 130)",
+    "bg": "rgb(240, 238, 247)",
+    "ratio": 7.1,
+    "sel": ".min-owner-row a",
+    "needs_4_5": true
+  },
+  {
+    "text": "G2 decide familias y emparejamientos. G3 se c",
+    "fontSize": "11px",
+    "fontWeight": "400",
+    "fg": "rgb(88, 85, 98)",
+    "bg": "rgb(247, 245, 241)",
+    "ratio": 6.67,
+    "sel": ".min-note",
+    "needs_4_5": true
+  },
+  {
+    "text": "01 · Especialista necesario",
+    "fontSize": "10px",
+    "fontWeight": "700",
+    "fg": "rgb(99, 81, 125)",
+    "bg": "rgb(240, 238, 247)",
+    "ratio": 6.09,
+    "sel": ".min-card-title",
+    "needs_4_5": true
+  },
+  {
+    "text": "Ui-ux-pro-max",
+    "fontSize": "11px",
+    "fontWeight": "700",
+    "fg": "rgb(48, 49, 70)",
+    "bg": "rgb(255, 255, 255)",
+    "ratio": 12.7,
+    "sel": ".min-support-item strong",
+    "needs_4_5": true
+  },
+  {
+    "text": "Buscar fuentes adecuadas; G2 decide.",
+    "fontSize": "10px",
+    "fontWeight": "400",
+    "fg": "rgb(114, 110, 119)",
+    "bg": "rgb(255, 255, 255)",
+    "ratio": 4.99,
+    "sel": ".min-support-item small",
+    "needs_4_5": true
+  },
+  {
+    "text": "CONSULTA · Opcional",
+    "fontSize": "9px",
+    "fontWeight": "700",
+    "fg": "rgb(89, 78, 117)",
+    "bg": "rgb(255, 255, 255)",
+    "ratio": 7.58,
+    "sel": ".min-support-item span",
+    "needs_4_5": true
+  },
+  {
+    "text": "2 consultas propuestas · 0 intervenciones que",
+    "fontSize": "10px",
+    "fontWeight": "400",
+    "fg": "rgb(125, 77, 68)",
+    "bg": "rgb(247, 245, 241)",
+    "ratio": 6.39,
+    "sel": ".min-support-warning",
+    "needs_4_5": true
+  },
+  {
+    "text": "No activado para esta función; aplicabilidad ",
+    "fontSize": "10px",
+    "fontWeight": "400",
+    "fg": "rgb(107, 100, 115)",
+    "bg": "rgb(250, 249, 246)",
+    "ratio": 5.4,
+    "sel": ".min-review-row p",
+    "needs_4_5": true
+  },
+  {
+    "text": "Pendiente de revisar",
+    "fontSize": "10px",
+    "fontWeight": "700",
+    "fg": "rgb(99, 92, 117)",
+    "bg": "rgb(250, 249, 246)",
+    "ratio": 6.01,
+    "sel": ".min-review-status",
+    "needs_4_5": true
+  },
+  {
+    "text": "CONTRATO VISUAL PROPUESTO · Los estados repre",
+    "fontSize": "9px",
+    "fontWeight": "600",
+    "fg": "rgb(115, 106, 118)",
+    "bg": "rgb(255, 253, 250)",
+    "ratio": 5.1,
+    "sel": ".min-disclaimer",
+    "needs_4_5": true
+  },
+  {
+    "text": "Fuera de la ruta mínima no significa «aprobad",
+    "fontSize": "10.5px",
+    "fontWeight": "400",
+    "fg": "rgb(106, 101, 113)",
+    "bg": "rgb(243, 240, 237)",
+    "ratio": 4.98,
+    "sel": ".min-cover-head p",
+    "needs_4_5": true
+  },
+  {
+    "text": "1 en alcance · 6 pendientes · 0 N/A justifica",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "fg": "rgb(38, 43, 63)",
+    "bg": "rgb(243, 240, 237)",
+    "ratio": 12.33,
+    "sel": "#minCoverageSummary",
+    "needs_4_5": true
+  },
+  {
+    "text": "Unidad de trabajo",
+    "fontSize": "9px",
+    "fontWeight": "700",
+    "fg": "rgb(97, 83, 106)",
+    "bg": "rgb(255, 253, 250)",
+    "ratio": 7.0,
+    "sel": ".min-settings label",
+    "needs_4_5": true
+  }
+]

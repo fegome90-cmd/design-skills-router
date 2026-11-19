@@ -1,0 +1,37 @@
+{
+  "source_sha256": "9136c45f41d8c3f0f0f896477fbb7150060114daf046d609a79b382b8ba32317",
+  "scripts_preserved": true,
+  "findings": 10,
+  "browser": [
+    {
+      "width": 320,
+      "audit_cards": 10,
+      "retained_behavior": [
+        "G5",
+        "G7"
+      ],
+      "no_horizontal_overflow": true,
+      "page_errors": []
+    },
+    {
+      "width": 390,
+      "audit_cards": 10,
+      "retained_behavior": [
+        "G5",
+        "G7"
+      ],
+      "no_horizontal_overflow": true,
+      "page_errors": []
+    },
+    {
+      "width": 1440,
+      "audit_cards": 10,
+      "retained_behavior": [
+        "G5",
+        "G7"
+      ],
+      "no_horizontal_overflow": true,
+      "page_errors": []
+    }
+  ]
+}

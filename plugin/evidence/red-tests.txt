@@ -1,0 +1,14 @@
+setUpClass (test_runner.RunnerTests) ... ERROR
+
+======================================================================
+ERROR: setUpClass (test_runner.RunnerTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 14, in setUpClass
+    raise AssertionError('MISSING_IMPLEMENTATION: runner.py does not exist yet')
+AssertionError: MISSING_IMPLEMENTATION: runner.py does not exist yet
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.001s
+
+FAILED (errors=1)

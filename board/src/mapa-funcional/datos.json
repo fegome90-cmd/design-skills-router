@@ -1,0 +1,1906 @@
+{
+  "schema": "design-router-capability-map/1.0",
+  "version": "1.0",
+  "date": "2026-11-17",
+  "status": "RESEARCH_MAP_NOT_RUNTIME_NOT_APPROVED",
+  "authority": "Proyecto/usuario/host > router G0 > G1–G7 por dominio > consulta de fuentes externas",
+  "model": "Necesidad concreta → función → nodo canónico → especialista propio → apoyo externo elegible. Una skill puede aportar varias funciones. Revisar cobertura no equivale a ejecutar todas.",
+  "counts": {
+    "skills": 47,
+    "already_in_baseline": 18,
+    "external_new": 29,
+    "functions": 28,
+    "edges": 83
+  },
+  "functions": [
+    {
+      "id": "meta",
+      "label": "Metaenrutadores externos",
+      "family": "Fuera del router",
+      "owners": [],
+      "nodes": [
+        "GOV00"
+      ],
+      "definition": "No reemplazar G0 con otro sistema de activación."
+    },
+    {
+      "id": "ui-research",
+      "label": "Investigar referencias de interfaces",
+      "family": "Investigación",
+      "owners": [
+        "G1",
+        "G5",
+        "G6"
+      ],
+      "nodes": [
+        "ART01",
+        "L01",
+        "R01"
+      ],
+      "definition": "Capturas, patrones y recorridos para resolver una pregunta concreta."
+    },
+    {
+      "id": "art-direction",
+      "label": "Dirección de arte y concepto",
+      "family": "Sistema visual",
+      "owners": [
+        "G1"
+      ],
+      "nodes": [
+        "D07",
+        "ART01",
+        "ART05"
+      ],
+      "definition": "Investigar y contrastar propuestas de identidad cuando esté autorizado."
+    },
+    {
+      "id": "brand-identity",
+      "label": "Identidad y voz de marca",
+      "family": "Sistema visual",
+      "owners": [
+        "G1"
+      ],
+      "nodes": [
+        "D01",
+        "ART01"
+      ],
+      "definition": "Conservar o documentar marca y tono, sin sustituir fuentes vigentes."
+    },
+    {
+      "id": "type-choice",
+      "label": "Elección y emparejamiento tipográfico",
+      "family": "Tipografía",
+      "owners": [
+        "G2"
+      ],
+      "nodes": [
+        "T01",
+        "T02",
+        "T06"
+      ],
+      "definition": "Familias, roles, pesos, idioma y licencia."
+    },
+    {
+      "id": "type-micro",
+      "label": "Escala y microtipografía",
+      "family": "Tipografía",
+      "owners": [
+        "G3"
+      ],
+      "nodes": [
+        "TY01",
+        "TY02",
+        "TY03"
+      ],
+      "definition": "Escalas, interlínea, longitud de línea y espaciados."
+    },
+    {
+      "id": "color-system",
+      "label": "Paleta, roles y contraste",
+      "family": "Sistema visual",
+      "owners": [
+        "G4"
+      ],
+      "nodes": [
+        "K01",
+        "K02"
+      ],
+      "definition": "Color por función y contraste medido, no presets indiscriminados."
+    },
+    {
+      "id": "layout",
+      "label": "Grillas, jerarquía y densidad",
+      "family": "Layout",
+      "owners": [
+        "G5"
+      ],
+      "nodes": [
+        "L01",
+        "LAY01"
+      ],
+      "definition": "Organización por tarea, contenido, adaptabilidad y lectura."
+    },
+    {
+      "id": "web-mobile",
+      "label": "Ergonomía web en teléfonos",
+      "family": "Layout",
+      "owners": [
+        "G5",
+        "G7"
+      ],
+      "nodes": [
+        "LAY01",
+        "MOV04"
+      ],
+      "definition": "Comportamiento web móvil; no habilita el árbol nativo S05."
+    },
+    {
+      "id": "tokens",
+      "label": "Tokens y sistema de diseño",
+      "family": "Componentes",
+      "owners": [
+        "G6"
+      ],
+      "nodes": [
+        "V01"
+      ],
+      "definition": "Arquitectura de tokens y conservación de los existentes."
+    },
+    {
+      "id": "components",
+      "label": "API de componentes y detalles",
+      "family": "Componentes",
+      "owners": [
+        "G6"
+      ],
+      "nodes": [
+        "V01",
+        "RC01",
+        "R01"
+      ],
+      "definition": "Componentes, estados, composición e integración con el stack."
+    },
+    {
+      "id": "component-lib",
+      "label": "Selección/adopción de bibliotecas",
+      "family": "Componentes",
+      "owners": [
+        "G6"
+      ],
+      "nodes": [
+        "R01",
+        "A10"
+      ],
+      "definition": "Comparar alternativas con ADOPT; no instalar por consultar catálogo."
+    },
+    {
+      "id": "variants",
+      "label": "Prototipos de alternativas",
+      "family": "Exploración",
+      "owners": [
+        "G1",
+        "G5"
+      ],
+      "nodes": [
+        "ART05"
+      ],
+      "definition": "Variantes evaluables con contenido y requisitos comparables."
+    },
+    {
+      "id": "image-fidelity",
+      "label": "Implementación fiel a captura",
+      "family": "Exploración",
+      "owners": [
+        "G5"
+      ],
+      "nodes": [
+        "LAY01",
+        "ART05"
+      ],
+      "definition": "Reproducir una referencia solicitada, con comprobación visual."
+    },
+    {
+      "id": "motion-assess",
+      "label": "Decidir si debe haber movimiento",
+      "family": "Movimiento",
+      "owners": [
+        "G7"
+      ],
+      "nodes": [
+        "M01"
+      ],
+      "definition": "Evaluar valor, alternativas sin animación y terminología."
+    },
+    {
+      "id": "motion-build",
+      "label": "Construir, reducir o coordinar movimiento",
+      "family": "Movimiento",
+      "owners": [
+        "G7"
+      ],
+      "nodes": [
+        "M03",
+        "MOV01",
+        "MOV02"
+      ],
+      "definition": "Escritura autorizada de transiciones, gestos o coreografía."
+    },
+    {
+      "id": "motion-review",
+      "label": "Auditar movimiento e interrupciones",
+      "family": "Movimiento",
+      "owners": [
+        "G7"
+      ],
+      "nodes": [
+        "MOV04",
+        "QA01"
+      ],
+      "definition": "Evaluar reduced motion, control del usuario y consistencia."
+    },
+    {
+      "id": "visual-qa",
+      "label": "Auditoría de interfaz y coherencia",
+      "family": "Validación",
+      "owners": [
+        "G1",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7"
+      ],
+      "nodes": [
+        "QA01"
+      ],
+      "definition": "Auditoría de dominios, sin asumir autoridad estética sobre especialistas."
+    },
+    {
+      "id": "accessibility",
+      "label": "Accesibilidad de interfaz",
+      "family": "Validación",
+      "owners": [
+        "G3",
+        "G5",
+        "G6",
+        "G7"
+      ],
+      "nodes": [
+        "AC01",
+        "TY03"
+      ],
+      "definition": "Criterios y pruebas por superficie y estado; no inferir conformidad."
+    },
+    {
+      "id": "performance",
+      "label": "Rendimiento de UI y animaciones",
+      "family": "Validación",
+      "owners": [
+        "G6",
+        "G7"
+      ],
+      "nodes": [
+        "MOV04",
+        "QA01"
+      ],
+      "definition": "Rendimiento medido de React o animaciones cuando corresponda."
+    },
+    {
+      "id": "stress-test",
+      "label": "Pruebas adversariales de UI",
+      "family": "Validación",
+      "owners": [
+        "G5",
+        "G6"
+      ],
+      "nodes": [
+        "LAY01",
+        "QA01"
+      ],
+      "definition": "Datos extremos y estados adversariales; fixtures aislados."
+    },
+    {
+      "id": "ux-writing",
+      "label": "Textos de interfaz",
+      "family": "Contenido",
+      "owners": [
+        "G5"
+      ],
+      "nodes": [
+        "C01",
+        "WR01"
+      ],
+      "definition": "Lenguaje funcional, mensajes, estados y recuperación."
+    },
+    {
+      "id": "docs-review",
+      "label": "Revisión de documentación",
+      "family": "Contenido",
+      "owners": [
+        "G0"
+      ],
+      "nodes": [
+        "C01",
+        "WR01"
+      ],
+      "definition": "Guías y documentación, separadas del aprendizaje del sistema."
+    },
+    {
+      "id": "faux-demo",
+      "label": "Demos ficticias y escenas de producto",
+      "family": "Exploración",
+      "owners": [
+        "G1"
+      ],
+      "nodes": [
+        "ART02"
+      ],
+      "definition": "Ilustraciones para comunicación; no evidencia de UI funcional."
+    },
+    {
+      "id": "learning",
+      "label": "Capturar correcciones aprobadas",
+      "family": "Aprendizaje",
+      "owners": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7"
+      ],
+      "nodes": [
+        "GOV00",
+        "QA01"
+      ],
+      "definition": "Solo feedback explícito y aprobación específica de reglas."
+    },
+    {
+      "id": "infra",
+      "label": "Despliegue, credenciales y costes",
+      "family": "Fuera del router",
+      "owners": [],
+      "nodes": [
+        "ENV02"
+      ],
+      "definition": "Acción de infraestructura; autorización independiente."
+    },
+    {
+      "id": "native",
+      "label": "Desarrollo nativo",
+      "family": "Fuera del router",
+      "owners": [],
+      "nodes": [
+        "S05"
+      ],
+      "definition": "Ruta nativa no desarrollada en el router web."
+    },
+    {
+      "id": "slides",
+      "label": "Documentos, slides e impresión",
+      "family": "Fuera del router",
+      "owners": [],
+      "nodes": [
+        "S06"
+      ],
+      "definition": "Ruta editorial no desarrollada en el router web."
+    }
+  ],
+  "skills": [
+    {
+      "id": "X01",
+      "name": "uizze-ui",
+      "repo": "uizze/uizze",
+      "source": {
+        "url": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/uizze-ui/SKILL.md",
+        "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+        "git_blob": "05cd0e6e01ec2c3a9a3e8678a85cd5d5385dabfc",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "EXCLUDE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Metarruteador alternativo excluido de la ejecución de diseño.",
+      "contributions": [
+        {
+          "function_id": "meta",
+          "effect": "excluir",
+          "trigger": "No activar el enrutador global de Uizze."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X02",
+      "name": "impeccable",
+      "repo": "pbakaus/impeccable",
+      "source": {
+        "url": "https://github.com/pbakaus/impeccable/blob/d41d9860b0094dcb68030657da63461212835aaa/skill/SKILL.src.md",
+        "commit": "d41d9860b0094dcb68030657da63461212835aaa",
+        "git_blob": "5f5985228eea60d46057b7b403ce4146a59adcbe",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "SPLIT",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "No ejecutar launcher, hooks ni inicialización global; consultar/ejecutar cada comando por fase autorizada.",
+      "contributions": [
+        {
+          "function_id": "art-direction",
+          "effect": "consultar",
+          "trigger": "Comando /shape bajo G1; sin init global."
+        },
+        {
+          "function_id": "type-micro",
+          "effect": "implementar",
+          "trigger": "/typeset solo con autorización y G3."
+        },
+        {
+          "function_id": "color-system",
+          "effect": "implementar",
+          "trigger": "/colorize subordinado a G4."
+        },
+        {
+          "function_id": "layout",
+          "effect": "implementar",
+          "trigger": "/layout subordinado a G5."
+        },
+        {
+          "function_id": "tokens",
+          "effect": "consultar",
+          "trigger": "/extract examinado sin sobrescribir G6."
+        },
+        {
+          "function_id": "ux-writing",
+          "effect": "consultar",
+          "trigger": "/clarify con contexto de producto confirmado."
+        },
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "/animate con permiso de edición y G7."
+        },
+        {
+          "function_id": "visual-qa",
+          "effect": "auditar",
+          "trigger": "/critique o /audit sin aplicar fixes por defecto."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X03",
+      "name": "ask-emil",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/ask-emil/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "2fe1a76a2e06e05dc12381e2d4ad6d740749e99f",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "EXCLUDE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": true,
+      "guard": "Metarruteador alternativo excluido de la ejecución de diseño.",
+      "contributions": [
+        {
+          "function_id": "meta",
+          "effect": "excluir",
+          "trigger": "No permitir router Ask Emil que suplante G0."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X04",
+      "name": "design",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/design/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "56d809dd879986f505c6ee98d69860bdeb955faf",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "EXCLUDE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Metarruteador alternativo excluido de la ejecución de diseño.",
+      "contributions": [
+        {
+          "function_id": "meta",
+          "effect": "excluir",
+          "trigger": "No activar router general design de Pro Max."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X05",
+      "name": "ui-radar",
+      "repo": "uizze/uizze",
+      "source": {
+        "url": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/ui-radar/SKILL.md",
+        "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+        "git_blob": "77de69c7ad9db38331b52d59d47b2ad15f215357",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Los ejemplos aportan evidencia, nunca sustituyen el brief; respetar derechos de capturas y marca.",
+      "contributions": [
+        {
+          "function_id": "ui-research",
+          "effect": "consultar",
+          "trigger": "Decisión visual concreta; evidencia visible, no clonación."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X06",
+      "name": "ui-ux-pro-max",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/ui-ux-pro-max/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "1dccc6b985a117a4c414db3fd3e49d1f538afcf2",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "SPLIT",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Consulta puntual por dominio; prohibido generar un design-system que sobrescriba G1–G7.",
+      "contributions": [
+        {
+          "function_id": "ui-research",
+          "effect": "consultar",
+          "trigger": "Buscar patrones con una pregunta y fuentes."
+        },
+        {
+          "function_id": "art-direction",
+          "effect": "consultar",
+          "trigger": "Solo ejemplos para G1."
+        },
+        {
+          "function_id": "type-choice",
+          "effect": "consultar",
+          "trigger": "Buscar fuentes adecuadas; G2 decide."
+        },
+        {
+          "function_id": "type-micro",
+          "effect": "consultar",
+          "trigger": "Buscar ejemplos de escala; G3 decide."
+        },
+        {
+          "function_id": "color-system",
+          "effect": "consultar",
+          "trigger": "Paletas como alternativas; G4 decide."
+        },
+        {
+          "function_id": "layout",
+          "effect": "consultar",
+          "trigger": "Patrones de distribución; G5 decide."
+        },
+        {
+          "function_id": "tokens",
+          "effect": "consultar",
+          "trigger": "Consultar sistemas, no generar archivos sin permiso."
+        },
+        {
+          "function_id": "components",
+          "effect": "consultar",
+          "trigger": "Repertorio de UI existente, API subordinada a G6."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X07",
+      "name": "deploy-to-vercel",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/deploy-to-vercel/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "f3bb68ba31294f0edf81fdb326ddc2666a24e0e0",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Infraestructura, publicación o credenciales requieren autorización independiente.",
+      "contributions": [
+        {
+          "function_id": "infra",
+          "effect": "externo",
+          "trigger": "Solo por orden independiente de publicar."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X08",
+      "name": "vercel-cli-with-tokens",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/vercel-cli-with-tokens/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "814423d0c40f56853e0f4f2f64d03a02266dadf4",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Infraestructura, publicación o credenciales requieren autorización independiente.",
+      "contributions": [
+        {
+          "function_id": "infra",
+          "effect": "externo",
+          "trigger": "Credenciales/token CLI fuera de router visual."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X09",
+      "name": "react-native-skills",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/react-native-skills/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "73401865dd7440a43c5243b107a3763e0d2f4aae",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "S05 aún bloqueada: no activa automáticamente capacidad nativa.",
+      "contributions": [
+        {
+          "function_id": "native",
+          "effect": "externo",
+          "trigger": "React Native requiere ruta S05 separada."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X10",
+      "name": "animate-expo",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/animate-expo/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "2ab54f8a9edda2cf679fc830ab7fab874320fc00",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "S05 aún bloqueada: no activa automáticamente capacidad nativa.",
+      "contributions": [
+        {
+          "function_id": "native",
+          "effect": "externo",
+          "trigger": "Expo Reanimated requiere ruta nativa."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X11",
+      "name": "write-swift",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/write-swift/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "9fdf55eaf5f490da0c5712a3fdcdfb30195c9fc0",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "S05 aún bloqueada: no activa automáticamente capacidad nativa.",
+      "contributions": [
+        {
+          "function_id": "native",
+          "effect": "externo",
+          "trigger": "Swift es una especialidad de código nativo."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X12",
+      "name": "slides",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/slides/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "52d345d1f4ab5fde70b38fdd0601ad42ef0449f1",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "S06 aún bloqueada: no activa automáticamente slides.",
+      "contributions": [
+        {
+          "function_id": "slides",
+          "effect": "externo",
+          "trigger": "Presentaciones fuera de ruta web S06."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X13",
+      "name": "frontend-design",
+      "repo": "anthropics/skills",
+      "source": {
+        "url": "https://github.com/anthropics/skills/blob/e4bb5d960d87126ff3b3a8af1a104b7db67560ba/skills/frontend-design/SKILL.md",
+        "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
+        "git_blob": "a5333457c414d20d625f307df945842c0952ecc3",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Consulta de dirección visual solo para identidad nueva o rediseño expresamente autorizado.",
+      "contributions": [
+        {
+          "function_id": "art-direction",
+          "effect": "consultar",
+          "trigger": "Estética distintiva solo si se diseña identidad o rediseño."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X14",
+      "name": "design-taste-frontend",
+      "repo": "Leonxlnx/taste-skill",
+      "source": {
+        "url": "https://github.com/Leonxlnx/taste-skill/blob/f6b76575f949707b4e3c37cd86cb44b0b98643e8/skills/taste-skill/SKILL.md",
+        "commit": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
+        "git_blob": "7dc7a9fed097364515581a28ec45ef955620eede",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Recetas prescriptivas solo para landing/marketing; sin imposición sobre UI operativa.",
+      "contributions": [
+        {
+          "function_id": "art-direction",
+          "effect": "prototipar",
+          "trigger": "Landing/marketing con brief y cambios permitidos."
+        },
+        {
+          "function_id": "layout",
+          "effect": "implementar",
+          "trigger": "Solo si sus reglas no contradicen identidad y G5."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X15",
+      "name": "hallmark",
+      "repo": "Nutlope/hallmark",
+      "source": {
+        "url": "https://github.com/Nutlope/hallmark/blob/04977e15f3dfd6ee4b74c887dac3eb52665d6c92/skills/hallmark/SKILL.md",
+        "commit": "04977e15f3dfd6ee4b74c887dac3eb52665d6c92",
+        "git_blob": "d27771723e827baa5e2b34d01492783a42df9174",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Hallmark en existente requiere mención explícita; no tema aleatorio sobre branding cerrado.",
+      "contributions": [
+        {
+          "function_id": "art-direction",
+          "effect": "prototipar",
+          "trigger": "Greenfield web o invocación explícita en existente."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X16",
+      "name": "ui-design",
+      "repo": "uizze/uizze",
+      "source": {
+        "url": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/ui-design/SKILL.md",
+        "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+        "git_blob": "32c51b8d03e8bae52c0094b6ae04b2b5f45a4413",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "SPLIT",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "UI Design tiene workflows propios. Consultar playbook acotado, no activar segunda orquestación ni sustituir tokens.",
+      "contributions": [
+        {
+          "function_id": "ui-research",
+          "effect": "consultar",
+          "trigger": "Consultar patrones contextualizados."
+        },
+        {
+          "function_id": "type-choice",
+          "effect": "consultar",
+          "trigger": "Referencias de tipografía con decisión G2."
+        },
+        {
+          "function_id": "color-system",
+          "effect": "consultar",
+          "trigger": "Referencias de paleta sin sustituir G4."
+        },
+        {
+          "function_id": "layout",
+          "effect": "implementar",
+          "trigger": "Flujo UI Design acotado al layout con G5."
+        },
+        {
+          "function_id": "components",
+          "effect": "implementar",
+          "trigger": "Componentes solo si stack y permisos confirmados."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X17",
+      "name": "image-to-ui",
+      "repo": "uizze/uizze",
+      "source": {
+        "url": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/image-to-ui/SKILL.md",
+        "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+        "git_blob": "6d1ab9dd98b9f0b228911b6bd91d61fd529c43ab",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Comparación visual con fuente y activos autorizados; no convertir en rediseño.",
+      "contributions": [
+        {
+          "function_id": "image-fidelity",
+          "effect": "implementar",
+          "trigger": "Captura con objetivo 1:1 y comparación renderizada."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X18",
+      "name": "brand",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/brand/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "3eddf309084e6c4493fa19a6b31e755703ba5e86",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Brand consulta identidad y voz; no modificar marca autorizada por regla externa.",
+      "contributions": [
+        {
+          "function_id": "brand-identity",
+          "effect": "consultar",
+          "trigger": "Identidad visual y voz; marca existente tiene precedencia."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X19",
+      "name": "banner-design",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/banner-design/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "79fa5ee1884ce1b9f76627a1bea073d3dd67ee7b",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "SPLIT",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Hero web puede evaluarse en ART02; formatos de banner/print deben usar ruta especializada, hoy bloqueada.",
+      "contributions": [
+        {
+          "function_id": "art-direction",
+          "effect": "prototipar",
+          "trigger": "Hero web solicitado y autorizado."
+        },
+        {
+          "function_id": "slides",
+          "effect": "externo",
+          "trigger": "Piezas impresas/documentales fuera de S06."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X20",
+      "name": "prototype",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/prototype/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "56a648d217a8665f2acdf9d6f6a21bbfb5a325f3",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": true,
+      "guard": "Deshabilitada invocación implícita; variantes con mismo contenido y escritura autorizada.",
+      "contributions": [
+        {
+          "function_id": "variants",
+          "effect": "prototipar",
+          "trigger": "Invocación explícita y espacio de variantes autorizado."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X21",
+      "name": "mobile-native",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/mobile-native/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "b97d73d9bd5f6b283b03588b852b7a2ad3764673",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Diseño web móvil válido; S05 de React Native/Swift continúa bloqueado.",
+      "contributions": [
+        {
+          "function_id": "web-mobile",
+          "effect": "implementar",
+          "trigger": "Sitio web en móvil; corregir viewport, tap y safe area, no S05."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X22",
+      "name": "composition-patterns",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/composition-patterns/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "d07025bf943345bc1cf15eb923594f889ff881f0",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Composition Patterns solo en React y para API de componentes en alcance.",
+      "contributions": [
+        {
+          "function_id": "components",
+          "effect": "consultar",
+          "trigger": "React composition y APIs de componentes."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X23",
+      "name": "design-system",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/design-system/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "804e553325fedc49dd7e75c30c6cffeebaa6650b",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Design System de Pro Max usa otra convención de capas; G6 decide arquitectura y compatibilidad DTCG local.",
+      "contributions": [
+        {
+          "function_id": "tokens",
+          "effect": "consultar",
+          "trigger": "Comparar convención con tokens vigentes; G6 decide."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X24",
+      "name": "ui-styling",
+      "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "source": {
+        "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/e59ff376a41f7ca47b7541ad5c116495cbade3ee/.claude/skills/ui-styling/SKILL.md",
+        "commit": "e59ff376a41f7ca47b7541ad5c116495cbade3ee",
+        "git_blob": "b5a9acb9643e10b3629c0b9cac7e616c1080b597",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "No sustituir Base UI u otro stack existente por shadcn/Radix/Tailwind automáticamente.",
+      "contributions": [
+        {
+          "function_id": "components",
+          "effect": "implementar",
+          "trigger": "Solo si shadcn/Radix/Tailwind ya autorizados; no migración."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X25",
+      "name": "pick-ui-library",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/pick-ui-library/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "fca76b8792f0b2e72623a25ffb182c2c46d3fbc0",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": true,
+      "guard": "Invocación explícita; propuesta de librería no equivale a instalarla.",
+      "contributions": [
+        {
+          "function_id": "component-lib",
+          "effect": "consultar",
+          "trigger": "Invocación explícita; evaluar candidatos en A10/ADOPT."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X26",
+      "name": "ask-sonner",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/ask-sonner/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "368752157d59c75e7374f84406e26755f35ac8d8",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Ask Sonner después de decidir Sonner por contrato; no equivale a permiso para instalarlo.",
+      "contributions": [
+        {
+          "function_id": "components",
+          "effect": "consultar",
+          "trigger": "Sonner previamente seleccionado: API de toasts; no instalación implícita."
+        },
+        {
+          "function_id": "components",
+          "effect": "implementar",
+          "trigger": "Integrar Sonner solo si stack y escritura están autorizados."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X27",
+      "name": "stageshow",
+      "repo": "benjitaylor/skills",
+      "source": {
+        "url": "https://github.com/benjitaylor/skills/blob/299140fafd08df55a9c234e610c3f64af3f45531/stageshow/SKILL.md",
+        "commit": "299140fafd08df55a9c234e610c3f64af3f45531",
+        "git_blob": "5b94faf312984346e98ffbc092c17f108ea494d5",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Demostración ficticia siempre identificada como ficticia y nunca usada como QA funcional.",
+      "contributions": [
+        {
+          "function_id": "faux-demo",
+          "effect": "prototipar",
+          "trigger": "Escena ficticia etiquetada para comunicación; no producto real."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X28",
+      "name": "anti-ui-slop",
+      "repo": "uizze/uizze",
+      "source": {
+        "url": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/anti-ui-slop/SKILL.md",
+        "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+        "git_blob": "81761062c1e482ddc7ea30e4f4e250ef67b73c0e",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Control visual auxiliar, sin reemplazar criterios de especialistas.",
+      "contributions": [
+        {
+          "function_id": "visual-qa",
+          "effect": "auditar",
+          "trigger": "Auditar contra contexto sin imponer estética de proveedor."
+        },
+        {
+          "function_id": "ui-research",
+          "effect": "consultar",
+          "trigger": "Comparadores reales de Uizze solo si aclaran defecto."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X29",
+      "name": "make-interfaces-feel-better",
+      "repo": "jakubkrehel/make-interfaces-feel-better",
+      "source": {
+        "url": "https://github.com/jakubkrehel/make-interfaces-feel-better/blob/1a2aa9695487dc6d2a59af28e34db9b1490ab181/skills/make-interfaces-feel-better/SKILL.md",
+        "commit": "1a2aa9695487dc6d2a59af28e34db9b1490ab181",
+        "git_blob": "e47b87b369396655fa6bea7240c17f108ea494d5",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "SPLIT",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Jakub reúne tipografía, superficies, iconos y motion; la propiedad decisoria sigue en cada G especialista.",
+      "contributions": [
+        {
+          "function_id": "type-micro",
+          "effect": "auditar",
+          "trigger": "Revisar microdetalles de texto bajo G3."
+        },
+        {
+          "function_id": "components",
+          "effect": "auditar",
+          "trigger": "Revisar estados y geometría bajo G6."
+        },
+        {
+          "function_id": "components",
+          "effect": "implementar",
+          "trigger": "Pulido de estados/detalles solo con edición autorizada."
+        },
+        {
+          "function_id": "motion-review",
+          "effect": "auditar",
+          "trigger": "Revisar microinteracciones bajo G7."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X30",
+      "name": "web-design-guidelines",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/web-design-guidelines/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "ceae92ab319216a68274168fba9b63b998b65997",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Capturar reglas efectivas, fecha y hash; fuente actual no es norma inmutable.",
+      "contributions": [
+        {
+          "function_id": "visual-qa",
+          "effect": "auditar",
+          "trigger": "Reglas web de fecha y hash fijados."
+        },
+        {
+          "function_id": "accessibility",
+          "effect": "auditar",
+          "trigger": "Solo criterios aplicables y verificados."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X31",
+      "name": "react-best-practices",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/react-best-practices/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "237988de4a66dd8a71d30a2c24ebe1a86b58d04e",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "React Best Practices solo optimiza código React/Next; no gobierna dirección estética ni exige Next.js.",
+      "contributions": [
+        {
+          "function_id": "performance",
+          "effect": "auditar",
+          "trigger": "React/Next en código cuando forma parte del encargo."
+        },
+        {
+          "function_id": "performance",
+          "effect": "implementar",
+          "trigger": "Optimizar React/Next solo con cambio de código autorizado."
+        },
+        {
+          "function_id": "components",
+          "effect": "consultar",
+          "trigger": "Patrones de composición de código React cuando aplican."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X32",
+      "name": "react-view-transitions",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/react-view-transitions/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "665db73fe55b2504d1123857f14606472cdefd0a",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "React View Transitions solo con soporte y permiso de modificación.",
+      "contributions": [
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "View Transition API en React compatible y con permiso."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X33",
+      "name": "vercel-optimize",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/vercel-optimize/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "c8a6d6d7075b2cc3f7921da89de86e6926f78985",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "DEFER",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Infraestructura, publicación o credenciales requieren autorización independiente.",
+      "contributions": [
+        {
+          "function_id": "infra",
+          "effect": "externo",
+          "trigger": "Coste/rendimiento Vercel fuera del router visual."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X34",
+      "name": "find-animation-opportunities",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/find-animation-opportunities/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "8a72a1931e82d21ae24cd00834f4f0aaebf58a60",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Find Animation Opportunities es exploración previa y no modifica código; no colocarlo como test de aceptación.",
+      "contributions": [
+        {
+          "function_id": "motion-assess",
+          "effect": "analizar",
+          "trigger": "Buscar oportunidades sin tocar código."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X35",
+      "name": "remove-animations",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/remove-animations/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "ccd6070c53575a9e96995de805eee9ad7d81bc58",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Remove Animations edita código, no se ejecuta desde auditoría solo lectura.",
+      "contributions": [
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "Retirar movimiento tras aprobación; no auditoría read-only."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X36",
+      "name": "animate",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/animate/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "69338805e0ea1c77d6f4c1987d516f46b1657819",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Animate construye transiciones. Condicionar a M01 afirmativo, intervención autorizada y alternativas reduced-motion.",
+      "contributions": [
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "Construir movimiento justificado por M01."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X37",
+      "name": "review-animations",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/review-animations/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "70bb73c016d0dafc28c03272a205cd97ece9f06d",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": true,
+      "guard": "Invocación explícita; evidencia de comportamiento antes de veredicto.",
+      "contributions": [
+        {
+          "function_id": "motion-review",
+          "effect": "auditar",
+          "trigger": "Invocación explícita para revisión de animaciones."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X38",
+      "name": "improve-animations",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/improve-animations/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "fb85fcc8c1707010ac0c64250d8a56ed0a68fe2d",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Read-only. Un plan no es permiso para aplicar los cambios.",
+      "contributions": [
+        {
+          "function_id": "motion-review",
+          "effect": "auditar",
+          "trigger": "Auditoría y plan read-only, sin implementar."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X39",
+      "name": "animation-performance",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/animation-performance/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "c7dd441dde8d597c877e851ed9f9601249351591",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Diagnóstico de jank con métricas si las hay; no inferir FPS de recetas.",
+      "contributions": [
+        {
+          "function_id": "performance",
+          "effect": "auditar",
+          "trigger": "Métricas de animación y jank observables."
+        },
+        {
+          "function_id": "motion-review",
+          "effect": "auditar",
+          "trigger": "Revisar presupuestos de frame reales."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X40",
+      "name": "animation-vocabulary",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/animation-vocabulary/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "e976138ced9ba6e9ecc3d65236c9ec24b753d9c0",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Animation Vocabulary solo traduce términos; es referencia consultiva, no prueba de QA.",
+      "contributions": [
+        {
+          "function_id": "motion-assess",
+          "effect": "consultar",
+          "trigger": "Identificar términos correctos antes de planificar."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X41",
+      "name": "choreograph",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/choreograph/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "965f7b1ee991adbbc301401cf2f6f6890b247572",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Choreograph coordina movimientos y puede cambiar implementación; requiere gate de escritura.",
+      "contributions": [
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "Coreografía de múltiples elementos con permiso."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X42",
+      "name": "gestures",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/gestures/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "71fb5af14cf57ce9b052bfbf22dad8e4c71e3ac1",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Gestures construye drag/swipe/hold; no disparar como validación read-only.",
+      "contributions": [
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "Gestos drag/swipe/sheet con permiso y stack."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X43",
+      "name": "apple-design",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/apple-design/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "97ec82d4ef630ff7f6f2fd283dc04702a63fcea4",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Apple Design aplica al navegador en esta ruta; tipografía dirigida por G3.",
+      "contributions": [
+        {
+          "function_id": "web-mobile",
+          "effect": "consultar",
+          "trigger": "Principios Apple aplicados a la web, no ruta nativa."
+        },
+        {
+          "function_id": "motion-assess",
+          "effect": "consultar",
+          "trigger": "Comportamiento físico e interrupción web."
+        },
+        {
+          "function_id": "type-micro",
+          "effect": "consultar",
+          "trigger": "Optical sizing/tracking: la decisión sigue en G3."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X44",
+      "name": "emil-design-eng",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/emil-design-eng/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "5155a4bf33e99028645dbdad4c049a3d209b1f21",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "KEEP",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Emil Design Eng es respaldo cuando no existe skill de motion más específica, no agente rector.",
+      "contributions": [
+        {
+          "function_id": "components",
+          "effect": "consultar",
+          "trigger": "Detalle de interacción como referencia, sin sustituir G6."
+        },
+        {
+          "function_id": "components",
+          "effect": "implementar",
+          "trigger": "Mejoras de interacción solo con permiso de escritura."
+        },
+        {
+          "function_id": "motion-build",
+          "effect": "implementar",
+          "trigger": "Pulir movimiento solo si M01 aprobó su pertinencia."
+        },
+        {
+          "function_id": "motion-review",
+          "effect": "auditar",
+          "trigger": "Polish y movimiento si no existe una guía más específica."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X45",
+      "name": "break-ui",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/break-ui/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "52be42ffb02f252e889b8ac3a45b97d9f7a0c36c",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": true,
+      "requires_explicit_invocation": false,
+      "guard": "Probar adversarialmente sin contaminación de producción; toggle solo en sandbox autorizado.",
+      "contributions": [
+        {
+          "function_id": "stress-test",
+          "effect": "analizar",
+          "trigger": "Detectar fallos con datos extremos sin modificar producción."
+        },
+        {
+          "function_id": "stress-test",
+          "effect": "prototipar",
+          "trigger": "Crear fixture/toggle solo en sandbox autorizado."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X46",
+      "name": "learn-taste",
+      "repo": "emilkowalski/skills",
+      "source": {
+        "url": "https://github.com/emilkowalski/skills/blob/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c/skills/learn-taste/SKILL.md",
+        "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
+        "git_blob": "9ea9da36bf557e063723df8641ce6b56594170d4",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "REFINE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": true,
+      "guard": "Invocación explícita y aprobación humana de cada regla antes de editar DESIGN.md o skills.",
+      "contributions": [
+        {
+          "function_id": "learning",
+          "effect": "aprender",
+          "trigger": "Solo correcciones reales, invocación expresa y aprobación de diff."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    },
+    {
+      "id": "X47",
+      "name": "writing-guidelines",
+      "repo": "vercel-labs/agent-skills",
+      "source": {
+        "url": "https://github.com/vercel-labs/agent-skills/blob/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills/writing-guidelines/SKILL.md",
+        "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+        "git_blob": "63facf310252a990d154bed12b3dcdd295ba771a",
+        "license_review": "Pendiente de revisión integral de assets/scripts y distribución"
+      },
+      "audit_action": "MOVE",
+      "already_in_baseline": false,
+      "requires_explicit_invocation": false,
+      "guard": "Docs/prosa no son memoria ni nuevas preferencias del usuario.",
+      "contributions": [
+        {
+          "function_id": "docs-review",
+          "effect": "auditar",
+          "trigger": "Guía de documentación; no aprendizaje automático."
+        },
+        {
+          "function_id": "ux-writing",
+          "effect": "auditar",
+          "trigger": "Solo revisión del texto UI dentro de WR01."
+        }
+      ],
+      "status": "MAPEADO_COMO_HIPOTESIS_NO_APROBADO"
+    }
+  ],
+  "routes": [
+    {
+      "id": "solo-fuente",
+      "name": "Elegir fuente",
+      "request": "Cambiar únicamente la familia tipográfica",
+      "tasks": [
+        "Respetar identidad y tipografía vigente",
+        "Consultar G2 para roles, glifos y licencias",
+        "Comparar muestras de texto real"
+      ],
+      "functions": [
+        "type-choice"
+      ],
+      "owners": [
+        "G2"
+      ],
+      "stop": "G3, color y motion permanecen fuera salvo un problema de escala o accesibilidad detectado."
+    },
+    {
+      "id": "solo-micro",
+      "name": "Interlineado",
+      "request": "Corregir el interlineado sin cambiar la familia",
+      "tasks": [
+        "Conservar fuente existente",
+        "Consultar G3 sobre interlínea, tracking y medida",
+        "Comprobar el contenido real"
+      ],
+      "functions": [
+        "type-micro"
+      ],
+      "owners": [
+        "G3"
+      ],
+      "stop": "No activar G2 para buscar otra tipografía si la familia ya está decidida."
+    },
+    {
+      "id": "tipografia",
+      "name": "Tipografía",
+      "request": "Corregir tipografía de una pantalla existente",
+      "tasks": [
+        "Conservar fuente e identidad vigentes",
+        "Elegir/validar familia y roles",
+        "Revisar escala y microtipo",
+        "Verificar texto real y tamaños"
+      ],
+      "functions": [
+        "type-choice",
+        "type-micro",
+        "accessibility"
+      ],
+      "owners": [
+        "G2",
+        "G3"
+      ],
+      "stop": "No activar arte, motion, tokens o deploy sin necesidad demostrada."
+    },
+    {
+      "id": "color",
+      "name": "Color",
+      "request": "Corregir contrastes y semántica de una paleta",
+      "tasks": [
+        "Usar colores existentes",
+        "Revisar función y pares reales",
+        "Verificar contraste aplicable"
+      ],
+      "functions": [
+        "color-system",
+        "accessibility"
+      ],
+      "owners": [
+        "G4"
+      ],
+      "stop": "No sustituir la identidad ni activar tipografía si no hay un problema asociado."
+    },
+    {
+      "id": "componentes",
+      "name": "Componentes",
+      "request": "Elegir un componente de interfaz",
+      "tasks": [
+        "Precisar requisito atómico",
+        "Revisar componentes nativos o existentes",
+        "Comparar alternativas",
+        "Aplicar ADOPT y pruebas"
+      ],
+      "functions": [
+        "components",
+        "component-lib",
+        "tokens",
+        "accessibility"
+      ],
+      "owners": [
+        "G6"
+      ],
+      "stop": "La consulta no instala dependencias; el stack vigente prevalece."
+    },
+    {
+      "id": "movimiento",
+      "name": "Movimiento",
+      "request": "Agregar o mejorar un gesto o transición",
+      "tasks": [
+        "Decidir si hace falta movimiento",
+        "Seleccionar técnica",
+        "Implementar solo si autorizado",
+        "Evaluar reduced motion e interrupción"
+      ],
+      "functions": [
+        "motion-assess",
+        "motion-build",
+        "motion-review",
+        "performance"
+      ],
+      "owners": [
+        "G7"
+      ],
+      "stop": "Una auditoría no autoriza animate/remove-animations."
+    },
+    {
+      "id": "auditoria",
+      "name": "Auditoría",
+      "request": "Auditar la pantalla sin modificar código",
+      "tasks": [
+        "Reconocer superficie y límites",
+        "Consultar criterios por dominios afectados",
+        "Pruebas read-only",
+        "Reportar defectos y no verificado"
+      ],
+      "functions": [
+        "visual-qa",
+        "accessibility",
+        "stress-test",
+        "motion-review"
+      ],
+      "owners": [
+        "G0",
+        "especialista del dominio"
+      ],
+      "stop": "Prohibido convertir hallazgo en implementación automática."
+    },
+    {
+      "id": "referencias",
+      "name": "Referencias",
+      "request": "Buscar inspiración para un flujo de trabajo",
+      "tasks": [
+        "Precisar la pregunta",
+        "Buscar ejemplos reales",
+        "Inspeccionar capturas",
+        "Registrar qué decisión informan"
+      ],
+      "functions": [
+        "ui-research",
+        "art-direction"
+      ],
+      "owners": [
+        "G1",
+        "G5 según pregunta"
+      ],
+      "stop": "Las capturas no son identidad aprobada ni autorización para copiarlas."
+    }
+  ],
+  "owners": {
+    "G0": {
+      "name": "design-process-orchestrator",
+      "what": "Selecciona el modo de trabajo, establece permisos y dependencias y conserva la autoridad de las fuentes del proyecto.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "da3b575b0bbaed6ab76c67e46b301f420abacaf7"
+    },
+    "G1": {
+      "name": "design-art-direction",
+      "what": "Define concepto, arquetipo estético y criterios visuales de la marca; las fuentes externas no deciden su identidad.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "c84053a1d89be72d58fdee2a69ce6b6430a5cc11"
+    },
+    "G2": {
+      "name": "typography-selection-pairing",
+      "what": "Decide familias tipográficas por personalidad visual y legibilidad funcional.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-selection-pairing/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "6461b053839ba20842b49841ccdcd41afdf442c2"
+    },
+    "G3": {
+      "name": "typography-scales-microtype",
+      "what": "Gobierna tamaños, interlineado, medida, tracking y resistencia del contenido a ajustes.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-scales-microtype/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "544b6c429669a33992c6d9d28f87eb0a232b983e"
+    },
+    "G4": {
+      "name": "color-theory-palette",
+      "what": "Gobierna paleta, rampas, pares de contraste y semántica cromática.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/color-theory-palette/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "4a944a9a15f3fe5abfab3b5f16249d8d574ce3b2"
+    },
+    "G5": {
+      "name": "layout-grid-hierarchy",
+      "what": "Gobierna composición espacial, jerarquía, agrupación y adaptación a dispositivos.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/layout-grid-hierarchy/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "9644ac9e75d9cc7a6599de5fcf5e8b3ba4d3dfc1"
+    },
+    "G6": {
+      "name": "design-tokens-components",
+      "what": "Gobierna contratos de componentes, arquitectura de tokens y evaluación de dependencias.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-tokens-components/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "11869f3248e07197bc81c873fddaac9c114b017b"
+    },
+    "G7": {
+      "name": "ui-motion-and-handoff",
+      "what": "Gobierna si el movimiento se justifica, cómo funciona, sus estados y reduced motion.",
+      "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/ui-motion-and-handoff/SKILL.md",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "9ef4f5595eeaaa76d21718686450484cc284ba14"
+    }
+  },
+  "mapped_baseline_support": {
+    "type-choice": [
+      "jakubkrehel/skills/better-typography"
+    ],
+    "type-micro": [
+      "jakubkrehel/skills/better-typography"
+    ],
+    "color-system": [
+      "jakubkrehel/skills/better-colors"
+    ],
+    "layout": [
+      "jakubkrehel/skills/better-layout"
+    ],
+    "tokens": [
+      "jakubkrehel/skills/better-ui"
+    ],
+    "components": [
+      "jakubkrehel/skills/better-ui"
+    ],
+    "accessibility": [
+      "jakubkrehel/skills/better-accessibility"
+    ],
+    "ux-writing": [
+      "jakubkrehel/skills/better-writing"
+    ],
+    "visual-qa": [
+      "jakubkrehel/skills/better-interface"
+    ]
+  },
+  "notes": [
+    "Una relación es hipótesis de routing, no invocación del host.",
+    "La fase de diseño no fija por sí sola qué skills ejecutar.",
+    "Skills con varios roles se invocan por subfunción y owner contextual.",
+    "No modificar tree-v0.4 ni el plugin publicado por este mapa."
+  ]
+}

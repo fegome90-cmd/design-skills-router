@@ -1,0 +1,15 @@
+/* Rulers and measurements: an on-demand layer that never blocks the board outside its 20px edges.
+   Edges use data attributes: board classes such as .top already carry layout rules. */
+.measure-layer{--ruler:20px;position:fixed;inset:0;z-index:80;pointer-events:none}
+.measure-layer[hidden]{display:none!important}
+.measure-ruler{position:absolute;pointer-events:auto;background:#fffdfa;box-shadow:0 0 0 1px #dfdad2}
+.measure-ruler[data-edge="top"]{left:0;right:0;top:0;height:var(--ruler)}
+.measure-ruler[data-edge="left"]{top:0;bottom:0;left:0;width:var(--ruler)}
+.measure-ruler[data-edge="bottom"]{left:0;right:0;bottom:0;height:var(--ruler)}
+.measure-ruler[data-edge="right"]{top:0;bottom:0;right:0;width:var(--ruler)}
+.measure-corner{position:absolute;width:var(--ruler);height:var(--ruler);display:grid;place-items:center;background:#f4f1eb;box-shadow:0 0 0 1px #dfdad2;font:600 var(--text-2xs)/var(--leading-tight) var(--mono);color:#575c72;pointer-events:auto;z-index:5}
+.measure-corner[data-corner="tl"]{top:0;left:0}.measure-corner[data-corner="tr"]{top:0;right:0}.measure-corner[data-corner="bl"]{bottom:0;left:0}.measure-corner[data-corner="br"]{bottom:0;right:0}
+.measure-box{position:fixed;outline:1px solid #4057bd;background:#4057bd14;pointer-events:none}
+.measure-tip{position:fixed;padding:4px 7px;border-radius:6px;background:#242b3d;color:#fff;font:500 var(--text-2xs)/var(--leading-ui) var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none;box-shadow:0 2px 8px #2c305433}
+.measure-tip span{color:#c9ccdf}
+#measureToggle[aria-pressed="true"]{background:#e9e9f7;color:#384486;border-color:#b6b9de}

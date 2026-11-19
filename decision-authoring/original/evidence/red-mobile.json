@@ -1,0 +1,20 @@
+{
+  "mode": "set_content supplied HTML; file URL blocked by administrator; no policy change",
+  "results": [
+    {
+      "width": 320,
+      "scroll_width": 456,
+      "overflow": true
+    },
+    {
+      "width": 390,
+      "scroll_width": 456,
+      "overflow": true
+    },
+    {
+      "width": 1440,
+      "scroll_width": 1440,
+      "overflow": false
+    }
+  ]
+}

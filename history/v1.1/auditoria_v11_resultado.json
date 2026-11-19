@@ -1,0 +1,123 @@
+{
+  "artifact": "Design Skills Router — selección mínima HTML v1.1",
+  "source_sha256": "9136c45f41d8c3f0f0f896477fbb7150060114daf046d609a79b382b8ba32317",
+  "audit_status": "NOT_APPROVED_FOR_RUNTIME",
+  "scope": "Auditoría externa solo lectura. HTML y plugin publicados no modificados.",
+  "observations": {
+    "original_smoke_tests": "3/3 PASS",
+    "adversarial_tests": "5/5 FAIL (fallos esperados y reproducidos)",
+    "viewport_checks": "320, 390, 768, 1440 px; sin overflow horizontal en documento/selector",
+    "text_contrast_samples": "17/17 muestras >= 4.5:1; no certificación WCAG",
+    "zip_sha256": "todos los 7 ficheros declarados corresponden a manifest",
+    "direct_file_url": "BLOCKED_BY_ADMINISTRATOR in test environment"
+  },
+  "findings": [
+    {
+      "id": "SEM-01",
+      "priority": "P1",
+      "title": "Auditoría focalizada pierde el dominio seleccionado",
+      "actual": "Auditoría → Solo función → G2: el selector muestra G2, pero los especialistas propuestos quedan vacíos ([])",
+      "expected": "Al elegir un dominio de auditoría, derivar la función de evaluación al especialista de ese dominio o mantener un bloqueo visible y justificado.",
+      "evidence": "probe_negative.json#audit_function_G2",
+      "area": "resolveOwner() · ownersSelected() · renderDomain()",
+      "fix": "Usar un dominio de auditoría explícito y resolver sus capacidades; no usar el owner predeterminado de una función genérica."
+    },
+    {
+      "id": "SEM-02",
+      "priority": "P1",
+      "title": "El escenario de auditoría activa un especialista no solicitado",
+      "actual": "Auditoría → Todas las funciones → G5: resultado [G5, G7]; con G2 el resultado es [G2, G7].",
+      "expected": "Un ámbito focalizado en G5 o G2 no debe arrastrar automáticamente G7 por una subfunción genérica de motion-review.",
+      "evidence": "evidencia_A01_auditoria_G5_G7.png",
+      "area": "functionsSelected() · resolveOwner() · ownersSelected()",
+      "fix": "Filtrar funciones por el dominio elegido antes de resolver los owners; separar auditoría global de auditoría focalizada."
+    },
+    {
+      "id": "STATE-03",
+      "priority": "P1",
+      "title": "La exportación conserva N/A inválidos sin declarar invalidez",
+      "actual": "Se puede exportar G4 como not_applicable sin razón, o el owner requerido como not_applicable con contradicción, sin estado validation.",
+      "expected": "Bloquear exportación como registro listo o exportar borrador con validación formal e identificación de conflictos.",
+      "evidence": "probe_negative.json#audit_export_conflict",
+      "area": "checkReview() · renderCoverage() · exportSelection()",
+      "fix": "Incorporar validateSelection() pura que produzca errores, y separar borrador de registro válido."
+    },
+    {
+      "id": "TRACE-04",
+      "priority": "P1",
+      "title": "El expediente omite la selección explícita de dominio",
+      "actual": "selected_domain no se incluye; en una auditoría focalizada que no resuelve owner, la elección de G2 se pierde.",
+      "expected": "Registrar dominio, contexto de aplicación, versión de política y estado de validación independientemente de proposed_owners.",
+      "evidence": "probe_negative.json#audit_export_conflict",
+      "area": "exportSelection()",
+      "fix": "Agregar selected_domain y policy_version/hash al contrato de exportación; probar serialización y readback."
+    },
+    {
+      "id": "UX-05",
+      "priority": "P1",
+      "title": "Se pierde el foco del teclado al cambiar la aplicabilidad",
+      "actual": "Al modificar un select o justificación, renderCoverage() reemplaza toda la grilla; document.activeElement pasa a BODY.",
+      "expected": "Conservar foco y cursor en el control correspondiente, y anunciar de forma no intrusiva la actualización.",
+      "evidence": "probe_a11y.json",
+      "area": "renderCoverage() · listener change de minCoverage",
+      "fix": "Actualizar únicamente la fila afectada o restaurar foco por identificador estable y posición de selección."
+    },
+    {
+      "id": "MODE-06",
+      "priority": "P2",
+      "title": "Modo de G0 inferido por función, no por contexto de proyecto",
+      "actual": "El perfil de «elegir fuente» siempre anuncia Lightweight; otros perfiles Subgraph sin identificar greenfield, fuentes existentes o permiso.",
+      "expected": "Marcar modo ilustrativo o solicitar contexto pertinente antes de proponer modo real; G0 decide según intención y trabajo.",
+      "evidence": "design-router-seleccion-minima-v1.1-modelo.json#profiles",
+      "area": "profile() · policy.profiles",
+      "fix": "Separar necesidad funcional y modo; inferencia de modo solo desde hechos con evidencia."
+    },
+    {
+      "id": "VIS-07",
+      "priority": "P2",
+      "title": "Los primeros diez apoyos ocultan intervenciones de escritura",
+      "actual": "El renderer ordena todas las consultas antes de las escrituras y corta all.slice(0,10): componentes oculta 5 intervenciones, movimiento oculta 8, auditoría oculta 1.",
+      "expected": "Mostrar apoyos agrupados por función y efecto o ofrecer un contador con expansión sin esconder el tipo de intervención.",
+      "evidence": "min_route_v11.js:L48-L56",
+      "area": "renderMain() · all.slice(0,10)",
+      "fix": "No truncar por orden de inventario sin un criterio; listar efectos por separado y permitir expandir."
+    },
+    {
+      "id": "POLICY-08",
+      "priority": "P2",
+      "title": "La simulación de sandbox aparece en modo de auditoría read-only",
+      "actual": "minPermit permite sandbox aunque el perfil vigente es «Audit · read-only». No se ejecuta escritura, pero el relato visual es inconsistente.",
+      "expected": "Cuando mode=Audit, desactivar la opción de sandbox y conservar permisos read-only; registrar la causa.",
+      "evidence": "probe_negative.json#audit_scenario_G5_sandbox",
+      "area": "minPermit · profile()",
+      "fix": "Hacer el permiso de simulación dependiente de modo; nunca usarlo como autorización real."
+    },
+    {
+      "id": "MAINT-09",
+      "priority": "P2",
+      "title": "El ZIP no incluye fuentes de construcción editables",
+      "actual": "El paquete integra el HTML compilado y test, pero no incluye build_min_route_v11.py, min_route_v11.js ni min_route_v11.css.",
+      "expected": "Conservar fuente, comando de build y hashes para reproducir una versión posterior sin editar manualmente el HTML monolítico.",
+      "evidence": "unzip -l design-router-seleccion-minima-v1.1.zip",
+      "area": "Empaquetado y trazabilidad",
+      "fix": "Incluir sources/ y prueba de build determinista en el próximo release de pizarra."
+    },
+    {
+      "id": "A11Y-10",
+      "priority": "P2",
+      "title": "Lectura en pantallas pequeñas requiere evaluación específica",
+      "actual": "Textos informativos de 9–11 CSS px; el check de ancho a 320 px no verifica por sí solo zoom 200%, reflow ni lector de pantalla.",
+      "expected": "Evaluar legibilidad y escalado real, foco, recorrido por teclado y tecnologías asistivas con contenidos largos.",
+      "evidence": "probe_contrast.json + probe_a11y.json",
+      "area": "min_route_v11.css",
+      "fix": "Revisar escala de texto y ejecutar pruebas de 200% zoom, reflow y teclado completo; no afirmar conformidad por solo contraste."
+    }
+  ],
+  "limitations": [
+    "Prueba de accesibilidad asistiva y zoom real no ejecutada",
+    "No se verificó activación de skills externas por host",
+    "No se ensayó Safari/iOS real",
+    "La revisión es propia, no revisión independiente por un subagente"
+  ],
+  "recommendation": "Mantener v1.1 como pizarra experimental; reparar SEM-01, SEM-02, STATE-03, TRACE-04 y UX-05 antes de reutilizar el modelo de selección."
+}

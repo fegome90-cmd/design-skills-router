@@ -1,0 +1,285 @@
+{
+  "schema": "design-router-side-by-side/0.8",
+  "board_version": "0.8",
+  "status": "DOCUMENTARY_COMPARISON_PROPOSED_NOT_APPROVED",
+  "comparison_method": "Revisión semántica por responsabilidades y secciones, NO diferencia literal línea a línea",
+  "authoritative_roles": "Usuario y fuentes del proyecto > G0 > especialistas G1–G7 > referencias externas",
+  "review_date": "2026-11-17",
+  "sources": {
+    "g1": {
+      "name": "design-art-direction",
+      "org": "fegome90-cmd/my-skills",
+      "role": "G1 · skill rectora",
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "git_blob": "c84053a1d89be72d58fdee2a69ce6b6430a5cc11",
+      "license": "MIT",
+      "uri": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md"
+    },
+    "radar": {
+      "name": "ui-radar",
+      "org": "uizze/uizze",
+      "role": "X05 · referencia externa",
+      "commit": "fc401e9e654cbafe427b0c98142fc8bccd0c4e7e",
+      "git_blob": "77de69c7ad9db38331b52d59d47b2ad15f215357",
+      "license": "MIT (texto de la skill; no las capturas de terceros)",
+      "uri": "https://github.com/uizze/uizze/blob/fc401e9e654cbafe427b0c98142fc8bccd0c4e7e/skills/ui-radar/SKILL.md"
+    },
+    "impeccable": {
+      "name": "impeccable",
+      "org": "pbakaus/impeccable",
+      "role": "X02 · candidata multicomando",
+      "commit": "d41d9860b0094dcb68030657da63461212835aaa",
+      "git_blob": "5f5985228eea60d46057b7b403ce4146a59adcbe",
+      "license": "Apache-2.0",
+      "uri": "https://github.com/pbakaus/impeccable/blob/d41d9860b0094dcb68030657da63461212835aaa/skill/SKILL.src.md"
+    }
+  },
+  "comparisons": {
+    "g1": {
+      "name": "G1 · design-art-direction",
+      "subtitle": "Especialista propio frente a recurso de investigación",
+      "verdict": "COMPLEMENTARIAS · ui-radar aporta evidencia; G1 establece concepto y decisión visual.",
+      "counts_as_skill": "La skill principal G1 gobierna; ui-radar nunca reemplaza las alternativas, el criterio ni el gate.",
+      "nodes": [
+        "ART01",
+        "ART05"
+      ],
+      "rows": [
+        {
+          "id": "01",
+          "kind": "different",
+          "title": "Propósito y autoridad",
+          "left_label": "DECISIÓN DE DISEÑO",
+          "left": "Define el concepto, el arquetipo, la dirección visual y los criterios propios del proyecto. Es responsable de G1.",
+          "right_label": "SOLO EVIDENCIA",
+          "right": "Busca pantallas o recorridos reales para informar una pregunta visual específica. Expresamente no decide la estética.",
+          "why": "Una referencia puede inspirar, pero no representa una dirección visual aprobada ni sustituye a la skill rectora.",
+          "test": "La búsqueda no debe reemplazar DESIGN.md ni tomar decisiones fuera de ART01/ART05."
+        },
+        {
+          "id": "02",
+          "kind": "complement",
+          "title": "Cuándo se activa",
+          "left_label": "DIRECCIÓN VISUAL",
+          "left": "Se consulta cuando hay que definir o revisar identidad, moodboard, concepto, estilo o hero autorizado.",
+          "right_label": "INVESTIGACIÓN FOCALIZADA",
+          "right": "Se consulta cuando existe una decisión concreta sin suficiente evidencia sobre pantallas, flujos o estados.",
+          "why": "G0 puede invocar G1 sin necesitar Uizze; Uizze se utiliza solo si la referencia cambia una decisión.",
+          "test": "Un ajuste tipográfico cerrado no debe activar una búsqueda visual general."
+        },
+        {
+          "id": "03",
+          "kind": "complement",
+          "title": "Entradas y fuentes",
+          "left_label": "CONTEXTO DEL PROYECTO",
+          "left": "Parte del brief, audiencia, problema, palabras clave emocionales y estructurales, y restricciones de marca vigentes.",
+          "right_label": "UNA PREGUNTA PENDIENTE",
+          "right": "Parte de plataforma, tarea de la pantalla y una decisión por investigar; búsqueda por objeto, estado o interacción.",
+          "why": "La consulta externa parte de necesidades formuladas bajo G1 y no inventa el brief.",
+          "test": "Sin pregunta de diseño concreta, la búsqueda puede omitirse."
+        },
+        {
+          "id": "04",
+          "kind": "different",
+          "title": "Proceso de trabajo",
+          "left_label": "CREACIÓN / SÍNTESIS",
+          "left": "Explora arquetipos, semilla narrativa, protagonista cuando corresponde, rima visual y materialidad opcional.",
+          "right_label": "OBSERVACIÓN / SELECCIÓN",
+          "right": "Busca referencias reales, inspecciona capturas y devuelve solamente hechos visibles útiles para decidir.",
+          "why": "Proceso creativo ≠ proceso de recuperación documental. Sus salidas no son intercambiables.",
+          "test": "No convertir una captura Uizze en guía estética obligatoria."
+        },
+        {
+          "id": "05",
+          "kind": "tension",
+          "title": "Tres variantes ≠ tres referencias",
+          "left_label": "ALTERNATIVAS DE CONCEPTO",
+          "left": "Propone tres direcciones A/B/C en la exploración divergente cuando ese trabajo está dentro del alcance.",
+          "right_label": "REFERENCIAS DE EVIDENCIA",
+          "right": "Conserva entre cero y tres referencias sólidas; una puede ser suficiente para una pregunta específica.",
+          "why": "Las tres alternativas creativas de G1 no equivalen a tres capturas. Si el encargo exige tres ejemplos, se complementa con Library o web; no se fuerza Uizze.",
+          "test": "Con una sola captura útil, no inventar dos más ni declarar completa una comparación que requería tres."
+        },
+        {
+          "id": "06",
+          "kind": "different",
+          "title": "Entregable",
+          "left_label": "ARTEFACTO DE DISEÑO",
+          "left": "Puede entregar la especificación `design-system/01-art-direction.md` y muestras de dirección, solo cuando el alcance y permiso lo justifican.",
+          "right_label": "FICHA DE FUENTE",
+          "right": "Entrega URL canónica, observación visual, decisión que informa y elementos ajenos que no se deben copiar.",
+          "why": "La ficha de evidencia es insumo de ART01/ART05, no es un DESIGN.md de reemplazo.",
+          "test": "No escribir artefactos nuevos porque Uizze devuelva resultados."
+        },
+        {
+          "id": "07",
+          "kind": "different",
+          "title": "Herramientas y efectos",
+          "left_label": "PROPUESTAS CON GATES",
+          "left": "Puede requerir creación de muestras o documentos de diseño si la tarea autoriza esos entregables.",
+          "right_label": "CONSULTA READ-ONLY",
+          "right": "Usa catálogo o MCP opcional; no precisa instalar scripts, modificar código ni conectar credenciales automáticamente.",
+          "why": "Modo auditoría de G0 sigue siendo de solo lectura, incluso si hay recomendaciones implementables.",
+          "test": "Una búsqueda Uizze nunca activa instalación, escritura ni pago."
+        },
+        {
+          "id": "08",
+          "kind": "shared",
+          "title": "Comprobación y trazabilidad",
+          "left_label": "CRITERIOS Y MUESTRAS",
+          "left": "Verifica que la dirección se conecte al brief y que sus decisiones visuales sean justificables.",
+          "right_label": "CAPTURA OBSERVADA",
+          "right": "Inspecciona las pantallas; OCR y metadatos solo sirven para ubicar referencias.",
+          "why": "Ambas exigen evidencia proporcionada, pero verifican objetos diferentes: dirección vs observación.",
+          "test": "Sin render/captura inspeccionada no afirmar verificación visual."
+        },
+        {
+          "id": "09",
+          "kind": "tension",
+          "title": "Licencias y material de terceros",
+          "left_label": "RESTRICCIONES DEL PROYECTO",
+          "left": "La identidad y los activos existentes se preservan; referencias no son licencia de reutilización.",
+          "right_label": "SKILL MIT, CAPTURAS NO",
+          "right": "La licencia MIT cubre instrucciones de la skill, no fotografías, logotipos ni pantallas ajenas.",
+          "why": "El hallazgo visual puede orientar una composición, pero copiar un activo exige derechos independientes.",
+          "test": "Guardar URL, hechos visibles y activos excluidos de copia."
+        },
+        {
+          "id": "10",
+          "kind": "complement",
+          "title": "Qué ocurre si falla la búsqueda",
+          "left_label": "G1 CONTINÚA",
+          "left": "Puede trabajar con documentación del proyecto y otras referencias pertinentes; declara vacíos.",
+          "right_label": "SIN RESULTADOS = SIN EVIDENCIA",
+          "right": "Intenta una reformulación razonable; si no encuentra nada, informa ausencia y termina.",
+          "why": "Un fallo de herramienta externa no bloquea decisiones independientes; sí bloquea afirmaciones basadas en capturas ausentes.",
+          "test": "Error remoto no puede convertirse en un PASS ni en evidencia inventada."
+        }
+      ]
+    },
+    "impeccable": {
+      "name": "Impeccable · skill multicomando",
+      "subtitle": "Sistema de trabajo completo frente a búsqueda especializada",
+      "verdict": "NO SON INTERCAMBIABLES · Impeccable ofrece intervenciones, ui-radar solo investigación.",
+      "counts_as_skill": "Impeccable no puede transformarse en orquestador G0 ni iniciar context/hooks automáticamente.",
+      "nodes": [
+        "P01",
+        "ART01",
+        "QA01"
+      ],
+      "rows": [
+        {
+          "id": "01",
+          "kind": "different",
+          "title": "Alcance de la skill",
+          "left_label": "AMPLIO / TRANSVERSAL",
+          "left": "Contiene modos y comandos para shape, critique, audit, layout, typeset, polish, harden, entre otros.",
+          "right_label": "UNA DECISIÓN",
+          "right": "Busca evidencia de interfaces reales para responder una pregunta específica de producto o interacción.",
+          "why": "Impeccable debe descomponerse por comando antes de mapearlo al árbol; Radar ya es una capacidad acotada.",
+          "test": "No activar Impeccable entero desde ART01."
+        },
+        {
+          "id": "02",
+          "kind": "tension",
+          "title": "Selección de workflow",
+          "left_label": "ROUTER SECUNDARIO",
+          "left": "Tiene selector de comandos y subflujos propios, incluso si se invoca sin argumentos.",
+          "right_label": "NO REPLANIFICA",
+          "right": "La skill indica que no inicia un segundo workflow de diseño o implementación.",
+          "why": "G0 gobierna selección. La consulta Radar es menos conflictiva; comandos de Impeccable necesitan adaptación explícita.",
+          "test": "El selector de Impeccable no reemplaza al router G0."
+        },
+        {
+          "id": "03",
+          "kind": "tension",
+          "title": "Preparación del entorno",
+          "left_label": "LAUNCHER / HOOKS",
+          "left": "Su setup utiliza un ejecutable local y carga PRODUCT.md/DESIGN.md; contempla hooks y reparaciones bajo comandos.",
+          "right_label": "API / CATÁLOGO OPCIONAL",
+          "right": "Su búsqueda puede consultar un catálogo público sin instalar un motor, o un MCP conectado por separado.",
+          "why": "El permiso para leer una fuente no habilita binarios, hooks, instalación ni cambios del proyecto.",
+          "test": "Consultar critique como referencia no ejecuta launcher ni hooks."
+        },
+        {
+          "id": "04",
+          "kind": "different",
+          "title": "Escritura y resultados",
+          "left_label": "POSIBLES CAMBIOS",
+          "left": "Comandos específicos pueden generar docs, modificar CSS, crear variantes o auditar según la opción elegida.",
+          "right_label": "SOLO DATOS",
+          "right": "Devuelve observaciones con enlaces y evita modificaciones de código o sistema visual.",
+          "why": "Los efectos del comando se deciden de forma independiente de la pertinencia del tema.",
+          "test": "Una auditoría nunca convierte un comando de edición en acción permitida."
+        },
+        {
+          "id": "05",
+          "kind": "complement",
+          "title": "Punto de contacto",
+          "left_label": "CRITIQUE / SHAPE",
+          "left": "Puede ayudar a criticar estructura, jerarquía o explorar un concepto acotado.",
+          "right_label": "REFERENTES VISUALES",
+          "right": "Aporta ejemplos observables que una crítica puede contrastar.",
+          "why": "Se pueden combinar como referencias, pero G1 determina la dirección y QA01 mantiene pruebas separadas.",
+          "test": "Una captura no da aprobación estética automática de la propuesta."
+        },
+        {
+          "id": "06",
+          "kind": "different",
+          "title": "Modelo de entregables",
+          "left_label": "SISTEMA Y PÁGINAS",
+          "left": "Puede producir o modificar PRODUCT.md, DESIGN.md, tokens y código según el comando.",
+          "right_label": "EVIDENCE NOTE",
+          "right": "Una pregunta, hasta tres ejemplos útiles y una observación verificable por referencia.",
+          "why": "La salida de búsqueda no puede sobrescribir fuentes rectoras del proyecto.",
+          "test": "ART05 recibe evidencias; no modifica documentos del proyecto."
+        },
+        {
+          "id": "07",
+          "kind": "tension",
+          "title": "Estado previo e identidad",
+          "left_label": "REFACTOR / REDISEÑO",
+          "left": "Distingue preservar un diseño existente de reemplazar el mundo visual cuando el encargo lo exige.",
+          "right_label": "INFORMAR SIN IMPONER",
+          "right": "No define si se debe conservar o rediseñar identidad.",
+          "why": "D01 y G1 poseen esa decisión; Impeccable y Radar son auxiliares bajo ese contrato.",
+          "test": "Con identidad aprobada, ninguna fuente cambia tokens o tipografía por sí sola."
+        },
+        {
+          "id": "08",
+          "kind": "shared",
+          "title": "Evidencia y verificabilidad",
+          "left_label": "RENDER Y REVISIÓN",
+          "left": "Insiste en inspeccionar la interfaz renderizada al tamaño real y declarar límites.",
+          "right_label": "CAPTURA REAL",
+          "right": "Insiste en inspeccionar imagen real y documentar el hecho visible.",
+          "why": "Coinciden en que no basta con suponer resultados a partir de instrucciones textuales.",
+          "test": "Sin navegador o capturas disponibles, el estado es no verificado."
+        },
+        {
+          "id": "09",
+          "kind": "complement",
+          "title": "Dependencia de plataforma",
+          "left_label": "MODO PERSUADE / OPERATE / READ / EXPERIENCE",
+          "left": "Distingue tipo de superficie y tarea del visitante para modular intensidad visual.",
+          "right_label": "PLATAFORMA, PANTALLA Y TAREA",
+          "right": "La búsqueda se centra en web/iOS y patrones de interacción concretos.",
+          "why": "La selección de modo y el alcance requieren el contrato del proyecto, no una clasificación de proveedor.",
+          "test": "No inferir plataforma o audiencia a partir del repositorio consultado."
+        },
+        {
+          "id": "10",
+          "kind": "tension",
+          "title": "Propuesta de adopción",
+          "left_label": "COMANDOS ACOTADOS",
+          "left": "Separar operaciones como critique, typeset o layout de su launcher/hook y evaluarlas por efectos.",
+          "right_label": "CONSULTA OPTATIVA",
+          "right": "Conservar referencia documental de solo lectura bajo ART01/ART05.",
+          "why": "El primer piloto debería probar Radar como referencia, luego Impeccable por un comando concreto.",
+          "test": "Cada comando de Impeccable pasa controles de autoridad y permiso."
+        }
+      ]
+    }
+  },
+  "gate": "NO_APROBADO. Comparación documental solamente. Sin instalación, cambio de baseline ni llamada de API."
+}

@@ -1,0 +1,11 @@
+AUDITORÍA DESIGN SKILLS ROUTER v1.1 — 17 NOV 2026
+
+Fuente original: design-router-pizarra-seleccion-minima-v1.1.html
+Copia anotada: design-router-pizarra-v1.1-auditada.html
+Informe: INFORME_AUDITORIA_v11.md
+Pruebas negativas: python test_regresion_negativa_v11.py (cinco fallos esperados)
+
+Los fallos esperados prueban que las contradicciones siguen presentes.
+No ejecutar estas pruebas como chequeo de release verde.
+El HTML original no fue modificado y sus datos y scripts son idénticos en la copia anotada.
+Ningún archivo de este paquete modifica ni autoriza el plugin publicado.

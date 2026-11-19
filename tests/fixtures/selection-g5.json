@@ -1,0 +1,168 @@
+{
+  "document": {
+    "schema": "design-router-minimal-selection-export/1.2",
+    "source": "research-board, not a runtime authorization",
+    "status": "DRAFT",
+    "selected_route": "auditoria",
+    "selected_scope": "scenario",
+    "selected_functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test"
+    ],
+    "requested_functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "selected_domain": "G5",
+    "policy_version": "1.2",
+    "policy_hash": "95974f25b980f4edd86f8c2b4960b632ad07873a9504ed90232f95cb7055815c",
+    "proposed_owners": [
+      "G5"
+    ],
+    "mode": "Audit · read-only",
+    "mode_status": "SIMULATED",
+    "simulated_permission": "read",
+    "source_pins": [
+      {
+        "id": "G5",
+        "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+        "git_blob": "9644ac9e75d9cc7a6599de5fcf5e8b3ba4d3dfc1"
+      }
+    ],
+    "prerequisites": [
+      "Identificar superficie, requisitos y dominio concreto antes de seleccionar especialistas.",
+      "Usar evidencia observada y registrar No revisado / No verificado cuando falte una prueba.",
+      "Los hallazgos no autorizan corregir código, instalar dependencias ni publicar."
+    ],
+    "applicability": {
+      "G1": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G2": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G3": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G4": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G5": {
+        "applicability": "applies",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G6": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G7": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      }
+    },
+    "completeness": {
+      "complete": false,
+      "pending_domains": [
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G6",
+        "G7"
+      ]
+    },
+    "validation": {
+      "valid": true,
+      "errors": []
+    },
+    "human_gate": "NOT_APPROVED",
+    "skills_executed": [],
+    "notes": [
+      "Selector demostrativo de elegibilidad, no motor de ejecución.",
+      "N/A requiere razón vinculada al alcance; la revisión no se marca Verified automáticamente.",
+      "G0 coordina según el modo mínimo, no se invoca siempre para una tarea unidimensional.",
+      "El modo escenario resume funciones sin ampliar permisos ni invocar skills externas."
+    ]
+  },
+  "permission": {
+    "value": "read",
+    "label": "Solo lectura / propuesta",
+    "note": "Auditoría en solo lectura. La simulación de sandbox queda deshabilitada."
+  },
+  "support": {
+    "warning": "Escritura prohibida en auditoría.",
+    "groups": [
+      {
+        "id": "write",
+        "summary": "1 intervenciones de escritura",
+        "breakUi": {
+          "function_id": "stress-test",
+          "effect": "prototipar",
+          "trigger": "Crear fixture/toggle solo en sandbox autorizado."
+        },
+        "names": [
+          "break-ui"
+        ],
+        "functionLabel": "Pruebas adversariales de UI"
+      },
+      {
+        "id": "read",
+        "summary": "5 consultas opcionales",
+        "breakUi": {
+          "function_id": "stress-test",
+          "effect": "analizar",
+          "trigger": "Detectar fallos con datos extremos sin modificar producción."
+        },
+        "names": [
+          "impeccable",
+          "anti-ui-slop",
+          "web-design-guidelines",
+          "web-design-guidelines",
+          "break-ui"
+        ],
+        "functionLabel": "Pruebas adversariales de UI"
+      }
+    ]
+  },
+  "nodesByFunction": {
+    "visual-qa": [
+      "QA01"
+    ],
+    "accessibility": [
+      "AC01",
+      "TY03"
+    ],
+    "stress-test": [
+      "LAY01",
+      "QA01"
+    ]
+  }
+}

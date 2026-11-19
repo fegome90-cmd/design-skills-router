@@ -1,0 +1,447 @@
+{
+  "kind": "real-local-cli-synthetic-ledger",
+  "package_version": "0.3.1",
+  "package_hash_entries_verified": 70,
+  "approval_observed": false,
+  "ledger_unchanged_after_blocked_operations": true,
+  "resumed_mode": "audit",
+  "resumed_assistance_level": "manual",
+  "notes": "Comandos reales de Python sobre copia completa del release. Estado temporal eliminado. Salidas extensas filtradas a campos de interés; <temp> representa el directorio efímero. Host y recuperación de fuentes externas quedaron fuera de esta prueba.",
+  "steps": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "verify-package"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "baseline_verified": true,
+        "inventory_count": 82,
+        "expanded_nodes": 3660
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/doctor.py",
+        "--format",
+        "json"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "schema": "design-tree-doctor/1",
+        "scopes": {
+          "package": "CHECKED",
+          "model_coverage": "STRUCTURAL_CHECKS_ONLY",
+          "session": "NOT_CHECKED",
+          "host_validation": "NOT_CHECKED"
+        },
+        "version": "0.3.1",
+        "exit_code": 0,
+        "findings": []
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "init",
+        "--project-id",
+        "cartografia-cli",
+        "--scope",
+        "Prueba local sintética de solo lectura",
+        "--medium",
+        "web",
+        "--mode",
+        "audit"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "project_id": "cartografia-cli",
+        "tree_version": "0.4",
+        "revision": 0,
+        "frontier": [
+          "Q00"
+        ],
+        "active_node_count": 1,
+        "approved_current_count": 0,
+        "inventory_confirmed": false,
+        "ready_for_human_handoff": false,
+        "permission_to_execute": false,
+        "assistance_level": "manual",
+        "external_tool_enforcement": false,
+        "authenticated_human_identity": false,
+        "inventory_pending_count": 82
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "node",
+        "Q00"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "node_id": "Q00",
+        "title": "¿De qué punto de partida nace este diseño?",
+        "active": true,
+        "structure_status": "PENDING",
+        "project_status": "PENDING",
+        "alternatives": [
+          {
+            "answer": "Proyecto nuevo, explícitamente solicitado",
+            "node_id": "F00",
+            "title": "Fundaciones · revisar dominios, no fabricar documentos por obligación"
+          },
+          {
+            "answer": "Proyecto existente",
+            "node_id": "E01",
+            "title": "¿Los documentos y el código expresan decisiones vigentes y coherentes?"
+          },
+          {
+            "answer": "Todavía no está definido",
+            "node_id": "Q01",
+            "title": "Aclarar el encargo antes de fijar una ruta"
+          }
+        ],
+        "skills": [
+          {
+            "id": "fegome90-cmd/my-skills/design-process-orchestrator",
+            "name": "design-process-orchestrator",
+            "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md",
+            "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+            "source_receipt": null
+          }
+        ],
+        "notice": "Inspecting a packet is not consulting its external sources or approving anything."
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "propose",
+        "P01",
+        "--file",
+        "<temp>/propuesta-incompleta.json"
+      ],
+      "exit_code": 2,
+      "stdout": null,
+      "stderr": {
+        "status": "BLOCKED",
+        "error": "NODE_NOT_ACTIVE:P01"
+      }
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "propose",
+        "Q00",
+        "--file",
+        "<temp>/propuesta-incompleta.json"
+      ],
+      "exit_code": 2,
+      "stdout": null,
+      "stderr": {
+        "status": "BLOCKED",
+        "error": "STRUCTURE_CONFIRMATION_REQUIRED"
+      }
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "status"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "project_id": "cartografia-cli",
+        "tree_version": "0.4",
+        "revision": 0,
+        "frontier": [
+          "Q00"
+        ],
+        "active_node_count": 1,
+        "approved_current_count": 0,
+        "inventory_confirmed": false,
+        "ready_for_human_handoff": false,
+        "permission_to_execute": false,
+        "assistance_level": "manual",
+        "external_tool_enforcement": false,
+        "authenticated_human_identity": false,
+        "inventory_pending_count": 82
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/ledger.json",
+        "export",
+        "--output",
+        "<temp>/bundle"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "export_dir": "<temp>/bundle",
+        "portable_evidence": 0,
+        "resume_requires_path_rebinding": true
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/doctor.py",
+        "--format",
+        "json",
+        "--bundle",
+        "<temp>/bundle"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "schema": "design-tree-doctor/1",
+        "scopes": {
+          "package": "CHECKED",
+          "model_coverage": "STRUCTURAL_CHECKS_ONLY",
+          "session": "BUNDLE_INTEGRITY_CHECKED",
+          "host_validation": "NOT_CHECKED"
+        },
+        "version": "0.3.1",
+        "exit_code": 0,
+        "findings": []
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/recuperado/ledger.json",
+        "resume",
+        "--bundle",
+        "<temp>/bundle"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "project_id": "cartografia-cli",
+        "tree_version": "0.4",
+        "revision": 0,
+        "frontier": [
+          "Q00"
+        ],
+        "active_node_count": 1,
+        "approved_current_count": 0,
+        "inventory_confirmed": false,
+        "ready_for_human_handoff": false,
+        "permission_to_execute": false,
+        "assistance_level": "manual",
+        "external_tool_enforcement": false,
+        "authenticated_human_identity": false,
+        "inventory_pending_count": 82
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/runner.py",
+        "--state",
+        "<temp>/recuperado/ledger.json",
+        "status"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "project_id": "cartografia-cli",
+        "tree_version": "0.4",
+        "revision": 0,
+        "frontier": [
+          "Q00"
+        ],
+        "active_node_count": 1,
+        "approved_current_count": 0,
+        "inventory_confirmed": false,
+        "ready_for_human_handoff": false,
+        "permission_to_execute": false,
+        "assistance_level": "manual",
+        "external_tool_enforcement": false,
+        "authenticated_human_identity": false,
+        "inventory_pending_count": 82
+      },
+      "stderr": null
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "skills/design-tree/scripts/doctor.py",
+        "--format",
+        "json",
+        "--state",
+        "<temp>/recuperado/ledger.json"
+      ],
+      "exit_code": 0,
+      "stdout": {
+        "schema": "design-tree-doctor/1",
+        "scopes": {
+          "package": "CHECKED",
+          "model_coverage": "STRUCTURAL_CHECKS_ONLY",
+          "session": "CHECKED",
+          "host_validation": "NOT_CHECKED"
+        },
+        "version": "0.3.1",
+        "exit_code": 0,
+        "findings": [],
+        "session": {
+          "project_id": "cartografia-cli",
+          "tree_version": "0.4",
+          "revision": 0,
+          "frontier": [
+            "Q00"
+          ],
+          "active_node_count": 1,
+          "approved_current_count": 0,
+          "inventory_confirmed": false,
+          "inventory_pending": [
+            "fegome90-cmd/my-skills/agy-agent",
+            "fegome90-cmd/my-skills/ai-work-prompting-gates",
+            "fegome90-cmd/my-skills/anchoring-tasks",
+            "fegome90-cmd/my-skills/authority-flow-audit",
+            "fegome90-cmd/my-skills/claude-md-optimizer",
+            "fegome90-cmd/my-skills/code-path-cartographer",
+            "fegome90-cmd/my-skills/codex-agent",
+            "fegome90-cmd/my-skills/color-theory-engine",
+            "fegome90-cmd/my-skills/color-theory-palette",
+            "fegome90-cmd/my-skills/design-art-direction",
+            "fegome90-cmd/my-skills/design-process-orchestrator",
+            "fegome90-cmd/my-skills/design-tokens-components",
+            "fegome90-cmd/my-skills/diagram-auditor",
+            "fegome90-cmd/my-skills/disenar-slides",
+            "fegome90-cmd/my-skills/disk-cleanup-macos-safe",
+            "fegome90-cmd/my-skills/dots-maintenance",
+            "fegome90-cmd/my-skills/ensenar",
+            "fegome90-cmd/my-skills/fish-shell-config",
+            "fegome90-cmd/my-skills/grill-me-dual-herdr",
+            "fegome90-cmd/my-skills/herdr-worktrunk",
+            "fegome90-cmd/my-skills/interagent-dispatch",
+            "fegome90-cmd/my-skills/layout-grid-hierarchy",
+            "fegome90-cmd/my-skills/learned-accuracy-fallacy-audit",
+            "fegome90-cmd/my-skills/learned-keynote-to-mp4-pipeline",
+            "fegome90-cmd/my-skills/learned-pr-feedback-resolution",
+            "fegome90-cmd/my-skills/learned-progressive-disclosure",
+            "fegome90-cmd/my-skills/learned-ssh-agent-vm-bootstrap",
+            "fegome90-cmd/my-skills/learned-structured-review",
+            "fegome90-cmd/my-skills/muse-agent",
+            "fegome90-cmd/my-skills/nix-fish-homemanager",
+            "fegome90-cmd/my-skills/opencode-agent",
+            "fegome90-cmd/my-skills/pi-agent",
+            "fegome90-cmd/my-skills/pi-extension-builder",
+            "fegome90-cmd/my-skills/pi-startup-diagnostics",
+            "fegome90-cmd/my-skills/prompt-doctor",
+            "fegome90-cmd/my-skills/quality-plan-loop",
+            "fegome90-cmd/my-skills/scripting-technical-presentations",
+            "fegome90-cmd/my-skills/skill-import-untrusted",
+            "fegome90-cmd/my-skills/skill-onboarding",
+            "fegome90-cmd/my-skills/skill-vetting",
+            "fegome90-cmd/my-skills/starship-nix-manager",
+            "fegome90-cmd/my-skills/starship-prompt",
+            "fegome90-cmd/my-skills/template-skill",
+            "fegome90-cmd/my-skills/tmux-plan-auditor",
+            "fegome90-cmd/my-skills/typography-scales-microtype",
+            "fegome90-cmd/my-skills/typography-selection-pairing",
+            "fegome90-cmd/my-skills/ui-motion-and-handoff",
+            "fegome90-cmd/my-skills/wiki-starter",
+            "fegome90-cmd/my-skills/work-closeout",
+            "emilkowalski/skills/animate-expo",
+            "emilkowalski/skills/animate",
+            "emilkowalski/skills/animation-performance",
+            "emilkowalski/skills/animation-vocabulary",
+            "emilkowalski/skills/apple-design",
+            "emilkowalski/skills/ask-sonner",
+            "emilkowalski/skills/break-ui",
+            "emilkowalski/skills/choreograph",
+            "emilkowalski/skills/emil-design-eng",
+            "emilkowalski/skills/find-animation-opportunities",
+            "emilkowalski/skills/gestures",
+            "emilkowalski/skills/improve-animations",
+            "emilkowalski/skills/mobile-native",
+            "emilkowalski/skills/pick-ui-library",
+            "emilkowalski/skills/prototype",
+            "emilkowalski/skills/remove-animations",
+            "emilkowalski/skills/review-animations",
+            "emilkowalski/skills/write-swift",
+            "jakubkrehel/skills/afk",
+            "jakubkrehel/skills/better-accessibility",
+            "jakubkrehel/skills/better-colors",
+            "jakubkrehel/skills/better-interface",
+            "jakubkrehel/skills/better-layout",
+            "jakubkrehel/skills/better-typography",
+            "jakubkrehel/skills/better-ui",
+            "jakubkrehel/skills/better-writing",
+            "jakubkrehel/skills/break",
+            "jakubkrehel/skills/build-design",
+            "jakubkrehel/skills/explain-interface",
+            "jakubkrehel/skills/interface-review",
+            "jakubkrehel/skills/state-machine",
+            "jakubkrehel/skills/teardown",
+            "jakubkrehel/skills/variant"
+          ],
+          "deferred_skills": [],
+          "unreviewed_applicable_skills": [],
+          "inventory_conflicts": [],
+          "blocked_nodes": [],
+          "unverified_nodes": [],
+          "failed_required_check_nodes": [],
+          "unknown_applicability_checks": [],
+          "assistance_level": "manual",
+          "active_phase_id": null,
+          "phase_statuses": {},
+          "delegated_pending": 0,
+          "ready_for_human_handoff": false,
+          "permission_to_execute": false,
+          "external_tool_enforcement": false,
+          "authenticated_human_identity": false,
+          "limitations": [
+            "Supervised pilot; receipt contents are not authenticated.",
+            "Source bytes received do not prove reading or correct use.",
+            "One atomic component requirement per session; use a separate named session for another requirement.",
+            "No server or automatic cross-chat/cloud persistence. Export and explicitly save the ledger.",
+            "Original tree has incomplete and contextual criteria; no universal coverage claim."
+          ]
+        }
+      },
+      "stderr": null
+    }
+  ]
+}

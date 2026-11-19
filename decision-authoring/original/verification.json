@@ -1,0 +1,41 @@
+{
+  "status": "VIEWER_CHECKS_PASS_ROUTER_DESIGN_INCOMPLETE",
+  "html_sha256": "591257cf413b7380e2ad7f2e72377aa69882c72651e785d7f9e816ef2284a1b8",
+  "rebuild_deterministic": true,
+  "original_v03_unchanged": true,
+  "model_tests": 25,
+  "negative_controls_included": 8,
+  "regression_checks": {
+    "before_failed": 10,
+    "after_failed": 0,
+    "total": 12,
+    "overlap_note": "Overlaps model tests; not independent cases"
+  },
+  "viewer_checks": 72,
+  "viewer_failures": 0,
+  "open_findings": [
+    {
+      "id": "OPEN-01",
+      "severity": "P1",
+      "title": "Skill criteria coverage and source admission incomplete"
+    },
+    {
+      "id": "OPEN-02",
+      "severity": "P1",
+      "title": "Applicability conditions partly natural language, not fully deterministic"
+    },
+    {
+      "id": "OPEN-03",
+      "severity": "P1",
+      "title": "Specialized routes and invocation metadata unresolved"
+    },
+    {
+      "id": "OPEN-04",
+      "severity": "P2",
+      "title": "Global expansion extremely long; use branch-level exploration"
+    }
+  ],
+  "runtime": "NOT_IMPLEMENTED",
+  "human_approval": "PENDING",
+  "review_independence": "SELF_REVIEW_NOT_BLIND"
+}

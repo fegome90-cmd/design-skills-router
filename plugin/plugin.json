@@ -1,0 +1,36 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "author": {
+    "email": "especialidadoncouv@gmail.com",
+    "name": "Felipe Gonzalez"
+  },
+  "description": "Árbol de decisiones para diseño UI web con fuentes, reutilización y confirmación humana por nodo.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "capabilities": [],
+        "category": "Productivity",
+        "composerIcon": "./assets/flor-negro-512.png",
+        "composerIconDark": "./assets/flor-blanco-512.png",
+        "defaultPrompt": "Usa el árbol v0.4 para iniciar o continuar un diseño web supervisado. Conserva el proyecto existente y muéstrame la próxima pregunta con sus alternativas, skills y evidencia antes de avanzar.",
+        "developerName": "Felipe Gonzalez",
+        "displayName": "Design Skills Router",
+        "logo": "./assets/flor-color-512.png",
+        "logoDark": "./assets/flor-color-512.png",
+        "longDescription": "Piloto supervisado de diseño UI web basado en el árbol v0.4 de Felipe. Presenta preguntas, alternativas y fuentes; conserva el inventario de 82 skills y registra confirmaciones humanas separadas. Incluye el árbol, el visor y un helper Python de estado portable. No instala 82 skills, no ofrece un servidor ni impide acciones fuera de su ejecutor. Las fuentes externas se recuperan por revisión fijada y las rutas incompletas quedan bloqueadas.",
+        "shortDescription": "Diseño con decisiones humanas"
+      },
+      "onboardingSkill": "./skills/design-tree/SKILL.md"
+    }
+  },
+  "keywords": [
+    "design",
+    "decision-tree",
+    "human-in-the-loop",
+    "skills",
+    "ui",
+    "reutilizacion"
+  ],
+  "name": "design-skills-router",
+  "version": "0.3.1"
+}

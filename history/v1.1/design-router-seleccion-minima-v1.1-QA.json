@@ -1,0 +1,21 @@
+{
+  "version": "1.1",
+  "result": "PASS_LOCAL_SCOPED",
+  "source_untouched": true,
+  "test_file": "test_min_route_v11_smoke.py",
+  "unit_test_classes": 3,
+  "failed_tests": 0,
+  "routes_checked": 8,
+  "browser": "Chromium /usr/bin/chromium via Playwright",
+  "viewport_widths": [
+    320,
+    390,
+    1440
+  ],
+  "reported_horizontal_overflow": false,
+  "base_html_data_equal": true,
+  "new_js_syntax_check": "PASS",
+  "plugin_edited": false,
+  "real_skill_invocation": "NOT_TESTED",
+  "host_policy": "NOT_VERIFIED"
+}
