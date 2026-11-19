@@ -1,0 +1,272 @@
+{
+  "scope": {
+    "id": "scope",
+    "skill": "fegome90-cmd/my-skills/design-process-orchestrator",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md",
+    "source_section": "Entry guards; Run; execution-contracts.md / Mode contracts",
+    "category": "project-contract",
+    "criterion": "Conservar fuentes y permisos. Un ajuste, auditoría o fuente ausente no autoriza reconstruir el proyecto.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "project.docs": {
+    "id": "project.docs",
+    "skill": "fegome90-cmd/my-skills/design-process-orchestrator",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/references/workspace-templates.md",
+    "source_section": "workspace-templates.md / PRODUCT; CONTEXT; STACK; DESIGN",
+    "category": "project-contract",
+    "criterion": "Definir producto, contexto, restricciones y decisiones sin sustituir fuentes canónicas.",
+    "adaptation": "Los cuatro dominios se revisan; no exigimos crear cuatro archivos en un proyecto que ya tiene equivalentes.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "art.direction": {
+    "id": "art.direction",
+    "skill": "fegome90-cmd/my-skills/design-art-direction",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+    "source_section": "Workflow / Fase 1: Keywords y arquetipo; Fase 4: Exploración divergente",
+    "category": "heuristic",
+    "criterion": "Conectar intención, referencias y alternativas con el brief.",
+    "adaptation": "No imponemos los seis arquetipos ni porcentajes; las propuestas se comparan sobre el mismo contenido.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "art.focus": {
+    "id": "art.focus",
+    "skill": "fegome90-cmd/my-skills/design-art-direction",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+    "source_section": "Workflow / Fase 2: Semilla narrativa y foco visual",
+    "category": "heuristic",
+    "criterion": "Identificar foco cuando lo requiere el encargo; no inventar hero en una pantalla operativa.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "art.rhyming": {
+    "id": "art.rhyming",
+    "skill": "fegome90-cmd/my-skills/design-art-direction",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+    "source_section": "Workflow / Fase 3: Rima Visual",
+    "category": "aesthetic-choice",
+    "criterion": "Repetir rasgos sólo si refuerzan una identidad y no perjudican el uso.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "art.material": {
+    "id": "art.material",
+    "skill": "fegome90-cmd/my-skills/design-art-direction",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+    "source_section": "Workflow / Fase 4: Profundidad táctil opcional",
+    "category": "aesthetic-choice",
+    "criterion": "Cero capas es válido. Justificar cada ornamento, contraste y coste.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "type.family": {
+    "id": "type.family",
+    "skill": "fegome90-cmd/my-skills/typography-selection-pairing",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-selection-pairing/SKILL.md",
+    "source_section": "Inputs and Preconditions; Workflow; Verification",
+    "category": "heuristic",
+    "criterion": "Comprobar roles, caracteres, archivos reales, fallback y licencia antes de decidir familias.",
+    "adaptation": "La selección no acredita legibilidad sin muestras ni pruebas.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "type.scale": {
+    "id": "type.scale",
+    "skill": "fegome90-cmd/my-skills/typography-scales-microtype",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-scales-microtype/SKILL.md",
+    "source_section": "Workflow / Fase 1: Escala Tipográfica Multi-Modo",
+    "category": "heuristic",
+    "criterion": "Escala heredada, por modos o fluida según contenido y entorno; valores de ejemplo no obligatorios.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "type.micro": {
+    "id": "type.micro",
+    "skill": "fegome90-cmd/my-skills/typography-scales-microtype",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-scales-microtype/SKILL.md",
+    "source_section": "Workflow / Fase 2: Parametrización Micro-tipográfica",
+    "category": "heuristic",
+    "criterion": "Ajustar interlínea, tracking, medida y alineación con muestras reales, no umbrales universales.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "type.test": {
+    "id": "type.test",
+    "skill": "fegome90-cmd/my-skills/typography-scales-microtype",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-scales-microtype/SKILL.md",
+    "source_section": "Verification / SC 1.4.4 y SC 1.4.12",
+    "category": "verification",
+    "criterion": "Comprobar zoom y overrides simultáneos; no inferir conformidad por rem, px o line-height.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "color": {
+    "id": "color",
+    "skill": "fegome90-cmd/my-skills/color-theory-palette",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/color-theory-palette/SKILL.md",
+    "source_section": "Workflow / Fase 2: Verificación Calculada; Fase 3: Redundancia Semántica",
+    "category": "verification",
+    "criterion": "Roles y pares reales en estados y fondos; contraste calculado y señal no dependiente sólo del color.",
+    "adaptation": "No transferir como normas los porcentajes, teorías psicológicas ni vetos cromáticos del original.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "layout": {
+    "id": "layout",
+    "skill": "jakubkrehel/skills/better-layout",
+    "source_url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-layout/SKILL.md",
+    "source_section": "Group with space, not lines; Hold structure until it breaks; Plan for growth and clipping; Reporting",
+    "category": "heuristic",
+    "criterion": "Componer según tarea, contenido y tokens; comprobar tamaños, zoom, textos largos y orden.",
+    "adaptation": "Cifras del autor son puntos de partida; RTL se evalúa según locales soportados.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "157da62016338e8693dcff93d47154a9e36f2157"
+  },
+  "layout.local": {
+    "id": "layout.local",
+    "skill": "fegome90-cmd/my-skills/layout-grid-hierarchy",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/layout-grid-hierarchy/SKILL.md",
+    "source_section": "Inputs and Preconditions; Workflow; Verification",
+    "category": "heuristic",
+    "criterion": "Retícula, jerarquía y espaciado al servicio de relaciones de contenido.",
+    "adaptation": "No universalizar 12 columnas, 8 pt ni tiempos de mirada no medidos.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "tokens": {
+    "id": "tokens",
+    "skill": "fegome90-cmd/my-skills/design-tokens-components",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-tokens-components/SKILL.md",
+    "source_section": "Workflow / Variables; Output Contract; Verification",
+    "category": "project-convention",
+    "criterion": "Respetar sistema existente; definir contratos y validar formato/versiones al intercambiar.",
+    "adaptation": "Brand/Alias/Mapped y ratios de invariancia son convenciones, no requisitos universales.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "motion": {
+    "id": "motion",
+    "skill": "fegome90-cmd/my-skills/ui-motion-and-handoff",
+    "source_url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/ui-motion-and-handoff/SKILL.md",
+    "source_section": "Workflow / Fase 1: Movimiento; Fase 2: Estados; Fase 3: Handoff",
+    "category": "heuristic",
+    "criterion": "Movimiento con función, estados y reducción de movimiento; rendimiento medido, no supuesto.",
+    "adaptation": "Duraciones no se convierten en umbrales universales.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5211aae8843eca4966d2aee828513582a04a7c8f"
+  },
+  "motion.review": {
+    "id": "motion.review",
+    "skill": "emilkowalski/skills/review-animations",
+    "source_url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/review-animations/SKILL.md",
+    "source_section": "SKILL.md y STANDARDS.md / revisión de movimiento",
+    "category": "verification",
+    "criterion": "Revisar propósito, curvas, duración, interrupción y reducción; declarar lo no ejercitado.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5206a950b715e0cabe7043ea0b2304332b91494e"
+  },
+  "catalog": {
+    "id": "catalog",
+    "skill": "emilkowalski/skills/pick-ui-library",
+    "source_url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/pick-ui-library/SKILL.md",
+    "source_section": "How to use this; The list; Common mismatches to catch",
+    "category": "curated-preference",
+    "criterion": "Elegir por necesidad y comprobar qué existe; candidatos del catálogo no son autorización de instalar.",
+    "adaptation": "Respetar invocación explícita; este visor consulta conocimiento, no invoca la skill.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "5206a950b715e0cabe7043ea0b2304332b91494e"
+  },
+  "interface": {
+    "id": "interface",
+    "skill": "jakubkrehel/skills/better-interface",
+    "source_url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+    "source_section": "4. Use domain skills as the sources of truth; 5. Verify what can be verified; Require evidence",
+    "category": "verification",
+    "criterion": "Revisar seis dominios; dueño ausente significa Not reviewed, no aprobación global.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "157da62016338e8693dcff93d47154a9e36f2157"
+  },
+  "a11y": {
+    "id": "a11y",
+    "skill": "jakubkrehel/skills/better-accessibility",
+    "source_url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-accessibility/SKILL.md",
+    "source_section": "Principios y Reporting de better-accessibility",
+    "category": "verification",
+    "criterion": "Semántica, teclado, foco, nombres, estados y reducción de movimiento se verifican en la integración.",
+    "adaptation": "La aplicación concreta de criterios se confirma con fuentes normativas; esta fila no certifica WCAG.",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "157da62016338e8693dcff93d47154a9e36f2157"
+  },
+  "writing": {
+    "id": "writing",
+    "skill": "jakubkrehel/skills/better-writing",
+    "source_url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-writing/SKILL.md",
+    "source_section": "Principios y Reporting de better-writing",
+    "category": "heuristic",
+    "criterion": "Copy concreto, acciones claras, errores recuperables y terminología del contexto.",
+    "adaptation": "",
+    "verification": "SECTION_REVIEWED_IN_CONVERSATION",
+    "source_commit": "157da62016338e8693dcff93d47154a9e36f2157"
+  },
+  "policy.coverage": {
+    "id": "policy.coverage",
+    "skill": null,
+    "source_url": null,
+    "source_section": "Conversación: instrucciones de Felipe y auditoría v0.3",
+    "category": "router-policy",
+    "criterion": "Cada skill del inventario recibe una disposición visible. Ningún resultado cierra dominios hermanos de cobertura obligatoria.",
+    "adaptation": "Política local propuesta. No pertenece a Emil ni Jakub.",
+    "verification": "USER_REQUIREMENT_AND_LOCAL_DESIGN"
+  },
+  "policy.adoption": {
+    "id": "policy.adoption",
+    "skill": null,
+    "source_url": null,
+    "source_section": "Conversación: instrucciones de Felipe y auditoría v0.3",
+    "category": "router-policy",
+    "criterion": "Cada candidato tiene una instancia de evaluación vinculada al mismo componente, requisito, fuente y versión.",
+    "adaptation": "Política local propuesta. No pertenece a Emil ni Jakub.",
+    "verification": "USER_REQUIREMENT_AND_LOCAL_DESIGN"
+  },
+  "policy.human": {
+    "id": "policy.human",
+    "skill": null,
+    "source_url": null,
+    "source_section": "Conversación: instrucciones de Felipe y auditoría v0.3",
+    "category": "router-policy",
+    "criterion": "Pregunta, alternativas y skills se confirman por la persona. Confirmar el árbol no aprueba un proyecto.",
+    "adaptation": "Política local propuesta. No pertenece a Emil ni Jakub.",
+    "verification": "USER_REQUIREMENT_AND_LOCAL_DESIGN"
+  },
+  "policy.scope": {
+    "id": "policy.scope",
+    "skill": null,
+    "source_url": null,
+    "source_section": "Conversación: instrucciones de Felipe y auditoría v0.3",
+    "category": "router-policy",
+    "criterion": "Las reglas dependen del medio, alcance y evidencia. Un dato desconocido bloquea los resultados dependientes.",
+    "adaptation": "Política local propuesta. No pertenece a Emil ni Jakub.",
+    "verification": "USER_REQUIREMENT_AND_LOCAL_DESIGN"
+  },
+  "policy.disposition": {
+    "id": "policy.disposition",
+    "skill": null,
+    "source_url": null,
+    "source_section": "Conversación: instrucciones de Felipe y auditoría v0.3",
+    "category": "router-policy",
+    "criterion": "Asignada, condicional, gobernanza o fuera de alcance: decisión propuesta, razón explícita y confirmación humana pendiente.",
+    "adaptation": "Política local propuesta. No pertenece a Emil ni Jakub.",
+    "verification": "USER_REQUIREMENT_AND_LOCAL_DESIGN"
+  }
+}

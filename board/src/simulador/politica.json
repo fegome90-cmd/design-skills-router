@@ -1,0 +1,157 @@
+{
+  "schema": "design-router-minimal-selection/1.2",
+  "status": "RESEARCH_ONLY_NOT_EXECUTABLE_NOT_APPROVED",
+  "baseline": "tree-v0.4 unmodified",
+  "profiles": {
+    "solo-fuente": {
+      "mode": "Lightweight",
+      "prereqs": [
+        "Identidad y tipografía vigente: conservar lo ya aprobado (D01, T01).",
+        "Definir contenido, idiomas, pesos y roles de lectura antes de comparar (T02/T06).",
+        "Revisar muestras de texto real; no asumir que el cambio requiere reescalar (TY01)."
+      ],
+      "hint": "G2 decide familias y emparejamientos. G3 se consulta solo si también cambia escala o microtipografía."
+    },
+    "solo-micro": {
+      "mode": "Lightweight",
+      "prereqs": [
+        "Conservar la familia autorizada; verificar que no cambie el alcance (T01).",
+        "Tomar muestras del contenido real y condiciones de tamaño (TY01/TY02).",
+        "Si aplica, revisar ajustes de texto y reflow; no declararlos conformes sin prueba (TY03)."
+      ],
+      "hint": "G3 es el especialista de interlineado; G2 no se activa para buscar nuevas fuentes."
+    },
+    "tipografia": {
+      "mode": "Subgraph",
+      "prereqs": [
+        "Separar selección de familia (G2) y microtipografía (G3); pueden ser trabajos distintos.",
+        "Identidad y preferencias de marca: conservar (D01).",
+        "Comprobar contenido y accesibilidad aplicables sin asumir conformidad (TY03)."
+      ],
+      "hint": "Por defecto solo se muestra la función seleccionada. Modo escenario combina G2+G3 cuando las dos tareas están realmente solicitadas."
+    },
+    "color": {
+      "mode": "Lightweight",
+      "prereqs": [
+        "Verificar colores existentes y autoridad de marca (D01/K01).",
+        "Revisar roles y contraste en pares reales, estados y temas (K02).",
+        "Una propuesta no constituye conformidad de accesibilidad (AC01)."
+      ],
+      "hint": "G4 gobierna el sistema de color; no exige cambiar tipografía."
+    },
+    "componentes": {
+      "mode": "Subgraph",
+      "prereqs": [
+        "Precisar el requisito atómico, tecnología y stack vigente (R01).",
+        "Reutilizar nativos o componentes aprobados antes de añadir biblioteca.",
+        "Cada nuevo candidato se evalúa mediante ADOPT: plataforma, licencia, seguridad, accesibilidad, coste y requisito (A10)."
+      ],
+      "hint": "G6 gobierna contratos y elección de componentes; consultar una biblioteca no autoriza instalarla."
+    },
+    "movimiento": {
+      "mode": "Subgraph",
+      "prereqs": [
+        "Primero decidir si el movimiento sirve a una función: alternativa sin animación (M01).",
+        "Si es necesario, definir transiciones/gestos apropiados (M03, MOV01/02).",
+        "Probar interrupción, reduced motion y funcionamiento real (MOV04)."
+      ],
+      "hint": "G7 es responsable; tareas como animate y gestures son de implementación, no pruebas de auditoría."
+    },
+    "auditoria": {
+      "mode": "Audit · read-only",
+      "prereqs": [
+        "Identificar superficie, requisitos y dominio concreto antes de seleccionar especialistas.",
+        "Usar evidencia observada y registrar No revisado / No verificado cuando falte una prueba.",
+        "Los hallazgos no autorizan corregir código, instalar dependencias ni publicar."
+      ],
+      "hint": "Una auditoría general no activa automáticamente G1–G7. Es necesario elegir el dominio afectado."
+    },
+    "referencias": {
+      "mode": "Lightweight",
+      "prereqs": [
+        "Formular la pregunta concreta sobre tarea, estado o interacción (ART01/L01).",
+        "Buscar fuentes relevantes e inspeccionar las capturas, no solo metadatos.",
+        "Registrar observación, decisión informada y material de marca que no debe copiarse."
+      ],
+      "hint": "UI Radar es un apoyo de investigación; la referencia no se convierte en decisión ni permiso de copia."
+    }
+  },
+  "owner_by_function": {
+    "art-direction": "G1",
+    "brand-identity": "G1",
+    "type-choice": "G2",
+    "type-micro": "G3",
+    "color-system": "G4",
+    "layout": "G5",
+    "tokens": "G6",
+    "components": "G6",
+    "component-lib": "G6",
+    "image-fidelity": "G5",
+    "faux-demo": "G1",
+    "motion-assess": "G7",
+    "motion-build": "G7",
+    "motion-review": "G7",
+    "docs-review": "G0",
+    "ux-writing": "G5",
+    "learning": "G0",
+    "web-mobile": "G5",
+    "variants": "G1"
+  },
+  "default_context_owner": {
+    "referencias": {
+      "ui-research": "G1"
+    },
+    "tipografia": {
+      "accessibility": "G3"
+    },
+    "color": {
+      "accessibility": "G4"
+    },
+    "componentes": {
+      "accessibility": "G6"
+    }
+  },
+  "special_blocked": [
+    "meta",
+    "infra",
+    "native",
+    "slides"
+  ],
+  "reviewable_domains": [
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6",
+    "G7"
+  ],
+  "review_states": [
+    "pending",
+    "applies",
+    "not_applicable"
+  ],
+  "writes": [
+    "implementar",
+    "prototipar",
+    "aprender"
+  ],
+  "notes": [
+    "Selector demostrativo de elegibilidad, no motor de ejecución.",
+    "N/A requiere razón vinculada al alcance; la revisión no se marca Verified automáticamente.",
+    "G0 coordina según el modo mínimo, no se invoca siempre para una tarea unidimensional.",
+    "El modo escenario resume funciones sin ampliar permisos ni invocar skills externas."
+  ],
+  "policy_version": "1.2",
+  "audit_domain_overrides": {
+    "visual-qa": [
+      "G1",
+      "G2",
+      "G3",
+      "G4",
+      "G5",
+      "G6",
+      "G7"
+    ]
+  }
+}

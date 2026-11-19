@@ -1,0 +1,69 @@
+test_audit_focused_domain_G2_is_represented (__main__.AuditExpectations.test_audit_focused_domain_G2_is_represented) ... FAIL
+test_audit_scenario_does_not_force_motion_specialist (__main__.AuditExpectations.test_audit_scenario_does_not_force_motion_specialist) ... FAIL
+test_export_captures_explicit_audit_domain (__main__.AuditExpectations.test_export_captures_explicit_audit_domain) ... FAIL
+test_export_invalid_nonapplicability_is_explicitly_flagged (__main__.AuditExpectations.test_export_invalid_nonapplicability_is_explicitly_flagged) ... FAIL
+test_rebuilding_coverage_preserves_keyboard_focus (__main__.AuditExpectations.test_rebuilding_coverage_preserves_keyboard_focus) ... FAIL
+
+======================================================================
+FAIL: test_audit_focused_domain_G2_is_represented (__main__.AuditExpectations.test_audit_focused_domain_G2_is_represented)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/auditoria_router_v11/test_regresion_negativa_v11.py", line 37, in test_audit_focused_domain_G2_is_represented
+    self.assertEqual(self.owners(),['G2'],'Una auditoría tipográfica no puede quedar sin especialista tras elegir G2')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['G2']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'G2'
+
+- []
++ ['G2'] : Una auditoría tipográfica no puede quedar sin especialista tras elegir G2
+
+======================================================================
+FAIL: test_audit_scenario_does_not_force_motion_specialist (__main__.AuditExpectations.test_audit_scenario_does_not_force_motion_specialist)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/auditoria_router_v11/test_regresion_negativa_v11.py", line 41, in test_audit_scenario_does_not_force_motion_specialist
+    self.assertEqual(self.owners(),['G5'],'Elegir auditoría de layout no debe traer G7 por la lista genérica de funciones')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['G5', 'G7'] != ['G5']
+
+First list contains 1 additional elements.
+First extra element 1:
+'G7'
+
+- ['G5', 'G7']
++ ['G5'] : Elegir auditoría de layout no debe traer G7 por la lista genérica de funciones
+
+======================================================================
+FAIL: test_export_captures_explicit_audit_domain (__main__.AuditExpectations.test_export_captures_explicit_audit_domain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/auditoria_router_v11/test_regresion_negativa_v11.py", line 47, in test_export_captures_explicit_audit_domain
+    self.assertEqual(data.get('selected_domain'),'G2','Exportar debe registrar la selección humana aunque no se resuelva el owner')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'G2' : Exportar debe registrar la selección humana aunque no se resuelva el owner
+
+======================================================================
+FAIL: test_export_invalid_nonapplicability_is_explicitly_flagged (__main__.AuditExpectations.test_export_invalid_nonapplicability_is_explicitly_flagged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/auditoria_router_v11/test_regresion_negativa_v11.py", line 54, in test_export_invalid_nonapplicability_is_explicitly_flagged
+    self.assertFalse(data.get('validation',{}).get('valid',True),'Un N/A sin justificación debe exportarse como inválido o bloquear la exportación')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : Un N/A sin justificación debe exportarse como inválido o bloquear la exportación
+
+======================================================================
+FAIL: test_rebuilding_coverage_preserves_keyboard_focus (__main__.AuditExpectations.test_rebuilding_coverage_preserves_keyboard_focus)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/auditoria_router_v11/test_regresion_negativa_v11.py", line 61, in test_rebuilding_coverage_preserves_keyboard_focus
+    self.assertIn(focus,{'SELECT','INPUT'},'Cambiar estado no debe dejar el foco en BODY')
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'BODY' not found in {'INPUT', 'SELECT'} : Cambiar estado no debe dejar el foco en BODY
+
+----------------------------------------------------------------------
+Ran 5 tests in 4.928s
+
+FAILED (failures=5)

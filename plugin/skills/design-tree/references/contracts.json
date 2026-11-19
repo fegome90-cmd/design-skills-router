@@ -1,0 +1,828 @@
+{
+  "schema": "design-tree-contracts/0.2",
+  "baseline": {
+    "tree_hash": "0cf76c1833d7aec023a3f939924af11e3caa7ff837ada1d208f6453f1e22a793"
+  },
+  "resources": [
+    {
+      "id": "jakub.interface.review-format",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/review-format.md",
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "git_blob": "345dc43af4ce9f971ab55afd7ceae786b1c4d36a",
+      "kind": "reference",
+      "scope": "reference"
+    }
+  ],
+  "relations": [
+    {
+      "id": "interface.better-accessibility",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-accessibility"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.better-layout",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-layout"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.better-writing",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-writing"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.better-typography",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-typography"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.better-colors",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-colors"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.better-ui",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "skill",
+        "id": "jakubkrehel/skills/better-ui"
+      },
+      "type": "delegates_to",
+      "required": true,
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "scope": "reference",
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "section": "4. Use domain skills as the sources of truth",
+        "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    },
+    {
+      "id": "interface.review-format",
+      "from_skill": "jakubkrehel/skills/better-interface",
+      "target": {
+        "kind": "resource",
+        "id": "jakub.interface.review-format"
+      },
+      "type": "uses_resource",
+      "required": true,
+      "scope": "reference",
+      "applies_to": [
+        "QA01"
+      ],
+      "when": [],
+      "source": {
+        "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/review-format.md",
+        "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+        "git_blob": "345dc43af4ce9f971ab55afd7ceae786b1c4d36a",
+        "section": "Review output format"
+      },
+      "provenance": "author",
+      "evidence_status": "SOURCE_REVIEWED"
+    }
+  ],
+  "source_reviews": {
+    "fegome90-cmd/my-skills/agy-agent": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/agy-agent/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/ai-work-prompting-gates": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/ai-work-prompting-gates/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/anchoring-tasks": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/anchoring-tasks/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/authority-flow-audit": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/authority-flow-audit/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/claude-md-optimizer": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/claude-md-optimizer/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/code-path-cartographer": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/code-path-cartographer/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/codex-agent": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/codex-agent/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/color-theory-engine": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/color-theory-engine/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "37aa116f668835ac9a4e2c2ac84e74980393bacc",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/color-theory-palette": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/color-theory-palette/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "4a944a9a15f3fe5abfab3b5f16249d8d574ce3b2",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/design-art-direction": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-art-direction/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "c84053a1d89be72d58fdee2a69ce6b6430a5cc11",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/design-process-orchestrator": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-process-orchestrator/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "da3b575b0bbaed6ab76c67e46b301f420abacaf7",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/design-tokens-components": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/design-tokens-components/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "11869f3248e07197bc81c873fddaac9c114b017b",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/diagram-auditor": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/diagram-auditor/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/disenar-slides": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/disenar-slides/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "0cbabcc251b6edc3083390adb5c48d486937c7f8",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/disk-cleanup-macos-safe": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/disk-cleanup-macos-safe/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/dots-maintenance": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/dots-maintenance/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/ensenar": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/ensenar/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/fish-shell-config": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/fish-shell-config/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/grill-me-dual-herdr": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/grill-me-dual-herdr/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/herdr-worktrunk": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/herdr-worktrunk/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/interagent-dispatch": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/interagent-dispatch/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/layout-grid-hierarchy": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/layout-grid-hierarchy/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "9644ac9e75d9cc7a6599de5fcf5e8b3ba4d3dfc1",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/learned-accuracy-fallacy-audit": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-accuracy-fallacy-audit/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/learned-keynote-to-mp4-pipeline": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-keynote-to-mp4-pipeline/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/learned-pr-feedback-resolution": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-pr-feedback-resolution/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/learned-progressive-disclosure": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-progressive-disclosure/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/learned-ssh-agent-vm-bootstrap": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-ssh-agent-vm-bootstrap/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/learned-structured-review": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/learned-structured-review/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/muse-agent": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/muse-agent/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/nix-fish-homemanager": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/nix-fish-homemanager/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/opencode-agent": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/opencode-agent/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/pi-agent": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/pi-agent/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/pi-extension-builder": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/pi-extension-builder/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/pi-startup-diagnostics": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/pi-startup-diagnostics/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/prompt-doctor": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/prompt-doctor/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/quality-plan-loop": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/quality-plan-loop/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/scripting-technical-presentations": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/scripting-technical-presentations/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "dfdf9601124485bf2162c6589d45806d3df7b80d",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/skill-import-untrusted": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/skill-import-untrusted/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/skill-onboarding": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/skill-onboarding/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/skill-vetting": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/skill-vetting/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/starship-nix-manager": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/starship-nix-manager/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/starship-prompt": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/starship-prompt/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/template-skill": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/template-skill/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/tmux-plan-auditor": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/tmux-plan-auditor/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/typography-scales-microtype": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-scales-microtype/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "544b6c429669a33992c6d9d28f87eb0a232b983e",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/typography-selection-pairing": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/typography-selection-pairing/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "6461b053839ba20842b49841ccdcd41afdf442c2",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/ui-motion-and-handoff": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/ui-motion-and-handoff/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "9ef4f5595eeaaa76d21718686450484cc284ba14",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "fegome90-cmd/my-skills/wiki-starter": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/wiki-starter/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "fegome90-cmd/my-skills/work-closeout": {
+      "commit": "5211aae8843eca4966d2aee828513582a04a7c8f",
+      "url": "https://github.com/fegome90-cmd/my-skills/blob/5211aae8843eca4966d2aee828513582a04a7c8f/skills/work-closeout/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/animate-expo": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/animate-expo/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/animate": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/animate/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/animation-performance": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/animation-performance/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/animation-vocabulary": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/animation-vocabulary/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/apple-design": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/apple-design/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "adf68c517f2d7d2781587d619de07f4de286da57",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "emilkowalski/skills/ask-sonner": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/ask-sonner/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/break-ui": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/break-ui/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/choreograph": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/choreograph/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/emil-design-eng": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/emil-design-eng/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "dc063c2a861922c1c9f2412b824b0862746304f5",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "emilkowalski/skills/find-animation-opportunities": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/find-animation-opportunities/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/gestures": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/gestures/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/improve-animations": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/improve-animations/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/mobile-native": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/mobile-native/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "94bba21fcb990b850e06effbf5709c96a07446ad",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "emilkowalski/skills/pick-ui-library": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/pick-ui-library/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "5e0028e988b88d2a88a019fdc978b4732243e467",
+      "invocation_policy": "EXPLICIT",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "emilkowalski/skills/prototype": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/prototype/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/remove-animations": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/remove-animations/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "emilkowalski/skills/review-animations": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/review-animations/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "591397b5308266f76671dacc3e44830a3e3e535f",
+      "invocation_policy": "EXPLICIT",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "emilkowalski/skills/write-swift": {
+      "commit": "5206a950b715e0cabe7043ea0b2304332b91494e",
+      "url": "https://github.com/emilkowalski/skills/blob/5206a950b715e0cabe7043ea0b2304332b91494e/skills/write-swift/SKILL.md",
+      "status": "ENTRY_SCOPE_REVIEWED",
+      "git_blob": "a09a8f693304fe1c04ed56d61dde9833a516849e",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "Entry/routing and selected sections only; native route remains blocked; no Swift toolchain claims verified",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/afk": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/afk/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/better-accessibility": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-accessibility/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "5e9ab11b4c109d56c435731198ed23ba0267e529",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-colors": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-colors/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "e0b3049b65a4e369217ca5f67b89ad3adf311fa0",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-interface": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-interface/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "11a75671a0cca1d24aeb6d70007aff6079c85696",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-layout": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-layout/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "d2a6a8226dc12d0cbb8f5c193fbf4c8329325085",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-typography": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-typography/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "843e22d6c32b930d8aa225d7150201bf6f6c80b6",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-ui": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-ui/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "b8abea328cfc49549423adce6674af7f50cce044",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/better-writing": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/better-writing/SKILL.md",
+      "status": "SOURCE_REVIEWED",
+      "git_blob": "54f93d31197446fc5b4d8645fddaa3ec91baa5c2",
+      "invocation_policy": "UNKNOWN",
+      "reviewed_at": "2026-11-08",
+      "review_scope": "SKILL.md main document; supporting files not exhaustively reread; no original skill execution",
+      "adaptation": "Source knowledge only. Existing project authority and contextual classification in v0.4 prevail; no aesthetic recipe promoted to universal standard."
+    },
+    "jakubkrehel/skills/break": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/break/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/build-design": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/build-design/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/explain-interface": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/explain-interface/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/interface-review": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/interface-review/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/state-machine": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/state-machine/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/teardown": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/teardown/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    },
+    "jakubkrehel/skills/variant": {
+      "commit": "157da62016338e8693dcff93d47154a9e36f2157",
+      "url": "https://github.com/jakubkrehel/skills/blob/157da62016338e8693dcff93d47154a9e36f2157/skills/variant/SKILL.md",
+      "status": "NOT_REVIEWED_THIS_RELEASE",
+      "git_blob": null,
+      "invocation_policy": "UNKNOWN"
+    }
+  },
+  "verification_requirements": []
+}

@@ -1,0 +1,44 @@
+test_export_has_no_external_network_behavior (test_portability.PortabilityTests.test_export_has_no_external_network_behavior) ... ok
+test_export_is_loadable_integrity_protected_state (test_portability.PortabilityTests.test_export_is_loadable_integrity_protected_state) ... ERROR
+test_move_bundle_resume_preserves_confirmations (test_portability.PortabilityTests.test_move_bundle_resume_preserves_confirmations) ... FAIL
+test_resume_refuses_overwrite (test_portability.PortabilityTests.test_resume_refuses_overwrite) ... ok
+test_tampered_export_evidence_rejected_on_resume (test_portability.PortabilityTests.test_tampered_export_evidence_rejected_on_resume) ... FAIL
+
+======================================================================
+ERROR: test_export_is_loadable_integrity_protected_state (test_portability.PortabilityTests.test_export_is_loadable_integrity_protected_state)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_portability.py", line 29, in test_export_is_loadable_integrity_protected_state
+    s=runner.load_state(out/'ledger.json');self.assertEqual(s['project_id'],'portable')
+  File "/mnt/data/design-plugin-build/design-skills-router/skills/design-tree/scripts/runner.py", line 345, in load_state
+    require(claimed==digest(s),'STATE_INTEGRITY_MISMATCH')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/data/design-plugin-build/design-skills-router/skills/design-tree/scripts/runner.py", line 39, in require
+    raise GateError(code)
+runner.GateError: STATE_INTEGRITY_MISMATCH
+
+======================================================================
+FAIL: test_move_bundle_resume_preserves_confirmations (test_portability.PortabilityTests.test_move_bundle_resume_preserves_confirmations)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_portability.py", line 35, in test_move_bundle_resume_preserves_confirmations
+    self.assertEqual(res.returncode,0,res.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 2 != 0 : usage: runner.py [-h] [--state STATE]
+                 {init,status,verify-package,node,source,structure,propose,confirm,invalidate,inventory,confirm-inventory,export} ...
+runner.py: error: argument cmd: invalid choice: 'resume' (choose from init, status, verify-package, node, source, structure, propose, confirm, invalidate, inventory, confirm-inventory, export)
+
+
+======================================================================
+FAIL: test_tampered_export_evidence_rejected_on_resume (test_portability.PortabilityTests.test_tampered_export_evidence_rejected_on_resume)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_portability.py", line 41, in test_tampered_export_evidence_rejected_on_resume
+    self.assertNotEqual(res.returncode,0);self.assertIn('EVIDENCE',res.stderr)
+                                          ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'EVIDENCE' not found in "usage: runner.py [-h] [--state STATE]\n                 {init,status,verify-package,node,source,structure,propose,confirm,invalidate,inventory,confirm-inventory,export} ...\nrunner.py: error: argument cmd: invalid choice: 'resume' (choose from init, status, verify-package, node, source, structure, propose, confirm, invalidate, inventory, confirm-inventory, export)\n"
+
+----------------------------------------------------------------------
+Ran 5 tests in 5.743s
+
+FAILED (failures=2, errors=1)

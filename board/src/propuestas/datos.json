@@ -1,0 +1,709 @@
+{
+  "schema": "design-router-proposal-board/0.6",
+  "created_at": "2026-11-17",
+  "status": "RESEARCH_PROPOSALS_ONLY_NO_APPROVAL_NO_PLUGIN_MUTATION",
+  "source_html": "design-router-pizarra-relaciones-v0.5.html",
+  "source_audit": "design-router-auditoria-semantica-v0.3.md",
+  "source_tree": "tree-v0.4 (untouched)",
+  "authoritative_suite": "fegome90-cmd/my-skills G0–G7",
+  "published_plugin": "design-skills-router 0.3.1 (source read earlier; not changed by this artifact)",
+  "stages": [
+    {
+      "id": "encuadre",
+      "index": "00",
+      "title": "Encuadre y autoridad",
+      "description": "Definir qué puede decidir y ejecutar el router"
+    },
+    {
+      "id": "fundaciones",
+      "index": "01",
+      "title": "Investigación y fuentes",
+      "description": "Recuperar evidencia sin instalar nada"
+    },
+    {
+      "id": "sistema",
+      "index": "02",
+      "title": "Sistema visual",
+      "description": "Respetar rectoría y ubicar operaciones"
+    },
+    {
+      "id": "componentes",
+      "index": "03",
+      "title": "Componentes y adopción",
+      "description": "Conservar tecnología aprobada y evaluar piezas"
+    },
+    {
+      "id": "validacion",
+      "index": "04",
+      "title": "Validación verificable",
+      "description": "Separar hallazgos de permisos para reparar"
+    },
+    {
+      "id": "aprendizaje",
+      "index": "05",
+      "title": "Gates y aprendizaje",
+      "description": "Aprobar fases, reglas y futuras publicaciones"
+    }
+  ],
+  "phases": [
+    {
+      "id": "F1",
+      "label": "Política y límites",
+      "description": "Separar autoridad, selección y efectos. Contratos mínimos y casos negativos.",
+      "check": "No hay escritura implícita ni metarruteador secundario."
+    },
+    {
+      "id": "F2",
+      "label": "Fuentes y consulta",
+      "description": "Auditar procedencia; permitir búsquedas acotadas sin admitir automáticamente.",
+      "check": "Toda fuente tiene estado y procedencia reproducibles."
+    },
+    {
+      "id": "F3",
+      "label": "Baseline candidato",
+      "description": "Reubicar relaciones y modelar componentes, manteniendo intacta v0.4.",
+      "check": "Las rutas web/nativo y las adopciones conservan sus gates."
+    },
+    {
+      "id": "F4",
+      "label": "Validación y gates",
+      "description": "Ejecutar casos negativos, host independiente y aceptación humana.",
+      "check": "Ningún resultado de prueba se interpreta como autorización de publicación."
+    }
+  ],
+  "proposals": [
+    {
+      "id": "C01",
+      "layer": "encuadre",
+      "priority": "P1",
+      "phase": "F1",
+      "owner": "G0",
+      "nodes": [
+        "Q00",
+        "ENV00",
+        "G0"
+      ],
+      "audit": [
+        "P1-01",
+        "P1-06"
+      ],
+      "status": "PROPUESTO",
+      "title": "Contratos de elegibilidad ≠ permisos de ejecución",
+      "summary": "Separar lectura, selección, propuesta y acción externa en cuatro decisiones comprobables.",
+      "before": "Un enlace a SKILL.md parece suficiente para activar un comportamiento.",
+      "after": "La relación primero acredita pertinencia; la autorización de herramientas se evalúa por separado.",
+      "change": "Introducir una política de capacidades reference / inspect / construct / verify / learn, sin otorgar privilegios desde contracts.json.",
+      "files": [
+        "contracts.json (candidato)",
+        "scripts/contracts.py",
+        "tests/test_contracts.py"
+      ],
+      "skills": [
+        "X02",
+        "X06",
+        "X30",
+        "X45"
+      ],
+      "checks": [
+        "UNKNOWN nunca significa elegible",
+        "Consulta no autoriza instalación ni escritura",
+        "El helper no afirma que controla herramientas externas"
+      ],
+      "depends": [],
+      "gate": "Revisión humana del contrato tipado y tests negativos",
+      "anchor": "G0"
+    },
+    {
+      "id": "C02",
+      "layer": "encuadre",
+      "priority": "P1",
+      "phase": "F1",
+      "owner": "G0",
+      "nodes": [
+        "Q00",
+        "ENV00",
+        "MODES"
+      ],
+      "audit": [
+        "P1-06"
+      ],
+      "status": "PROPUESTO",
+      "title": "Modo, asistencia y permiso son ejes independientes",
+      "summary": "Una auditoría puede ser phase_auto y seguir siendo estrictamente de solo lectura.",
+      "before": "“Más autonomía” puede confundirse con autorización de editar o publicar.",
+      "after": "Greenfield/Subgraph/Lightweight/Audit/Refactor × manual/guided/phase_auto × efectos autorizados.",
+      "change": "Definir matriz de compatibilidad y un guard externo al evaluador de relaciones; no ampliar allowed_actions silenciosamente.",
+      "files": [
+        "skills/design-process-orchestrator/SKILL.md (fuente)",
+        "scripts/assistance.py",
+        "tests/fixtures/host-routing-cases.json"
+      ],
+      "skills": [
+        "X35",
+        "X36",
+        "X45",
+        "X46"
+      ],
+      "checks": [
+        "Audit + phase_auto nunca ejecuta ediciones",
+        "Scope nuevo invalida delegación",
+        "No se atribuyen permisos de publicación al helper"
+      ],
+      "depends": [
+        "C01"
+      ],
+      "gate": "Mandato humano exacto para cualquier edición",
+      "anchor": "MODES"
+    },
+    {
+      "id": "C03",
+      "layer": "encuadre",
+      "priority": "P1",
+      "phase": "F1",
+      "owner": "G0",
+      "nodes": [
+        "G0",
+        "SCOPE",
+        "ENV00"
+      ],
+      "audit": [
+        "P1-04",
+        "P1-05"
+      ],
+      "status": "PROPUESTO",
+      "title": "Evitar dobles orquestadores y rutas fuera de ámbito",
+      "summary": "No permitir que un wrapper externo sustituya G0; deploy, nativo y slides siguen independientes.",
+      "before": "Un metarruteador externo puede abrir fases o herramientas no solicitadas.",
+      "after": "Solo subfunciones acotadas y comprobables; S05/S06 y publicación mantienen sus bloqueos.",
+      "change": "Excluir como orquestadores activos uizze-ui, ask-emil y design; tratar deploy, credenciales y rutas especializadas como fuera de ejecución web.",
+      "files": [
+        "GOV00 / manifest de disposición",
+        "tests/test_host_cases.py"
+      ],
+      "skills": [
+        "X01",
+        "X03",
+        "X04",
+        "X07",
+        "X08",
+        "X09",
+        "X10",
+        "X11",
+        "X12",
+        "X33"
+      ],
+      "checks": [
+        "QA01 no dispara deploy-to-vercel",
+        "Skill nativa no desbloquea S05",
+        "No se emiten decisiones fuera del scope aprobado"
+      ],
+      "depends": [
+        "C01"
+      ],
+      "gate": "Revisión del inventario sin exclusión irreversible",
+      "anchor": "ENV00"
+    },
+    {
+      "id": "C04",
+      "layer": "fundaciones",
+      "priority": "P1",
+      "phase": "F2",
+      "owner": "G0",
+      "nodes": [
+        "F00",
+        "REFS"
+      ],
+      "audit": [
+        "P1-07"
+      ],
+      "status": "BLOQUEO DE FUENTE",
+      "title": "Fijar fuentes y vetting antes de admitir",
+      "summary": "Los enlaces blob/main no bastan para reproducir una skill ni revisar sus dependencias.",
+      "before": "47 fichas indican URL y algunos blobs, pero no todos los commits y scripts.",
+      "after": "Commit exacto, blob, licencia, subrecursos, dependencias, seguridad y diferencias contra el pin previo.",
+      "change": "Preparar manifiesto de procedencia versionado, con revisión skill-vetting y skill-onboarding para candidatas nuevas.",
+      "files": [
+        "skill-inventory candidate v0.5",
+        "source-receipts.json (propuesto)",
+        "auditoría de licencias y scripts"
+      ],
+      "skills": [
+        "X05",
+        "X06",
+        "X30"
+      ],
+      "checks": [
+        "Rechazar commit ausente",
+        "Hash de bytes no se confunde con autenticidad",
+        "No se ejecutan scripts durante revisión"
+      ],
+      "depends": [
+        "C03"
+      ],
+      "gate": "Aprobación expresa de la admisión de cada candidata",
+      "anchor": "REFS"
+    },
+    {
+      "id": "C05",
+      "layer": "fundaciones",
+      "priority": "P2",
+      "phase": "F2",
+      "owner": "G1",
+      "nodes": [
+        "F00",
+        "ART05",
+        "G1"
+      ],
+      "audit": [
+        "P1-04"
+      ],
+      "status": "PROPUESTO",
+      "title": "Recuperación por dominio y tres referencias cuando aplique",
+      "summary": "La comparación visual informa G1 sin reemplazar la identidad del proyecto.",
+      "before": "Un catálogo general puede imponer una estética o generar un nuevo DESIGN.md.",
+      "after": "Preguntas concretas → fuentes visuales comparables → motivo de adopción/rechazo.",
+      "change": "Vincular ui-radar y búsquedas puntuales Pro Max como referencia; no ejecutar workflow de creación o persistencia.",
+      "files": [
+        "ART01 / ART05 (contrato suplementario)",
+        "registro de referencias observadas"
+      ],
+      "skills": [
+        "X05",
+        "X06",
+        "X13"
+      ],
+      "checks": [
+        "La fuente de una captura queda registrada",
+        "Si ya hay identidad, se conserva",
+        "No se crean documentos fuera del alcance"
+      ],
+      "depends": [
+        "C01",
+        "C04"
+      ],
+      "gate": "Selección de dirección solo por autoridad del proyecto",
+      "anchor": "ART05"
+    },
+    {
+      "id": "C06",
+      "layer": "sistema",
+      "priority": "P1",
+      "phase": "F2",
+      "owner": "G1",
+      "nodes": [
+        "G1",
+        "D00",
+        "ART05"
+      ],
+      "audit": [
+        "P1-04"
+      ],
+      "status": "PROPUESTO",
+      "title": "Acotar los 23 comandos y workflows estéticos",
+      "summary": "Impeccable, Taste, Hallmark y Anthropic asesoran; la decisión sigue en G1–G7.",
+      "before": "Un workflow externo puede regenerar tokens, identidad o archivos de producto.",
+      "after": "Consulta de playbook específico con límites de superficie y sin autoinicialización.",
+      "change": "Descomponer Impeccable por comando, Uizze UI Design por playbook y Taste/Hallmark por caso de uso, nunca como flujo rector.",
+      "files": [
+        "candidate-relations.json",
+        "tests/test_authority.py"
+      ],
+      "skills": [
+        "X02",
+        "X14",
+        "X15",
+        "X16",
+        "X18"
+      ],
+      "checks": [
+        "Identidad cerrada no cambia con Hallmark",
+        "Hooks/binarios no se lanzan por consulta",
+        "Subgrafo ligero no inicia greenfield"
+      ],
+      "depends": [
+        "C01",
+        "C05"
+      ],
+      "gate": "Revisión de la función elegida y su efecto",
+      "anchor": "G1"
+    },
+    {
+      "id": "C07",
+      "layer": "sistema",
+      "priority": "P1",
+      "phase": "F3",
+      "owner": "G7",
+      "nodes": [
+        "G7",
+        "M01"
+      ],
+      "audit": [
+        "P1-02"
+      ],
+      "status": "REUBICACIÓN",
+      "title": "Movimiento: decisión → construcción → revisión",
+      "summary": "La capa de QA no puede contener automáticamente implementadores de movimiento.",
+      "before": "X32/X35/X36/X41/X42 aparecen en Validación, aunque escriben o implementan.",
+      "after": "M01 decide utilidad → M03/MOV02 construyen con permisos → MOV04/QA01 revisan.",
+      "change": "Reubicar react-view-transitions, remove-animations, animate, choreograph y gestures; explorar find-animation-opportunities en M01 y mantener review-animations en QA.",
+      "files": [
+        "baseline candidato (NO editar tree-v0.4)",
+        "test de condiciones M01–M03"
+      ],
+      "skills": [
+        "X32",
+        "X34",
+        "X35",
+        "X36",
+        "X37",
+        "X41",
+        "X42"
+      ],
+      "checks": [
+        "Audit mantiene animación sin modificar",
+        "Reduced-motion revisado cuando corresponde",
+        "Implementadores no aparecen como controles read-only"
+      ],
+      "depends": [
+        "C01",
+        "C02",
+        "C04"
+      ],
+      "gate": "Versionado de baseline y permiso de edición",
+      "anchor": "M01"
+    },
+    {
+      "id": "C08",
+      "layer": "sistema",
+      "priority": "P1",
+      "phase": "F3",
+      "owner": "G5 / G7",
+      "nodes": [
+        "G5",
+        "G7",
+        "STACK"
+      ],
+      "audit": [
+        "P1-03"
+      ],
+      "status": "REUBICACIÓN",
+      "title": "Web móvil no equivale a aplicación nativa",
+      "summary": "La semántica de la skill manda, no la palabra “native” de su nombre.",
+      "before": "mobile-native y apple-design pueden asociarse a S05, ruta nativa bloqueada.",
+      "after": "Los consejos para web móvil entran en LAY01/M03/TY02; React Native/Swift siguen en S05.",
+      "change": "Separar plataforma web / web-móvil / nativa en el baseline candidato; no habilitar S05 automáticamente.",
+      "files": [
+        "skill-inventory candidate v0.5",
+        "regresión de rutas especializadas"
+      ],
+      "skills": [
+        "X21",
+        "X43",
+        "X09",
+        "X10",
+        "X11"
+      ],
+      "checks": [
+        "Web móvil activa consulta sin cambiar stack",
+        "Swift sigue bloqueado como ruta web",
+        "No heredar permisos entre plataformas"
+      ],
+      "depends": [
+        "C04",
+        "C07"
+      ],
+      "gate": "Nueva versión de baseline, no override de v0.4",
+      "anchor": "G5"
+    },
+    {
+      "id": "C09",
+      "layer": "sistema",
+      "priority": "P2",
+      "phase": "F3",
+      "owner": "G1",
+      "nodes": [
+        "G1",
+        "ART05"
+      ],
+      "audit": [
+        "P1-05"
+      ],
+      "status": "RUTA CONDICIONAL",
+      "title": "Demo ilustrada y hero ≠ UI funcional",
+      "summary": "Stageshow y banner-design producen escenas de producto; no certifican comportamiento real.",
+      "before": "Una escena ficticia puede terminar conectada a implementación funcional.",
+      "after": "Material visual se marca demostrativo; los formatos de slides/print no habilitan S06.",
+      "change": "Mover Stageshow bajo dirección de arte; separar hero web de banner/print y etiquetar todos los prototipos simulados.",
+      "files": [
+        "ART02 / ART05 (contrato)",
+        "rutas especializadas S06: pendientes"
+      ],
+      "skills": [
+        "X27",
+        "X19"
+      ],
+      "checks": [
+        "Demo visual no se reporta como app funcional",
+        "Formato externo mantiene bloqueo hasta contrato propio"
+      ],
+      "depends": [
+        "C06"
+      ],
+      "gate": "Aprobación del medio y alcance del entregable",
+      "anchor": "G1"
+    },
+    {
+      "id": "C10",
+      "layer": "componentes",
+      "priority": "P1",
+      "phase": "F3",
+      "owner": "G6",
+      "nodes": [
+        "G6",
+        "ADOPT",
+        "A10"
+      ],
+      "audit": [
+        "P1-01",
+        "P1-04"
+      ],
+      "status": "PROPUESTO",
+      "title": "Un contrato ADOPT para cada requisito atómico",
+      "summary": "Una sugerencia de biblioteca no constituye decisión de adopción.",
+      "before": "“Usar una librería” puede convertirse en cambio de stack sin probar un requisito.",
+      "after": "Reutilizar / adaptar / incorporar / diseñar, con seis ejes y evidencia por candidato.",
+      "change": "Vincular todas las recomendaciones de pick-ui-library y ui-styling al gate ADOPT por componente, versión y requisito.",
+      "files": [
+        "A10 / ADOPT",
+        "candidate-evaluation.json (propuesto)"
+      ],
+      "skills": [
+        "X22",
+        "X23",
+        "X24",
+        "X25",
+        "X26"
+      ],
+      "checks": [
+        "Reutilización antes de añadir dependencia",
+        "Falta de licencia = bloqueada",
+        "El estado UNKNOWN no pasa como VERIFIED"
+      ],
+      "depends": [
+        "C01",
+        "C04"
+      ],
+      "gate": "Aprobación humana del candidato exacto",
+      "anchor": "ADOPT"
+    },
+    {
+      "id": "C11",
+      "layer": "componentes",
+      "priority": "P2",
+      "phase": "F3",
+      "owner": "G6",
+      "nodes": [
+        "G6",
+        "RC01",
+        "STACK"
+      ],
+      "audit": [
+        "P1-04"
+      ],
+      "status": "PROPUESTO",
+      "title": "Preservar Base UI y APIs existentes",
+      "summary": "La tecnología del proyecto es una restricción, no un gusto de la skill.",
+      "before": "ui-styling propone shadcn/Radix/Tailwind como stack preferente.",
+      "after": "Se consulta por criterios transferibles; no migra librerías ni crea componentes propios por defecto.",
+      "change": "Exigir evidencia de compatibilidad con plataforma y biblioteca ya instaladas, además de comparar alternativas nativas.",
+      "files": [
+        "STACK.md existente (si aplica)",
+        "tests de conservación de dependencias"
+      ],
+      "skills": [
+        "X24",
+        "X22",
+        "X25"
+      ],
+      "checks": [
+        "No reemplazar Base UI por Radix sin gate",
+        "Sin biblioteca adecuada, no fingir adopción",
+        "Compatibilidad de React se verifica por versión"
+      ],
+      "depends": [
+        "C10"
+      ],
+      "gate": "Cambio de stack exige autorización independiente",
+      "anchor": "RC01"
+    },
+    {
+      "id": "C12",
+      "layer": "validacion",
+      "priority": "P1",
+      "phase": "F4",
+      "owner": "G0 / G7",
+      "nodes": [
+        "QA01",
+        "AC01",
+        "BREAK"
+      ],
+      "audit": [
+        "P1-06"
+      ],
+      "status": "PROPUESTO",
+      "title": "Pruebas adversariales sin escribir en producción",
+      "summary": "Separar inspección, prueba sintética de sandbox y corrección real.",
+      "before": "Una “auditoría” podría generar toggles o ediciones en código del producto.",
+      "after": "break-ui corre en espacio temporal autorizado; hallazgos no conceden permiso de corrección.",
+      "change": "Crear perfiles de efecto por skill y validación read-only/sandbox/write antes de tocar archivos.",
+      "files": [
+        "effect-policy.json (propuesto)",
+        "test_host_cases / escenarios A05, A12"
+      ],
+      "skills": [
+        "X28",
+        "X29",
+        "X37",
+        "X38",
+        "X45"
+      ],
+      "checks": [
+        "Auditoría mantiene intacto hash del proyecto",
+        "Datos extremos detectados en sandbox",
+        "Fallo no se transforma en aprobación"
+      ],
+      "depends": [
+        "C01",
+        "C02"
+      ],
+      "gate": "Aprobar reparación aparte del informe",
+      "anchor": "QA01"
+    },
+    {
+      "id": "C13",
+      "layer": "validacion",
+      "priority": "P1",
+      "phase": "F4",
+      "owner": "G0",
+      "nodes": [
+        "QA01",
+        "AC01"
+      ],
+      "audit": [
+        "P1-07"
+      ],
+      "status": "PROPUESTO",
+      "title": "Guías dinámicas y pruebas negativas reproducibles",
+      "summary": "La URL de reglas vivas necesita snapshot antes de comparar resultados.",
+      "before": "web-design-guidelines consulta “latest” y podría cambiar entre dos auditorías.",
+      "after": "Versionar reglas, fecha, checksum y resultado por archivo; probar controles adversariales.",
+      "change": "Añadir fuente fijada y pruebas de escenarios A01–A12 y activaciones reales separadas de tests estructurales.",
+      "files": [
+        "contracts.json candidato",
+        "tests/test_contracts.py",
+        "host-routing-evidence (externa)"
+      ],
+      "skills": [
+        "X30",
+        "X31",
+        "X39"
+      ],
+      "checks": [
+        "Reglas no accesibles = NOT_VERIFIED",
+        "Doce escenarios negativos documentados",
+        "Pruebas unitarias no se presentan como host PASS"
+      ],
+      "depends": [
+        "C04",
+        "C12"
+      ],
+      "gate": "Pruebas negativas y evidencia de sesión independiente",
+      "anchor": "QA01"
+    },
+    {
+      "id": "C14",
+      "layer": "aprendizaje",
+      "priority": "P1",
+      "phase": "F4",
+      "owner": "G0 / G1–G7",
+      "nodes": [
+        "LEARN",
+        "HUMAN",
+        "RULES"
+      ],
+      "audit": [
+        "P1-06"
+      ],
+      "status": "GATE HUMANO",
+      "title": "Aprendizaje propuesto, nunca autoescritura",
+      "summary": "Learn Taste necesita feedback real y aceptación literal de cada regla.",
+      "before": "Una preferencia inferida podría almacenarse como norma universal.",
+      "after": "Corrección trazable → propuesta con motivo → aprobación exacta → escritura autorizada.",
+      "change": "Aplicar plantilla LEARNING-CANDIDATE del plugin, respetando disable-model-invocation y gate de edición.",
+      "files": [
+        "references/LEARNING-CANDIDATE.md",
+        "DESIGN.md (solo si autorizado)"
+      ],
+      "skills": [
+        "X46"
+      ],
+      "checks": [
+        "Sin feedback real no nace regla",
+        "Un “ok” ambiguo no aprueba el texto",
+        "La escritura no implica publicación"
+      ],
+      "depends": [
+        "C01",
+        "C13"
+      ],
+      "gate": "Aprobación humana del diff de la regla",
+      "anchor": "LEARN"
+    },
+    {
+      "id": "C15",
+      "layer": "aprendizaje",
+      "priority": "P1",
+      "phase": "F4",
+      "owner": "G0 / host",
+      "nodes": [
+        "PACK",
+        "HUMAN",
+        "BASE"
+      ],
+      "audit": [
+        "P1-07",
+        "P1-06"
+      ],
+      "status": "GATE HUMANO",
+      "title": "Baseline nuevo, release separado y rollback",
+      "summary": "La pizarra y los contratos candidatos no son una publicación del plugin.",
+      "before": "Un resultado de tests podría confundirse con permiso de publicar o completar todo el trabajo.",
+      "after": "Baseline candidato → migración → pruebas independientes → fase AWAITING_HUMAN → autorización de publicación.",
+      "change": "Mantener v0.4 byte a byte; publicar solo después de revisar diff, hashes, release remoto y puertas de aceptación.",
+      "files": [
+        "baseline-lock.json (preservado)",
+        "scripts/release.py",
+        "CHANGELOG.md candidato"
+      ],
+      "skills": [
+        "X02",
+        "X06"
+      ],
+      "checks": [
+        "No alterar baseline v0.4 original",
+        "Sin autorización no se publica",
+        "Resultado estructural no simula funcionamiento del host"
+      ],
+      "depends": [
+        "C01",
+        "C04",
+        "C10",
+        "C13",
+        "C14"
+      ],
+      "gate": "Aprobación humana separada para fase y publicación",
+      "anchor": "BASE"
+    }
+  ],
+  "note": "These 15 proposals are not the 47 skill relationships; they are proposed remediation work orders. All are pending review."
+}

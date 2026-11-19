@@ -1,0 +1,435 @@
+{
+  "schema": "design-router-ui-dependencies/1",
+  "golden_sha256": "c07323286b8cf2c285049527c676f19f2d3016fadf078ac47a40e41683eb119e",
+  "google_fonts_stylesheet": "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500,0,0;9..144,650,0,0&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap",
+  "google_fonts_user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/132.0.0.0 Safari/537.36",
+  "dependency_inventory": [
+    {
+      "name": "Shoelace",
+      "version": "2.20.1",
+      "purpose": "Tema claro, tooltips de zoom y etiqueta; el SVG y los controles principales son nativos.",
+      "source": "https://registry.npmjs.org/@shoelace-style/shoelace/-/shoelace-2.20.1.tgz",
+      "integrity": "sha512-FSghU95jZPGbwr/mybVvk66qRZYpx5FkXL+vLNpy1Vp8UsdwSxXjIHE3fsvMbKWTKi9UFfewHTkc5e7jAqRYoQ==",
+      "golden_urls": [
+        "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css",
+        "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"
+      ],
+      "required_for_core": false,
+      "offline": "Tema exacto y bundle ESM de sl-tooltip y sl-tag desde la distribución oficial.",
+      "license": "MIT; avisos de dependencias en local-ui/licenses",
+      "build_tool": "esbuild 0.25.12"
+    },
+    {
+      "name": "Google Fonts",
+      "version": {
+        "Fraunces": "v38",
+        "IBM Plex Mono": "v23",
+        "IBM Plex Sans": "v23"
+      },
+      "purpose": "Tipografía; el HTML dorado declara fallbacks de sistema.",
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500,0,0;9..144,650,0,0&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap",
+      "required_for_core": false,
+      "offline": "CSS oficial y 27 fuentes WOFF2 distintas para todos los pesos y rangos declarados.",
+      "license": "SIL Open Font License 1.1 para las tres familias."
+    },
+    {
+      "name": "Visor diagrams.net",
+      "version": null,
+      "purpose": "Motor alternativo mxGraph, solicitado explícitamente en el control Motor draw.io.",
+      "source": "https://viewer.diagrams.net/js/viewer-static.min.js",
+      "required_for_core": false,
+      "offline": "Se usa el fallback SVG existente y la exportación .drawio local."
+    },
+    {
+      "name": "Editor diagrams.net",
+      "version": null,
+      "purpose": "Abrir el editor externo en otra pestaña si la persona hace clic.",
+      "source": "https://app.diagrams.net/",
+      "required_for_core": false,
+      "offline": "El enlace sigue siendo una navegación manual; el archivo .drawio se puede exportar sin red."
+    },
+    {
+      "name": "Referencias externas",
+      "version": null,
+      "purpose": "Enlaces de procedencia o enlaces documentales a GitHub, Miro, Milanote y Whimsical.",
+      "required_for_core": false,
+      "offline": "Se mantienen las referencias manuales y los datos embebidos."
+    }
+  ],
+  "supplemental_license_sources": [
+    {
+      "name": "@ctrl/tinycolor",
+      "version": "4.1.0",
+      "url": "https://registry.npmjs.org/@ctrl/tinycolor/-/tinycolor-4.1.0.tgz",
+      "license_files": [
+        "ctrl-tinycolor-4.1.0-LICENSE"
+      ]
+    },
+    {
+      "name": "@floating-ui/core",
+      "version": "1.6.8",
+      "url": "https://registry.npmjs.org/@floating-ui/core/-/core-1.6.8.tgz",
+      "license_files": [
+        "floating-ui-core-1.6.8-LICENSE"
+      ]
+    },
+    {
+      "name": "@floating-ui/dom",
+      "version": "1.6.12",
+      "url": "https://registry.npmjs.org/@floating-ui/dom/-/dom-1.6.12.tgz",
+      "license_files": [
+        "floating-ui-dom-1.6.12-LICENSE"
+      ]
+    },
+    {
+      "name": "@floating-ui/utils",
+      "version": "0.2.8",
+      "url": "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.8.tgz",
+      "license_files": [
+        "floating-ui-utils-0.2.8-LICENSE"
+      ]
+    },
+    {
+      "name": "@lit/react",
+      "version": "1.0.6",
+      "url": "https://registry.npmjs.org/@lit/react/-/react-1.0.6.tgz",
+      "license_files": [
+        "lit-react-1.0.6-LICENSE"
+      ]
+    },
+    {
+      "name": "@lit/reactive-element",
+      "version": "2.0.4",
+      "url": "https://registry.npmjs.org/@lit/reactive-element/-/reactive-element-2.0.4.tgz",
+      "license_files": [
+        "lit-reactive-element-2.0.4-LICENSE"
+      ]
+    },
+    {
+      "name": "@shoelace-style/animations",
+      "version": "1.2.0",
+      "url": "https://registry.npmjs.org/@shoelace-style/animations/-/animations-1.2.0.tgz",
+      "license_files": [
+        "shoelace-style-animations-1.2.0-LICENSE.md"
+      ]
+    },
+    {
+      "name": "@shoelace-style/localize",
+      "version": "3.2.1",
+      "url": "https://registry.npmjs.org/@shoelace-style/localize/-/localize-3.2.1.tgz",
+      "license_files": [
+        "shoelace-style-localize-3.2.1-LICENSE.md"
+      ]
+    },
+    {
+      "name": "composed-offset-position",
+      "version": "0.0.6",
+      "url": "https://registry.npmjs.org/composed-offset-position/-/composed-offset-position-0.0.6.tgz",
+      "license_files": [
+        "composed-offset-position-0.0.6-LICENSE.md"
+      ]
+    },
+    {
+      "name": "lit",
+      "version": "3.2.1",
+      "url": "https://registry.npmjs.org/lit/-/lit-3.2.1.tgz",
+      "license_files": [
+        "lit-3.2.1-LICENSE"
+      ]
+    },
+    {
+      "name": "lit-element",
+      "version": "4.1.1",
+      "url": "https://registry.npmjs.org/lit-element/-/lit-element-4.1.1.tgz",
+      "license_files": [
+        "lit-element-4.1.1-LICENSE"
+      ]
+    },
+    {
+      "name": "lit-html",
+      "version": "3.2.1",
+      "url": "https://registry.npmjs.org/lit-html/-/lit-html-3.2.1.tgz",
+      "license_files": [
+        "lit-html-3.2.1-LICENSE"
+      ]
+    }
+  ],
+  "font_license_sources": [
+    {
+      "family": "fraunces",
+      "source": "https://github.com/google/fonts/blob/main/ofl/fraunces/OFL.txt"
+    },
+    {
+      "family": "ibmplexmono",
+      "source": "https://github.com/google/fonts/blob/main/ofl/ibmplexmono/OFL.txt"
+    },
+    {
+      "family": "ibmplexsans",
+      "source": "https://github.com/google/fonts/blob/main/ofl/ibmplexsans/OFL.txt"
+    }
+  ],
+  "local_files": [
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+      "sha256": "7ced53420784c93cecccb7c27237594f0e41e5a7990581565f0aef8eda9e9d2f",
+      "bytes": 14648,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2"
+    },
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1iAq129k.woff2",
+      "sha256": "aeaa5b49508dca08599d12f8782b5d24366418d8dfc57d391589458dbe8b0d77",
+      "bytes": 5852,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1iAq129k.woff2"
+    },
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1iEq129k.woff2",
+      "sha256": "7ba7a2b0f611cda114878d9412ed356481ee5232c7b188ac2fad4d01dd6c4263",
+      "bytes": 13356,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1iEq129k.woff2"
+    },
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1iIq129k.woff2",
+      "sha256": "f8c22ec1804bd6966b70f43ac7c327025645b4c09597117fca2a5a6c750106fe",
+      "bytes": 6912,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1iIq129k.woff2"
+    },
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1isq129k.woff2",
+      "sha256": "1431edf60f08a3d3c88c83a2919cfce1b53149939375adb2ac4f587efeed80af",
+      "bytes": 8324,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1isq129k.woff2"
+    },
+    {
+      "path": "fonts/-F63fjptAgt5VM-kVkqdyU8n1pUL8lJdhg.woff2",
+      "sha256": "afe2b708d2857614368aaa41aff592e2eac2395ca40efc101381741f141bc5be",
+      "bytes": 5340,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F63fjptAgt5VM-kVkqdyU8n1pUL8lJdhg.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwl1FgtIU.woff2",
+      "sha256": "3febe5c7f22e4b07b4552738673c3dbe8bced2dc5f48b866edf7ccd9552d109a",
+      "bytes": 6972,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwl1FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwl5FgtIU.woff2",
+      "sha256": "18f641271b1393a07e1cc09e3528b1abcf4eb7294b454c8a3561d1455abb12c6",
+      "bytes": 13400,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwl5FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwl9FgtIU.woff2",
+      "sha256": "c634bd5a48b1b2891f1ceab494f4322229ca28a36ff2e49e75e88f0defb902be",
+      "bytes": 6012,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwl9FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+      "sha256": "6e618344335cc436ffd25deba4f4cb5a60ca6c3a4832e67f236ca43922f74eea",
+      "bytes": 14904,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwlRFgtIU.woff2",
+      "sha256": "ef2d8c602770429638da4674c489da3375542ec5c9b856d0623060025831b59c",
+      "bytes": 8456,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwlRFgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwupkp-8tFQ.woff2",
+      "sha256": "a0e4fc6b0fbad87effb4dcf57955b5b5112ab7c7c07c3722d47cb50b4f8f32ef",
+      "bytes": 5348,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3twJwupkp-8tFQ.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl1FgtIU.woff2",
+      "sha256": "83109cdd4f8665b475dfc11d61bd44da328bf7e6eab3d3953d39c49b1b9f6015",
+      "bytes": 7692,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl1FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl5FgtIU.woff2",
+      "sha256": "9203938fd230cf46d99e63f962b78fcdbe42dddf0937b64c69cb2c693916dc10",
+      "bytes": 14320,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl5FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl9FgtIU.woff2",
+      "sha256": "858d2e209a29fc620bf146a897a76d48bb16ba77804da03029fc21ad0d385912",
+      "bytes": 6984,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwl9FgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2",
+      "sha256": "cecb8f0bc58b996a828bc0a23e2814e4acec33f0f531adf565c0248e242061e1",
+      "bytes": 15588,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlRFgtIU.woff2",
+      "sha256": "8789b11d9afc3f686c023ed7ff411f7f3bc838be0b0933685cfb278313cf7e78",
+      "bytes": 9380,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlRFgtIU.woff2"
+    },
+    {
+      "path": "fonts/-F6qfjptAgt5VM-kVkqdyU8n3vAOwupkp-8tFQ.woff2",
+      "sha256": "5cd1570b419f46b36069f21c1bab17f4db08c25f174dcf3f0f15e9b82e4f2488",
+      "bytes": 6100,
+      "source": "https://fonts.gstatic.com/s/ibmplexmono/v23/-F6qfjptAgt5VM-kVkqdyU8n3vAOwupkp-8tFQ.woff2"
+    },
+    {
+      "path": "fonts/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2",
+      "sha256": "7234ed860a9cc83045413c4faee63c960a8f2d1917adcf728119307d56e0d783",
+      "bytes": 67304,
+      "source": "https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2"
+    },
+    {
+      "path": "fonts/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2",
+      "sha256": "f18853f63a870ebef013e30e789d8d544f102e4acd94988e57c223d9c796ddf4",
+      "bytes": 19700,
+      "source": "https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2"
+    },
+    {
+      "path": "fonts/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2",
+      "sha256": "a2930b27d13a228bd9ab6a49269b5f800237892ad560cb9dd7fab01b1620f88e",
+      "bytes": 59388,
+      "source": "https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2",
+      "sha256": "d160e20920ae4d6556518d352d3af27a74e9b0de3d8fe17b1c1044fc75aa2f81",
+      "bytes": 30964,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2",
+      "sha256": "73e7f7b1c980416ae0c2461268b14c7cfcce0668e683dc43fbb11a82a227b9f2",
+      "bytes": 13160,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2",
+      "sha256": "7d0037a170882a49e65a45c38ef195237bb07b1cc791d078379f0ac0d7ae1935",
+      "bytes": 23568,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2",
+      "sha256": "9409ee21811f0f5272b7e1d828fe8838005b0573481ef906e7e55b63f6610ab0",
+      "bytes": 29512,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2",
+      "sha256": "f598dd0700f155e2facfaa8ecfacace397d4c2c153e9ce37ab7ad310e8505bc2",
+      "bytes": 19500,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2"
+    },
+    {
+      "path": "fonts/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2",
+      "sha256": "e2291e842cf5af167122a22881a740c7f2dda7716f1e8cd76680264f4a859470",
+      "bytes": 45712,
+      "source": "https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2"
+    },
+    {
+      "path": "google-fonts.css",
+      "sha256": "11658ad6c7ad346888ad17efc7eb5c8103817832b45da60e666c694ef13b0b4e",
+      "bytes": 19434
+    },
+    {
+      "path": "licenses/bootstrap-icons-LICENSE",
+      "sha256": "0fb3e11bd57e896c5a512afd64864d28a37de45d19835016c87ca1ad19ead969",
+      "bytes": 1093
+    },
+    {
+      "path": "licenses/composed-offset-position-0.0.6-LICENSE.md",
+      "sha256": "086c588bc8fd118a6a316d4701cf46bba36aa934f94fcfd933a35127c24627e4",
+      "bytes": 1094
+    },
+    {
+      "path": "licenses/ctrl-tinycolor-4.1.0-LICENSE",
+      "sha256": "40623170cffa92890b9a2decc5456de6bba6d4f75a7a7b7abc60cc9fdaf78b65",
+      "bytes": 1072
+    },
+    {
+      "path": "licenses/floating-ui-core-1.6.8-LICENSE",
+      "sha256": "0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce",
+      "bytes": 1089
+    },
+    {
+      "path": "licenses/floating-ui-dom-1.6.12-LICENSE",
+      "sha256": "0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce",
+      "bytes": 1089
+    },
+    {
+      "path": "licenses/floating-ui-utils-0.2.8-LICENSE",
+      "sha256": "0e4c9a9b6c71019cbbea3bdc20b01223110a9035700f9c960c8fcbf78c2325ce",
+      "bytes": 1089
+    },
+    {
+      "path": "licenses/fraunces-OFL.txt",
+      "sha256": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b",
+      "bytes": 4391
+    },
+    {
+      "path": "licenses/ibmplexmono-OFL.txt",
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "bytes": 4456
+    },
+    {
+      "path": "licenses/ibmplexsans-OFL.txt",
+      "sha256": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+      "bytes": 4456
+    },
+    {
+      "path": "licenses/lit-3.2.1-LICENSE",
+      "sha256": "45d31799d0db956cc3eb5469346abbd9b7025babc5ff29fab10d7095da992ef1",
+      "bytes": 1517
+    },
+    {
+      "path": "licenses/lit-element-4.1.1-LICENSE",
+      "sha256": "45d31799d0db956cc3eb5469346abbd9b7025babc5ff29fab10d7095da992ef1",
+      "bytes": 1517
+    },
+    {
+      "path": "licenses/lit-html-3.2.1-LICENSE",
+      "sha256": "2b66f9390afde29edfe4314daff93f01fb182e1178053e228120178987e5db75",
+      "bytes": 1518
+    },
+    {
+      "path": "licenses/lit-react-1.0.6-LICENSE",
+      "sha256": "45d31799d0db956cc3eb5469346abbd9b7025babc5ff29fab10d7095da992ef1",
+      "bytes": 1517
+    },
+    {
+      "path": "licenses/lit-reactive-element-2.0.4-LICENSE",
+      "sha256": "45d31799d0db956cc3eb5469346abbd9b7025babc5ff29fab10d7095da992ef1",
+      "bytes": 1517
+    },
+    {
+      "path": "licenses/shoelace-LICENSE.md",
+      "sha256": "ac9ffacbfc877b6f4253a481b3c0edbad0c019ac3506a3b51415b336f4a0c054",
+      "bytes": 1065
+    },
+    {
+      "path": "licenses/shoelace-style-animations-1.2.0-LICENSE.md",
+      "sha256": "ac9ffacbfc877b6f4253a481b3c0edbad0c019ac3506a3b51415b336f4a0c054",
+      "bytes": 1065
+    },
+    {
+      "path": "licenses/shoelace-style-localize-3.2.1-LICENSE.md",
+      "sha256": "ac9ffacbfc877b6f4253a481b3c0edbad0c019ac3506a3b51415b336f4a0c054",
+      "bytes": 1065
+    },
+    {
+      "path": "shoelace-2.20.1-board.js",
+      "sha256": "63c0623e93c2c93593347918182638fab4d28ccd7a51b9726e6b92bf2665a6ef",
+      "bytes": 79012
+    },
+    {
+      "path": "shoelace-2.20.1-light.css",
+      "sha256": "48932bd11b44ee99ce1ebe8c7fe2fc9337119f026807edfb7aca9a212ff22d36",
+      "bytes": 19536
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "width": 320,
+    "focus_before": "<select data-review-status=\"G4\" aria-label=\"Aplicabilidad de G4\"><option value=\"pending\" selected=\"\">Pendiente</option><option value=\"applies\">Aplica</option><option value=\"not_applicable\">No aplica</",
+    "focus_after_select": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "focus_after_input_change": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "sizes": {
+      "fontSize": "10px",
+      "color": "rgb(107, 100, 115)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "summary": {
+      "fontSize": "16px"
+    },
+    "dims": {
+      "doc": [
+        320,
+        320
+      ],
+      "panel": [
+        320,
+        320
+      ],
+      "min": [
+        320,
+        320
+      ],
+      "hidden_overflow": []
+    },
+    "page_errors": []
+  },
+  {
+    "width": 390,
+    "focus_before": "<select data-review-status=\"G4\" aria-label=\"Aplicabilidad de G4\"><option value=\"pending\" selected=\"\">Pendiente</option><option value=\"applies\">Aplica</option><option value=\"not_applicable\">No aplica</",
+    "focus_after_select": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "focus_after_input_change": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "sizes": {
+      "fontSize": "10px",
+      "color": "rgb(107, 100, 115)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "summary": {
+      "fontSize": "16px"
+    },
+    "dims": {
+      "doc": [
+        390,
+        390
+      ],
+      "panel": [
+        390,
+        390
+      ],
+      "min": [
+        390,
+        390
+      ],
+      "hidden_overflow": []
+    },
+    "page_errors": []
+  },
+  {
+    "width": 768,
+    "focus_before": "<select data-review-status=\"G4\" aria-label=\"Aplicabilidad de G4\"><option value=\"pending\" selected=\"\">Pendiente</option><option value=\"applies\">Aplica</option><option value=\"not_applicable\">No aplica</",
+    "focus_after_select": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "focus_after_input_change": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "sizes": {
+      "fontSize": "10px",
+      "color": "rgb(107, 100, 115)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "summary": {
+      "fontSize": "16px"
+    },
+    "dims": {
+      "doc": [
+        768,
+        768
+      ],
+      "panel": [
+        768,
+        768
+      ],
+      "min": [
+        768,
+        768
+      ],
+      "hidden_overflow": []
+    },
+    "page_errors": []
+  },
+  {
+    "width": 1440,
+    "focus_before": "<select data-review-status=\"G4\" aria-label=\"Aplicabilidad de G4\"><option value=\"pending\" selected=\"\">Pendiente</option><option value=\"applies\">Aplica</option><option value=\"not_applicable\">No aplica</",
+    "focus_after_select": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "focus_after_input_change": "<body>\n<div class=\"app capability-active\">\n <header class=\"top\">\n  <div class=\"identity\"><div class=\"logo\" aria-hidden=\"true\">R</div><div><div class=\"eyebrow\">Estudio de sistemas / Research board 03</",
+    "sizes": {
+      "fontSize": "10px",
+      "color": "rgb(107, 100, 115)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    "summary": {
+      "fontSize": "16px"
+    },
+    "dims": {
+      "doc": [
+        1440,
+        1440
+      ],
+      "panel": [
+        1220,
+        1220
+      ],
+      "min": [
+        1220,
+        1220
+      ],
+      "hidden_overflow": []
+    },
+    "page_errors": []
+  }
+]

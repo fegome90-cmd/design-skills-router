@@ -1,0 +1,22 @@
+Chromium 159.0.8154.6, macOS arm64. Pizarra SHA-256 c07323286b8cf2c285049527c676f19f2d3016fadf078ac47a40e41683eb119e.
+PASS 1. Tablero → Q00 → ficha de código Python real
+PASS 2. Q00 → F00 → atrás → adelante, con URL y selección
+PASS 3. Búsqueda por alias E03__F00 y filtro Archivos
+PASS 4. Ficha runner.py y símbolo con línea y fuente
+PASS 5. Apertura directa desde file:/// con enlace profundo
+PASS 6. Salir de la vista y volver a usar el simulador
+PASS 7. Controles alcanzables y sin overflow a 390 y 320 CSS px
+7/7 casos aprobados
+PASS Base: fuente G2, microtipografía G3 y escenario G2 + G3
+PASS SEM-01: auditoría de tipografía, solo función
+PASS SEM-02: auditoría de layout, escenario completo
+PASS STATE-03: N/A vacío y N/A de G2 requerido
+PASS TRACE-04: expediente descargado conserva ámbito y huella de política
+PASS UX-05: cambio con teclado conserva select exacto y selección dentro del texto
+PASS Auditoría sin ámbito en ambos alcances
+PASS Ida y vuelta entre dominios con justificaciones independientes
+PASS POLICY-08: al entrar en auditoría se bloquea sandbox y se conserva lectura efectiva
+PASS VIS-07: los apoyos de escritura están visibles o se pueden desplegar
+PASS Responsive: 320, 390, 768 y 1440 CSS px sin desborde al abrir requisitos
+11/11 casos aprobados
+✅ Process completed with exit code 0 (runtime: 10.66s)

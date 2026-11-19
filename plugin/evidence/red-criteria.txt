@@ -1,0 +1,53 @@
+test_all_branch_cannot_be_rejected (test_runner.RunnerTests.test_all_branch_cannot_be_rejected) ... ok
+test_all_children_stay_open (test_runner.RunnerTests.test_all_children_stay_open) ... ok
+test_assistant_receipt_rejected (test_runner.RunnerTests.test_assistant_receipt_rejected) ... ok
+test_audit_permission_is_read_only (test_runner.RunnerTests.test_audit_permission_is_read_only) ... ok
+test_bad_git_blob_rejected (test_runner.RunnerTests.test_bad_git_blob_rejected) ... ok
+test_baseline_drift_rejected (test_runner.RunnerTests.test_baseline_drift_rejected) ... ok
+test_candidate_cannot_cross_component_context (test_runner.RunnerTests.test_candidate_cannot_cross_component_context) ... ok
+test_candidate_identity_is_required (test_runner.RunnerTests.test_candidate_identity_is_required) ... ok
+test_changed_source_file_blocks (test_runner.RunnerTests.test_changed_source_file_blocks) ... ok
+test_confirmed_choice_opens_only_selected_branch (test_runner.RunnerTests.test_confirmed_choice_opens_only_selected_branch) ... ok
+test_decision_does_not_auto_approve (test_runner.RunnerTests.test_decision_does_not_auto_approve) ... ok
+test_declared_hard_enforcement_is_false (test_runner.RunnerTests.test_declared_hard_enforcement_is_false) ... ok
+test_descendant_is_locked_before_approval (test_runner.RunnerTests.test_descendant_is_locked_before_approval) ... ok
+test_evidence_changes_before_confirmation_block (test_runner.RunnerTests.test_evidence_changes_before_confirmation_block) ... ok
+test_incomplete_evidence_leaf_cannot_be_approved (test_runner.RunnerTests.test_incomplete_evidence_leaf_cannot_be_approved) ... ok
+test_initial_not_ready_to_implement (test_runner.RunnerTests.test_initial_not_ready_to_implement) ... ok
+test_invalidate_root_revokes_downstream (test_runner.RunnerTests.test_invalidate_root_revokes_downstream) ... ok
+test_inventory_no_silent_defaults (test_runner.RunnerTests.test_inventory_no_silent_defaults) ... ok
+test_inventory_preserves_all_entries (test_runner.RunnerTests.test_inventory_preserves_all_entries) ... ok
+test_inventory_proposal_needs_human (test_runner.RunnerTests.test_inventory_proposal_needs_human) ... ok
+test_mismatched_receipt_hash_rejected (test_runner.RunnerTests.test_mismatched_receipt_hash_rejected) ... ok
+test_missing_criterion_decisions_blocks (test_runner.RunnerTests.test_missing_criterion_decisions_blocks) ... FAIL
+test_missing_skill_review_blocks (test_runner.RunnerTests.test_missing_skill_review_blocks) ... ok
+test_missing_source_blocks (test_runner.RunnerTests.test_missing_source_blocks) ... ok
+test_node_not_applicable_is_not_a_silent_branch_skip (test_runner.RunnerTests.test_node_not_applicable_is_not_a_silent_branch_skip) ... ok
+test_packet_contains_real_tree_and_skill (test_runner.RunnerTests.test_packet_contains_real_tree_and_skill) ... ok
+test_proposal_without_structure_is_blocked (test_runner.RunnerTests.test_proposal_without_structure_is_blocked) ... ok
+test_root_only_initially (test_runner.RunnerTests.test_root_only_initially) ... ok
+test_scope_confusion_rejected (test_runner.RunnerTests.test_scope_confusion_rejected) ... ok
+test_siblings_not_invalidated_unnecessarily (test_runner.RunnerTests.test_siblings_not_invalidated_unnecessarily) ... ok
+test_source_invocation_needs_separate_authority (test_runner.RunnerTests.test_source_invocation_needs_separate_authority) ... ok
+test_source_receipt_does_not_prove_comprehension (test_runner.RunnerTests.test_source_receipt_does_not_prove_comprehension) ... ok
+test_state_roundtrip_and_integrity (test_runner.RunnerTests.test_state_roundtrip_and_integrity) ... ok
+test_state_stale_writer_rejected (test_runner.RunnerTests.test_state_stale_writer_rejected) ... ok
+test_tree_baseline_bytes_preserved (test_runner.RunnerTests.test_tree_baseline_bytes_preserved) ... ok
+test_unexamined_alternative_blocks (test_runner.RunnerTests.test_unexamined_alternative_blocks) ... ok
+test_unknown_node_rejected (test_runner.RunnerTests.test_unknown_node_rejected) ... ok
+test_unknown_route_blocks_instead_of_web_fallback (test_runner.RunnerTests.test_unknown_route_blocks_instead_of_web_fallback) ... ok
+test_wrong_commit_rejected (test_runner.RunnerTests.test_wrong_commit_rejected) ... ok
+
+======================================================================
+FAIL: test_missing_criterion_decisions_blocks (test_runner.RunnerTests.test_missing_criterion_decisions_blocks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 156, in test_missing_criterion_decisions_blocks
+    with self.assertRaisesRegex(self.r.GateError,'CRITERION'):self.router.propose(self.state,'Q00',p)
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: GateError not raised
+
+----------------------------------------------------------------------
+Ran 39 tests in 0.433s
+
+FAILED (failures=1)

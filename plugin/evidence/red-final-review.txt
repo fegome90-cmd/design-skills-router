@@ -1,0 +1,181 @@
+test_export_has_no_external_network_behavior (test_portability.PortabilityTests.test_export_has_no_external_network_behavior) ... ok
+test_export_is_loadable_integrity_protected_state (test_portability.PortabilityTests.test_export_is_loadable_integrity_protected_state) ... ok
+test_move_bundle_resume_preserves_confirmations (test_portability.PortabilityTests.test_move_bundle_resume_preserves_confirmations) ... ok
+test_resume_refuses_overwrite (test_portability.PortabilityTests.test_resume_refuses_overwrite) ... ok
+test_tampered_export_evidence_rejected_on_resume (test_portability.PortabilityTests.test_tampered_export_evidence_rejected_on_resume) ... ok
+test_all_branch_cannot_be_rejected (test_runner.RunnerTests.test_all_branch_cannot_be_rejected) ... ok
+test_all_children_stay_open (test_runner.RunnerTests.test_all_children_stay_open) ... ok
+test_assistant_receipt_rejected (test_runner.RunnerTests.test_assistant_receipt_rejected) ... ok
+test_audit_permission_is_read_only (test_runner.RunnerTests.test_audit_permission_is_read_only) ... ok
+test_bad_git_blob_rejected (test_runner.RunnerTests.test_bad_git_blob_rejected) ... ok
+test_baseline_drift_rejected (test_runner.RunnerTests.test_baseline_drift_rejected) ... ok
+test_candidate_cannot_cross_component_context (test_runner.RunnerTests.test_candidate_cannot_cross_component_context) ... ok
+test_candidate_identity_is_required (test_runner.RunnerTests.test_candidate_identity_is_required) ... ok
+test_changed_source_file_blocks (test_runner.RunnerTests.test_changed_source_file_blocks) ... ok
+test_confirmed_choice_opens_only_selected_branch (test_runner.RunnerTests.test_confirmed_choice_opens_only_selected_branch) ... ok
+test_dangling_criterion_evidence_reference_rejected (test_runner.RunnerTests.test_dangling_criterion_evidence_reference_rejected) ... FAIL
+test_dangling_skill_evidence_reference_rejected (test_runner.RunnerTests.test_dangling_skill_evidence_reference_rejected) ... FAIL
+test_decision_does_not_auto_approve (test_runner.RunnerTests.test_decision_does_not_auto_approve) ... ok
+test_declared_hard_enforcement_is_false (test_runner.RunnerTests.test_declared_hard_enforcement_is_false) ... ok
+test_descendant_is_locked_before_approval (test_runner.RunnerTests.test_descendant_is_locked_before_approval) ... ok
+test_evidence_changes_before_confirmation_block (test_runner.RunnerTests.test_evidence_changes_before_confirmation_block) ... ok
+test_excluded_inventory_cannot_mask_active_applied_skill (test_runner.RunnerTests.test_excluded_inventory_cannot_mask_active_applied_skill) ... FAIL
+test_incomplete_evidence_leaf_cannot_be_approved (test_runner.RunnerTests.test_incomplete_evidence_leaf_cannot_be_approved) ... ok
+test_initial_not_ready_to_implement (test_runner.RunnerTests.test_initial_not_ready_to_implement) ... ok
+test_invalidate_root_revokes_downstream (test_runner.RunnerTests.test_invalidate_root_revokes_downstream) ... ok
+test_inventory_applicable_requires_observed_review (test_runner.RunnerTests.test_inventory_applicable_requires_observed_review) ... FAIL
+test_inventory_no_silent_defaults (test_runner.RunnerTests.test_inventory_no_silent_defaults) ... ok
+test_inventory_preserves_all_entries (test_runner.RunnerTests.test_inventory_preserves_all_entries) ... ok
+test_inventory_proposal_needs_human (test_runner.RunnerTests.test_inventory_proposal_needs_human) ... ok
+test_mismatched_receipt_hash_rejected (test_runner.RunnerTests.test_mismatched_receipt_hash_rejected) ... ok
+test_missing_criterion_decisions_blocks (test_runner.RunnerTests.test_missing_criterion_decisions_blocks) ... ok
+test_missing_skill_review_blocks (test_runner.RunnerTests.test_missing_skill_review_blocks) ... ok
+test_missing_source_blocks (test_runner.RunnerTests.test_missing_source_blocks) ... ok
+test_node_not_applicable_is_not_a_silent_branch_skip (test_runner.RunnerTests.test_node_not_applicable_is_not_a_silent_branch_skip) ... ok
+test_packet_contains_real_tree_and_skill (test_runner.RunnerTests.test_packet_contains_real_tree_and_skill) ... ok
+test_proposal_without_structure_is_blocked (test_runner.RunnerTests.test_proposal_without_structure_is_blocked) ... ok
+test_root_only_initially (test_runner.RunnerTests.test_root_only_initially) ... ok
+test_scope_confusion_rejected (test_runner.RunnerTests.test_scope_confusion_rejected) ... ok
+test_siblings_not_invalidated_unnecessarily (test_runner.RunnerTests.test_siblings_not_invalidated_unnecessarily) ... ok
+test_source_invocation_needs_separate_authority (test_runner.RunnerTests.test_source_invocation_needs_separate_authority) ... ok
+test_source_receipt_does_not_prove_comprehension (test_runner.RunnerTests.test_source_receipt_does_not_prove_comprehension) ... ok
+test_state_roundtrip_and_integrity (test_runner.RunnerTests.test_state_roundtrip_and_integrity) ... ok
+test_state_stale_writer_rejected (test_runner.RunnerTests.test_state_stale_writer_rejected) ... ok
+test_string_instead_of_reference_list_rejected (test_runner.RunnerTests.test_string_instead_of_reference_list_rejected) ... FAIL
+test_tree_baseline_bytes_preserved (test_runner.RunnerTests.test_tree_baseline_bytes_preserved) ... ok
+test_unexamined_alternative_blocks (test_runner.RunnerTests.test_unexamined_alternative_blocks) ... ok
+test_unknown_node_rejected (test_runner.RunnerTests.test_unknown_node_rejected) ... ok
+test_unknown_route_blocks_instead_of_web_fallback (test_runner.RunnerTests.test_unknown_route_blocks_instead_of_web_fallback) ... ok
+test_wrong_commit_rejected (test_runner.RunnerTests.test_wrong_commit_rejected) ... ok
+
+======================================================================
+FAIL: test_dangling_criterion_evidence_reference_rejected (test_runner.RunnerTests.test_dangling_criterion_evidence_reference_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 181, in test_dangling_criterion_evidence_reference_rejected
+    with self.assertRaisesRegex(self.r.GateError,'EVIDENCE_REFERENCE'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: GateError not raised
+
+======================================================================
+FAIL: test_dangling_skill_evidence_reference_rejected (test_runner.RunnerTests.test_dangling_skill_evidence_reference_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 176, in test_dangling_skill_evidence_reference_rejected
+    with self.assertRaisesRegex(self.r.GateError,'EVIDENCE_REFERENCE'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: GateError not raised
+
+======================================================================
+FAIL: test_excluded_inventory_cannot_mask_active_applied_skill (test_runner.RunnerTests.test_excluded_inventory_cannot_mask_active_applied_skill)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 200, in test_excluded_inventory_cannot_mask_active_applied_skill
+    self.assertIn('fegome90-cmd/my-skills/design-process-orchestrator',s.get('inventory_conflicts',[]))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'fegome90-cmd/my-skills/design-process-orchestrator' not found in []
+
+======================================================================
+FAIL: test_inventory_applicable_requires_observed_review (test_runner.RunnerTests.test_inventory_applicable_requires_observed_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 193, in test_inventory_applicable_requires_observed_review
+    self.assertEqual(set(s.get('unreviewed_applicable_skills',[])),set(self.router.inventory))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'fegome90-cmd/my-skills/ai-work-prompting-gates'
+'fegome90-cmd/my-skills/pi-agent'
+'emilkowalski/skills/break-ui'
+'jakubkrehel/skills/better-writing'
+'fegome90-cmd/my-skills/learned-accuracy-fallacy-audit'
+'fegome90-cmd/my-skills/nix-fish-homemanager'
+'fegome90-cmd/my-skills/code-path-cartographer'
+'fegome90-cmd/my-skills/template-skill'
+'jakubkrehel/skills/afk'
+'fegome90-cmd/my-skills/color-theory-palette'
+'fegome90-cmd/my-skills/interagent-dispatch'
+'fegome90-cmd/my-skills/starship-nix-manager'
+'fegome90-cmd/my-skills/ensenar'
+'fegome90-cmd/my-skills/learned-pr-feedback-resolution'
+'fegome90-cmd/my-skills/typography-selection-pairing'
+'fegome90-cmd/my-skills/opencode-agent'
+'emilkowalski/skills/gestures'
+'emilkowalski/skills/ask-sonner'
+'emilkowalski/skills/remove-animations'
+'fegome90-cmd/my-skills/learned-keynote-to-mp4-pipeline'
+'jakubkrehel/skills/build-design'
+'fegome90-cmd/my-skills/disk-cleanup-macos-safe'
+'fegome90-cmd/my-skills/wiki-starter'
+'fegome90-cmd/my-skills/design-process-orchestrator'
+'fegome90-cmd/my-skills/skill-import-untrusted'
+'fegome90-cmd/my-skills/agy-agent'
+'fegome90-cmd/my-skills/pi-extension-builder'
+'emilkowalski/skills/animation-performance'
+'jakubkrehel/skills/explain-interface'
+'fegome90-cmd/my-skills/dots-maintenance'
+'jakubkrehel/skills/better-ui'
+'jakubkrehel/skills/teardown'
+'fegome90-cmd/my-skills/layout-grid-hierarchy'
+'fegome90-cmd/my-skills/pi-startup-diagnostics'
+'emilkowalski/skills/prototype'
+'fegome90-cmd/my-skills/scripting-technical-presentations'
+'fegome90-cmd/my-skills/authority-flow-audit'
+'jakubkrehel/skills/variant'
+'fegome90-cmd/my-skills/fish-shell-config'
+'jakubkrehel/skills/better-interface'
+'jakubkrehel/skills/better-typography'
+'emilkowalski/skills/animation-vocabulary'
+'fegome90-cmd/my-skills/design-tokens-components'
+'emilkowalski/skills/apple-design'
+'emilkowalski/skills/mobile-native'
+'fegome90-cmd/my-skills/herdr-worktrunk'
+'emilkowalski/skills/write-swift'
+'fegome90-cmd/my-skills/diagram-auditor'
+'fegome90-cmd/my-skills/work-closeout'
+'emilkowalski/skills/choreograph'
+'fegome90-cmd/my-skills/tmux-plan-auditor'
+'fegome90-cmd/my-skills/quality-plan-loop'
+'fegome90-cmd/my-skills/skill-onboarding'
+'fegome90-cmd/my-skills/anchoring-tasks'
+'emilkowalski/skills/improve-animations'
+'emilkowalski/skills/animate'
+'emilkowalski/skills/pick-ui-library'
+'fegome90-cmd/my-skills/prompt-doctor'
+'fegome90-cmd/my-skills/color-theory-engine'
+'emilkowalski/skills/review-animations'
+'fegome90-cmd/my-skills/grill-me-dual-herdr'
+'fegome90-cmd/my-skills/learned-ssh-agent-vm-bootstrap'
+'fegome90-cmd/my-skills/typography-scales-microtype'
+'fegome90-cmd/my-skills/claude-md-optimizer'
+'emilkowalski/skills/animate-expo'
+'jakubkrehel/skills/better-colors'
+'fegome90-cmd/my-skills/muse-agent'
+'emilkowalski/skills/find-animation-opportunities'
+'fegome90-cmd/my-skills/skill-vetting'
+'fegome90-cmd/my-skills/codex-agent'
+'jakubkrehel/skills/better-accessibility'
+'fegome90-cmd/my-skills/disenar-slides'
+'fegome90-cmd/my-skills/learned-structured-review'
+'jakubkrehel/skills/state-machine'
+'jakubkrehel/skills/break'
+'fegome90-cmd/my-skills/learned-progressive-disclosure'
+'fegome90-cmd/my-skills/starship-prompt'
+'jakubkrehel/skills/better-layout'
+'fegome90-cmd/my-skills/design-art-direction'
+'fegome90-cmd/my-skills/ui-motion-and-handoff'
+'emilkowalski/skills/emil-design-eng'
+'jakubkrehel/skills/interface-review'
+
+======================================================================
+FAIL: test_string_instead_of_reference_list_rejected (test_runner.RunnerTests.test_string_instead_of_reference_list_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/design-plugin-build/design-skills-router/tests/test_runner.py", line 186, in test_string_instead_of_reference_list_rejected
+    with self.assertRaisesRegex(self.r.GateError,'EVIDENCE_REFERENCE'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: GateError not raised
+
+----------------------------------------------------------------------
+Ran 49 tests in 6.362s
+
+FAILED (failures=5)

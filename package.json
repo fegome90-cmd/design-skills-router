@@ -1,0 +1,22 @@
+{
+  "name": "design-skills-router-workbench",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Pruebas de la pizarra Design Skills Router",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "npm run test:core && node tests/router-v12.semantic.cjs release/design-router-pizarra-v1.4.html",
+    "test:core": "node --test tests/selection-core.test.cjs",
+    "test:browser": "node tests/map-test.cjs release/design-router-pizarra-v1.4.html && node tests/router-v12.playwright.cjs release/design-router-pizarra-v1.4.html",
+    "test:offline": "node offline/test-offline.cjs release/design-router-pizarra-v1.4-offline.html",
+    "test:preview": "python3 -B tools/build.py --output-dir .preview && node tests/router-v12.semantic.cjs .preview/design-router-pizarra-v1.4.html && node tests/map-test.cjs .preview/design-router-pizarra-v1.4.html && node tests/router-v12.playwright.cjs .preview/design-router-pizarra-v1.4.html && node offline/test-offline.cjs .preview/design-router-pizarra-v1.4-offline.html",
+    "test:telemetry": "python3 -B -m unittest discover -s telemetry/tests && node --test tests/telemetry-board.test.cjs",
+    "test:telemetry:e2e": "python3 -B tools/build.py --output-dir .preview && node tests/telemetry-board.playwright.cjs .preview/design-router-pizarra-v1.4-offline.html && node tests/telemetry-dashboard.playwright.cjs && node tests/telemetry-collector.playwright.cjs",
+    "test:golden": "node tests/router-v12.semantic.cjs release/design-router-pizarra-v1.3.html && node offline/test-offline.cjs release/design-router-pizarra-v1.3-offline.html"
+  },
+  "devDependencies": {
+    "playwright": "1.57.0"
+  }
+}

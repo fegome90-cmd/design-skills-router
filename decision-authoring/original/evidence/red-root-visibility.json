@@ -1,0 +1,23 @@
+[
+  {
+    "width": 320,
+    "rootTop": 578.5,
+    "rootBottom": 660.5,
+    "canvasHeight": 576,
+    "visible": false
+  },
+  {
+    "width": 390,
+    "rootTop": 578.5,
+    "rootBottom": 660.5,
+    "canvasHeight": 576,
+    "visible": false
+  },
+  {
+    "width": 1440,
+    "rootTop": 578.5,
+    "rootBottom": 660.5,
+    "canvasHeight": 648,
+    "visible": false
+  }
+]

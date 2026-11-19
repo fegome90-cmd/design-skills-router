@@ -1,0 +1,55 @@
+{
+  "target": "/mnt/data/baseline-v03/design-decision-tree-v0.3",
+  "passed": 2,
+  "failed": 10,
+  "checks": [
+    {
+      "name": "single_root_unique_ids",
+      "pass": true
+    },
+    {
+      "name": "identity_and_required_review_are_siblings",
+      "pass": false
+    },
+    {
+      "name": "existing_scopes_have_review_expansion",
+      "pass": false
+    },
+    {
+      "name": "art_direction_decomposed",
+      "pass": false
+    },
+    {
+      "name": "microtypography_decomposed",
+      "pass": false
+    },
+    {
+      "name": "deliverable_always_reviewed",
+      "pass": false
+    },
+    {
+      "name": "capabilities_not_exclusive",
+      "pass": false
+    },
+    {
+      "name": "cross_discipline_reviewer_present",
+      "pass": false
+    },
+    {
+      "name": "each_named_candidate_has_assessment",
+      "pass": false
+    },
+    {
+      "name": "all_82_have_disposition",
+      "pass": false
+    },
+    {
+      "name": "every_decision_has_rule_source",
+      "pass": false
+    },
+    {
+      "name": "human_gates_are_not_self_approved",
+      "pass": true
+    }
+  ]
+}

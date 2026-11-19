@@ -1,0 +1,374 @@
+{
+  "default": {
+    "route": "tipografia",
+    "scope": "function",
+    "functions": [
+      "type-choice"
+    ],
+    "owners": [
+      "G2"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {}
+    },
+    "domain_select": "",
+    "primary": "G2 · typography-selection-pairing\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Ui-ux-pro-max\nBuscar fuentes adecuadas; G2 decide.\nCONSULTA · Opcional\nUi-design\nReferencias de tipografía con decisión G2.\nCONSULTA · Opcional\n\n2 consultas propuestas · 0 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "1 en alcance · 6 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_function_unscoped": {
+    "route": "auditoria",
+    "scope": "function",
+    "functions": [
+      "visual-qa"
+    ],
+    "owners": [],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {}
+    },
+    "domain_select": "",
+    "primary": "Falta delimitar dominio o función. No se activa automáticamente ningún especialista.",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\n\n3 consultas propuestas · 0 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "0 en alcance · 7 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_function_G2": {
+    "route": "auditoria",
+    "scope": "function",
+    "functions": [
+      "visual-qa"
+    ],
+    "owners": [],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {}
+    },
+    "domain_select": "G2",
+    "primary": "Falta delimitar dominio o función. No se activa automáticamente ningún especialista.",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\n\n3 consultas propuestas · 0 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "0 en alcance · 7 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_scenario_unscoped": {
+    "route": "auditoria",
+    "scope": "scenario",
+    "functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "owners": [],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {}
+    },
+    "domain_select": "",
+    "primary": "Falta delimitar dominio o función. No se activa automáticamente ningún especialista.",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microinteracciones bajo G7.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nReview-animations\nInvocación explícita para revisión de animaciones. · Requiere invocación explícita\nCONSULTA · Opcional\nImprove-animations\nAuditoría y plan read-only, sin implementar.\nCONSULTA · Opcional\nAnimation-performance\nRevisar presupuestos de frame reales.\nCONSULTA · Opcional\nEmil-design-eng\nPolish y movimiento si no existe una guía más específica.\nCONSULTA · Opcional\nBreak-ui\nDetectar fallos con datos extremos sin modificar producción.\nCONSULTA · Opcional\n\n1 contribuciones adicionales en las fichas del mapa inferior.\n\n10 consultas propuestas · 1 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "0 en alcance · 7 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_scenario_G2": {
+    "route": "auditoria",
+    "scope": "scenario",
+    "functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "owners": [
+      "G2",
+      "G7"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {}
+    },
+    "domain_select": "G2",
+    "primary": "G2 · typography-selection-pairing\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada\nG7 · ui-motion-and-handoff\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microinteracciones bajo G7.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nReview-animations\nInvocación explícita para revisión de animaciones. · Requiere invocación explícita\nCONSULTA · Opcional\nImprove-animations\nAuditoría y plan read-only, sin implementar.\nCONSULTA · Opcional\nAnimation-performance\nRevisar presupuestos de frame reales.\nCONSULTA · Opcional\nEmil-design-eng\nPolish y movimiento si no existe una guía más específica.\nCONSULTA · Opcional\nBreak-ui\nDetectar fallos con datos extremos sin modificar producción.\nCONSULTA · Opcional\n\n1 contribuciones adicionales en las fichas del mapa inferior.\n\n10 consultas propuestas · 1 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "2 en alcance · 5 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_scenario_G5": {
+    "route": "auditoria",
+    "scope": "scenario",
+    "functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "owners": [
+      "G5",
+      "G7"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {}
+    },
+    "domain_select": "G5",
+    "primary": "G5 · layout-grid-hierarchy\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada\nG7 · ui-motion-and-handoff\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microinteracciones bajo G7.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nReview-animations\nInvocación explícita para revisión de animaciones. · Requiere invocación explícita\nCONSULTA · Opcional\nImprove-animations\nAuditoría y plan read-only, sin implementar.\nCONSULTA · Opcional\nAnimation-performance\nRevisar presupuestos de frame reales.\nCONSULTA · Opcional\nEmil-design-eng\nPolish y movimiento si no existe una guía más específica.\nCONSULTA · Opcional\nBreak-ui\nDetectar fallos con datos extremos sin modificar producción.\nCONSULTA · Opcional\n\n1 contribuciones adicionales en las fichas del mapa inferior.\n\n10 consultas propuestas · 1 intervenciones que podrían requerir edición. La edición sigue sin permiso en esta simulación.",
+    "summary": "2 en alcance · 5 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_scenario_G5_sandbox": {
+    "route": "auditoria",
+    "scope": "scenario",
+    "functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "owners": [
+      "G5",
+      "G7"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {}
+    },
+    "domain_select": "G5",
+    "primary": "G5 · layout-grid-hierarchy\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada\nG7 · ui-motion-and-handoff\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microinteracciones bajo G7.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nReview-animations\nInvocación explícita para revisión de animaciones. · Requiere invocación explícita\nCONSULTA · Opcional\nImprove-animations\nAuditoría y plan read-only, sin implementar.\nCONSULTA · Opcional\nAnimation-performance\nRevisar presupuestos de frame reales.\nCONSULTA · Opcional\nEmil-design-eng\nPolish y movimiento si no existe una guía más específica.\nCONSULTA · Opcional\nBreak-ui\nDetectar fallos con datos extremos sin modificar producción.\nCONSULTA · Opcional\n\n1 contribuciones adicionales en las fichas del mapa inferior.\n\n10 consultas propuestas · 1 intervenciones que podrían requerir edición. Edición simulada: no concede permisos ni activa herramientas.",
+    "summary": "2 en alcance · 5 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_conflict_no_reason": {
+    "route": "auditoria",
+    "scope": "scenario",
+    "functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "owners": [
+      "G5",
+      "G7"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {
+        "G5": {
+          "status": "not_applicable"
+        }
+      }
+    },
+    "domain_select": "G5",
+    "primary": "G5 · layout-grid-hierarchy\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada\nG7 · ui-motion-and-handoff\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Impeccable\n/critique o /audit sin aplicar fixes por defecto.\nCONSULTA · Opcional\nAnti-ui-slop\nAuditar contra contexto sin imponer estética de proveedor.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microinteracciones bajo G7.\nCONSULTA · Opcional\nWeb-design-guidelines\nReglas web de fecha y hash fijados.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nReview-animations\nInvocación explícita para revisión de animaciones. · Requiere invocación explícita\nCONSULTA · Opcional\nImprove-animations\nAuditoría y plan read-only, sin implementar.\nCONSULTA · Opcional\nAnimation-performance\nRevisar presupuestos de frame reales.\nCONSULTA · Opcional\nEmil-design-eng\nPolish y movimiento si no existe una guía más específica.\nCONSULTA · Opcional\nBreak-ui\nDetectar fallos con datos extremos sin modificar producción.\nCONSULTA · Opcional\n\n1 contribuciones adicionales en las fichas del mapa inferior.\n\n10 consultas propuestas · 1 intervenciones que podrían requerir edición. Edición simulada: no concede permisos ni activa herramientas.",
+    "summary": "1 en alcance · 5 pendientes · 0 N/A justificados · 1 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "audit_export_conflict": {
+    "selected_route": "auditoria",
+    "selected_scope": "scenario",
+    "selected_functions": [
+      "visual-qa",
+      "accessibility",
+      "stress-test",
+      "motion-review"
+    ],
+    "proposed_owners": [
+      "G5",
+      "G7"
+    ],
+    "simulated_permission": "sandbox",
+    "applicability": {
+      "G1": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G2": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G3": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G4": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G5": {
+        "applicability": "not_applicable",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G6": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G7": {
+        "applicability": "applies",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      }
+    },
+    "human_gate": "NOT_APPROVED",
+    "skills_executed": []
+  },
+  "audit_export_conflict_with_reason": {
+    "proposed_owners": [
+      "G5",
+      "G7"
+    ],
+    "applicability": {
+      "G1": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G2": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G3": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G4": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G5": {
+        "applicability": "not_applicable",
+        "reason": "Sin relación con esta tarea",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G6": {
+        "applicability": "pending",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      },
+      "G7": {
+        "applicability": "applies",
+        "reason": "",
+        "reviewed": false,
+        "verified": false,
+        "approved": false
+      }
+    },
+    "human_gate": "NOT_APPROVED"
+  },
+  "type_scenario": {
+    "route": "tipografia",
+    "scope": "scenario",
+    "functions": [
+      "type-choice",
+      "type-micro",
+      "accessibility"
+    ],
+    "owners": [
+      "G2",
+      "G3"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {
+        "G5": {
+          "status": "not_applicable",
+          "reason": "Sin relación con esta tarea"
+        }
+      },
+      "tipografia|scenario|type-choice,type-micro,accessibility": {}
+    },
+    "domain_select": "",
+    "primary": "G2 · typography-selection-pairing\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada\nG3 · typography-scales-microtype\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Ui-ux-pro-max\nBuscar fuentes adecuadas; G2 decide.\nCONSULTA · Opcional\nUi-ux-pro-max\nBuscar ejemplos de escala; G3 decide.\nCONSULTA · Opcional\nUi-design\nReferencias de tipografía con decisión G2.\nCONSULTA · Opcional\nMake-interfaces-feel-better\nRevisar microdetalles de texto bajo G3.\nCONSULTA · Opcional\nWeb-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\nApple-design\nOptical sizing/tracking: la decisión sigue en G3.\nCONSULTA · Opcional\nImpeccable\n/typeset solo con autorización y G3.\nESCRITURA · Gate externo\n\n6 consultas propuestas · 1 intervenciones que podrían requerir edición. Edición simulada: no concede permisos ni activa herramientas.",
+    "summary": "2 en alcance · 5 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "accessibility_function": {
+    "route": "tipografia",
+    "scope": "function",
+    "functions": [
+      "accessibility"
+    ],
+    "owners": [
+      "G3"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {
+        "G5": {
+          "status": "not_applicable",
+          "reason": "Sin relación con esta tarea"
+        }
+      },
+      "tipografia|scenario|type-choice,type-micro,accessibility": {},
+      "tipografia|function|accessibility": {}
+    },
+    "domain_select": "",
+    "primary": "G3 · typography-scales-microtype\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Web-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\n\n1 consultas propuestas · 0 intervenciones que podrían requerir edición. Edición simulada: no concede permisos ni activa herramientas.",
+    "summary": "1 en alcance · 6 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "accessibility_changed_G6": {
+    "route": "tipografia",
+    "scope": "function",
+    "functions": [
+      "accessibility"
+    ],
+    "owners": [
+      "G6"
+    ],
+    "reviews": {
+      "tipografia|function|type-choice": {},
+      "auditoria|function|visual-qa": {},
+      "auditoria|scenario|visual-qa,accessibility,stress-test,motion-review": {
+        "G5": {
+          "status": "not_applicable",
+          "reason": "Sin relación con esta tarea"
+        }
+      },
+      "tipografia|scenario|type-choice,type-micro,accessibility": {},
+      "tipografia|function|accessibility": {}
+    },
+    "domain_select": "G6",
+    "primary": "G6 · design-tokens-components\nRevisión propuesta del nodo; no consta consulta real ni ejecución.\nSKILL.md fijada",
+    "support": "Web-design-guidelines\nSolo criterios aplicables y verificados.\nCONSULTA · Opcional\n\n1 consultas propuestas · 0 intervenciones que podrían requerir edición. Edición simulada: no concede permisos ni activa herramientas.",
+    "summary": "1 en alcance · 6 pendientes · 0 N/A justificados · 0 conflictos / razones faltantes · 0 verificaciones de ejecución"
+  },
+  "page_errors": []
+}
