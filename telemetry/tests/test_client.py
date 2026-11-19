@@ -1,5 +1,6 @@
 import http.server
 import json
+import multiprocessing
 import os
 import tempfile
 import threading
@@ -10,6 +11,24 @@ from unittest.mock import patch
 
 from telemetry import contract
 from telemetry.client import POST_OK, POST_REJECT, POST_RETRY, Telemetry, client_from_env
+
+
+def _ack(accepted, duplicates=0):
+    return json.dumps({
+        "schema": contract.SCHEMA, "accepted": accepted, "duplicates": duplicates,
+    }).encode()
+
+
+def _offline_producer(config, barrier, result):
+    client = Telemetry(config)
+    identifiers = []
+    barrier.wait(timeout=20)
+    with patch.object(client, "_post", return_value=POST_RETRY):
+        for _ in range(16):
+            event = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+            identifiers.append(event["event_id"])
+            client.flush()
+    result.put((identifiers, len(client._events)))
 
 
 class ClientTests(unittest.TestCase):
@@ -53,6 +72,142 @@ class ClientTests(unittest.TestCase):
         with patch.object(client, "_post", return_value=POST_OK):
             self.assertTrue(client.flush())
         self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+
+    def test_only_a_matching_collector_receipt_retires_a_persisted_batch(self):
+        response = [503, b"offline"]
+        attempts = []
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                attempts.append([event["event_id"] for event in payload["events"]])
+                status, body = response
+                self.send_response(status)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        client = Telemetry(contract.TelemetryConfig(
+            True, f"http://127.0.0.1:{server.server_port}", state_dir=self.state,
+        ))
+        ids = [client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")["event_id"]
+               for _ in range(2)]
+        self.assertFalse(client.flush())
+        invalid = [
+            (200, b"<html>Login</html>"), (200, _ack(2)), (202, b"<html>Login</html>"),
+            (202, b"{}"), (202, _ack(1)), (202, _ack(True, 1)), (202, _ack(-1, 3)),
+            (202, json.dumps({"schema": "other", "accepted": 2, "duplicates": 0}).encode()),
+        ]
+        for status, body in invalid:
+            with self.subTest(status=status, body=body):
+                response[:] = [status, body]
+                self.assertFalse(client.flush())
+                self.assertEqual(len(list(self.state.rglob("outbox-*.jsonl"))), 1)
+        response[:] = [202, _ack(1, 1)]
+        self.assertTrue(client.flush())
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+        self.assertEqual(attempts, [ids] * (len(invalid) + 2))
+
+    def test_truncated_422_response_preserves_batch_for_retry(self):
+        attempts = []
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+                attempts.append([event["event_id"] for event in payload["events"]])
+                if len(attempts) == 1:
+                    self.send_response(422)
+                    self.send_header("Transfer-Encoding", "chunked")
+                    self.end_headers()
+                    self.wfile.write(b'40\r\n{"error":')
+                    self.close_connection = True
+                    return
+                self.send_response(202)
+                self.end_headers()
+                self.wfile.write(_ack(1))
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        client = Telemetry(contract.TelemetryConfig(
+            True, f"http://127.0.0.1:{server.server_port}", state_dir=self.state,
+        ))
+        event = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        self.assertFalse(client.flush())
+        self.assertEqual(len(list(self.state.rglob("outbox-*.jsonl"))), 1)
+        self.assertEqual(list(self.state.rglob("rejected-*.jsonl")), [])
+        self.assertTrue(client.flush())
+        self.assertEqual(attempts, [[event["event_id"]]] * 2)
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+
+    def test_processes_compact_and_recover_exactly_the_emitted_events(self):
+        ctx = multiprocessing.get_context("spawn")
+        workers = 4
+        barrier = ctx.Barrier(workers)
+        result = ctx.Queue()
+        self.addCleanup(result.close)
+        processes = [ctx.Process(target=_offline_producer, args=(self.config(), barrier, result))
+                     for _ in range(workers)]
+        for process in processes:
+            process.start()
+            self.addCleanup(process.join, 5)
+            self.addCleanup(process.terminate)
+        expected = []
+        for _ in processes:
+            identifiers, pending = result.get(timeout=30)
+            self.assertEqual(pending, 0)
+            expected.extend(identifiers)
+        for process in processes:
+            process.join(10)
+            self.assertEqual(process.exitcode, 0)
+        recovered = []
+        def delivered(events):
+            recovered.extend(event["event_id"] for event in events)
+            return POST_OK
+
+        client = Telemetry(self.config())
+        with patch.object(client, "_post", side_effect=delivered):
+            self.assertTrue(client.flush())
+        self.assertCountEqual(recovered, expected)
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+
+    def test_producer_can_persist_while_another_client_awaits_ack(self):
+        producer, consumer = Telemetry(self.config()), Telemetry(self.config())
+        first = producer.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(producer, "_post", return_value=POST_RETRY):
+            self.assertFalse(producer.flush())
+        sending = threading.Event()
+        unblock = threading.Event()
+        def slow_post(events):
+            sending.set()
+            return POST_OK if unblock.wait(timeout=5) else POST_RETRY
+
+        with patch.object(consumer, "_post", side_effect=slow_post):
+            replay = threading.Thread(target=consumer.flush_spool)
+            replay.start()
+            try:
+                self.assertTrue(sending.wait(timeout=5))
+                second = producer.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+                with patch.object(producer, "_post", side_effect=AssertionError("another process owns replay")):
+                    self.assertFalse(producer.flush())
+                self.assertEqual(producer._events, [])
+            finally:
+                unblock.set()
+                replay.join(timeout=5)
+        client = Telemetry(self.config())
+        with patch.object(client, "_post", return_value=POST_OK) as post:
+            self.assertTrue(client.flush())
+            post.assert_called_once_with([first, second])
 
     def test_equivalent_collector_origins_share_pending_events(self):
         def configured(url):
@@ -294,8 +449,8 @@ class ClientTests(unittest.TestCase):
         class StubHandler(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
                 length = int(self.headers.get("Content-Length", 0))
-                self.rfile.read(length)
-                body = b"{}"
+                events = json.loads(self.rfile.read(length))["events"]
+                body = _ack(len(events))
                 if mode["fail"]:
                     self.send_response(429)
                 else:
@@ -361,6 +516,28 @@ class ClientTests(unittest.TestCase):
         names = [e["name"] for batch in posted for e in batch]
         self.assertEqual(names, ["skill.execution_started", "skill.execution_completed", "router.invoked"])
 
+    def test_existing_write_only_outbox_under_read_only_parent_can_upgrade(self):
+        if not hasattr(os, "geteuid") or os.geteuid() == 0:
+            self.skipTest("requires POSIX directory permissions and an unprivileged user")
+        client = Telemetry(self.config())
+        directory = client._outbox_dir()
+        directory.mkdir(parents=True)
+        # An older client already established the high-water clock, but
+        # neither of the new lock files exists yet.
+        (directory / "spool-clock").write_text("1800000000000000000:1")
+        os.chmod(directory.parent, 0o500)
+        os.chmod(directory, 0o300)
+        self.addCleanup(os.chmod, directory.parent, 0o700)
+        self.addCleanup(os.chmod, directory, 0o700)
+        event = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(client, "_post", side_effect=AssertionError("outbox cannot be listed")):
+            self.assertFalse(client.flush())
+            self.assertEqual(client._events, [])
+        os.chmod(directory, 0o700)
+        with patch.object(client, "_post", return_value=POST_OK) as post:
+            self.assertTrue(client.flush())
+            post.assert_called_once_with([event])
+
     def test_spool_filenames_stay_monotonic_across_clock_rollback_and_instances(self):
         c1 = Telemetry(self.config())
         c2 = Telemetry(self.config())
@@ -425,6 +602,7 @@ class ClientTests(unittest.TestCase):
                 received.append(events)
                 self.send_response(202)
                 self.end_headers()
+                self.wfile.write(_ack(len(events)))
             def log_message(self, format, *args):
                 pass
         stub = http.server.ThreadingHTTPServer(("127.0.0.1", 0), IndexedRejectHandler)
@@ -556,6 +734,7 @@ class ClientTests(unittest.TestCase):
                 received.append(events)
                 self.send_response(202)
                 self.end_headers()
+                self.wfile.write(_ack(len(events)))
             def log_message(self, format, *args):
                 pass
 

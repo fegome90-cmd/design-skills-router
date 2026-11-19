@@ -12,6 +12,10 @@ const { chromium } = require('playwright');
 
 const file = process.argv[2] || path.join(__dirname, '../.preview/design-router-pizarra-v1.4-offline.html');
 
+function receipt(payload) {
+  return { schema: 'design-router-telemetry/1', accepted: payload.events.length, duplicates: 0 };
+}
+
 function serve(html) {
   const events = [];
   const server = http.createServer((request, response) => {
@@ -38,7 +42,7 @@ function serve(html) {
           const payload = JSON.parse(body);
           events.push(...(payload.events || []));
           response.writeHead(202, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          response.end(JSON.stringify({ accepted: (payload.events || []).length, duplicates: 0 }));
+          response.end(JSON.stringify(receipt(payload)));
         } catch (_) {
           response.writeHead(400, { 'Content-Type': 'application/json' });
           response.end('{"error":"INVALID_JSON"}');
@@ -69,11 +73,11 @@ async function checkCollectorSwitch(browser, origin) {
   try {
     await page.route(collectorA + '/v1/events', async route => {
       sentToA.push(...route.request().postDataJSON().events.map(event => event.event_id));
-      await route.fulfill({ status: offline ? 503 : 202 });
+      await route.fulfill(offline ? { status: 503 } : { status: 202, json: receipt(route.request().postDataJSON()) });
     });
     await page.route(collectorB + '/v1/events', async route => {
       sentToB.push(...route.request().postDataJSON().events.map(event => event.event_id));
-      await route.fulfill({ status: 202 });
+      await route.fulfill({ status: 202, json: receipt(route.request().postDataJSON()) });
     });
     await page.addInitScript(endpoint => {
       if (location.search === '?inline') window.DESIGN_ROUTER_TELEMETRY = { endpoint };
@@ -104,6 +108,32 @@ async function checkCollectorSwitch(browser, origin) {
     assert.ok(sentToA.every(id => !sentToB.includes(id)), 'A received a B event');
   } finally {
     await page.close();
+  }
+}
+
+async function checkSharedOptOut(browser, fixture) {
+  const context = await browser.newContext();
+  try {
+    const settings = await context.newPage();
+    const board = fixture.origin + '/board.html';
+    await settings.goto(board);
+    await settings.evaluate(url => window.DesignRouterTelemetry.configure(url), fixture.origin);
+    const otherTab = await context.newPage();
+    const isPost = response => response.request().method() === 'POST' &&
+      response.url() === fixture.origin + '/v1/events' && response.status() === 202;
+    await Promise.all([otherTab.waitForResponse(isPost), otherTab.goto(board)]);
+    await Promise.all([otherTab.waitForResponse(isPost), otherTab.click('#capRouteButtons [data-route="auditoria"]')]);
+    const posts = [];
+    otherTab.on('request', req => {
+      if (req.method() === 'POST') posts.push(req.url());
+    });
+    await settings.evaluate(() => window.DesignRouterTelemetry.configure(null));
+    await otherTab.click('#capRouteButtons [data-route="color"]');
+    await otherTab.evaluate(() => window.dispatchEvent(new Event('online')));
+    await otherTab.waitForTimeout(400);
+    assert.deepEqual(posts, [], 'an already-open tab must respect revocation on its next click and flush');
+  } finally {
+    await context.close();
   }
 }
 
@@ -153,6 +183,7 @@ async function checkCollectorSwitch(browser, origin) {
 
     await page.close();
     await checkCollectorSwitch(browser, fixture.origin);
+    await checkSharedOptOut(browser, fixture);
     console.log(`PASS tablero: ${fixture.events.length} eventos observados, sin ejecuciones inventadas`);
   } finally {
     await browser.close();

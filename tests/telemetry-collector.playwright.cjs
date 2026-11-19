@@ -10,6 +10,7 @@
 
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const { randomUUID } = require('node:crypto');
 const { mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const http = require('node:http');
@@ -52,6 +53,52 @@ function serveBoard(html) {
       origin: `http://127.0.0.1:${server.address().port}`
     }));
   });
+}
+
+async function checkDashboardRange(browser, origin) {
+  const post = await fetch(origin + '/v1/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ schema: telemetry.SCHEMA, events: [{
+      name: 'router.invoked', command: 'status', source: 'cli',
+      event_id: randomUUID(), evaluation_id: randomUUID(), instance_id: randomUUID(),
+      occurred_at: new Date(Date.now() - 15 * 86400000).toISOString(),
+      tree_version: '0.4', router_version: '1.4.0'
+    }] })
+  });
+  assert.equal(post.status, 202);
+  const url = origin + '/v1/metrics?window=';
+  const week = await (await fetch(url + '7d')).json();
+  const all = await (await fetch(url + 'all')).json();
+  assert.equal(all.totals.invocations, week.totals.invocations + 1);
+
+  for (const status of [200, 503]) {
+    const page = await browser.newPage();
+    let release;
+    const resume = new Promise(resolve => { release = resolve; });
+    try {
+      await page.route(url + 'all', async route => {
+        await resume;
+        await route.fulfill({ status, json: all });
+      });
+      await Promise.all([page.waitForRequest(url + 'all'), page.goto(origin, { waitUntil: 'domcontentloaded' })]);
+      await page.locator('[data-window="7d"]').click();
+      await page.waitForFunction(count => document.querySelector('#k-invocations').textContent === String(count),
+        week.totals.invocations);
+      const bounds = await page.locator('#bounds').innerText();
+      const response = page.waitForResponse(url + 'all');
+      release();
+      await (await response).finished();
+      await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
+      assert.equal(await page.locator('[data-window="7d"]').getAttribute('aria-pressed'), 'true');
+      assert.equal(await page.locator('#k-invocations').innerText(), String(week.totals.invocations));
+      assert.equal(await page.locator('#bounds').innerText(), bounds);
+      assert.equal(await page.locator('#status').getAttribute('data-kind'), 'info');
+    } finally {
+      release();
+      await page.close();
+    }
+  }
 }
 
 (async () => {
@@ -126,6 +173,7 @@ function serveBoard(html) {
     assert.match(statusText, /Datos reales: \d+ eventos aceptados/);
 
     await page.close();
+    await checkDashboardRange(browser, collector.origin);
     console.log('PASS colector real: eventos válidos contados una vez, veneno aislado, política de origen aplicada');
   } finally {
     await browser.close();

@@ -21,8 +21,8 @@ Design Skills Router. No es una plataforma de analítica general.
 python3 -B -m telemetry.collector --db var/telemetry.sqlite3 --port 8787
 ```
 
-Abre <http://127.0.0.1:8787/>. El dashboard no inventa datos: si no hay eventos,
-lo dice; si no hay emisor de ejecuciones, muestra `schema_supported_no_emitter`.
+Abre <http://127.0.0.1:8787/>. Mientras el colector carezca de eventos históricos
+de ejecución de un host, el dashboard muestra `schema_supported_no_emitter`.
 
 ### Opciones del colector
 
@@ -120,7 +120,14 @@ en `collectors/<sha256-del-endpoint>/outbox-*.jsonl`. Al volver a usar ese
 endpoint, reintenta sus pendientes antes de enviar los eventos nuevos. Cada
 colector admite hasta 100 archivos de 100 eventos. Al alcanzar el límite,
 el cliente puede descartar el archivo más antiguo. Un rechazo permanente se
-guarda en `rejected-*.jsonl` junto a la cola de ese colector.
+guarda en `rejected-*.jsonl` junto a la cola de ese colector. Varios procesos
+pueden compartir el directorio. Mientras uno reenvía un lote, los demás
+pueden guardar los suyos.
+
+Ambos clientes confirman la entrega cuando el colector devuelve HTTP 202
+con el esquema `design-router-telemetry/1` y la suma de `accepted` y
+`duplicates` coincide con el tamaño del lote. Una respuesta HTML o un acuse
+incompleto deja el lote pendiente.
 
 Al actualizar, los archivos antiguos en la raíz del directorio de estado
 quedan disponibles para inspección local. Como esos archivos carecen de
@@ -150,11 +157,19 @@ colector cae —al superarlo conserva los 1000 eventos más recientes; si un cor
 divide la evaluación más antigua, el colector pone en cuarentena los eventos
 huérfanos al reintentar—; no es la fuente de verdad.
 
-La cola de la pizarra, sus fragmentos por pestaña y los rechazos pertenecen
-a la URL de ingesta configurada, incluida su ruta y consulta. Si cambias de
+El límite se comparte entre las pestañas del mismo origen que escriben al
+mismo colector. Los eventos nuevos se guardan por separado y la pizarra
+también recupera las colas anteriores en fragmentos. Ante un HTTP 429, una
+pestaña abierta programa su reintento según `Retry-After`.
+
+La cola de la pizarra y los rechazos pertenecen a la URL de ingesta
+configurada, incluida su ruta y consulta. Si cambias de
 colector, los pendientes esperan hasta que vuelvas a usar el original. Las
 colas antiguas sin destino permanecen en el navegador para inspección local.
 Con la telemetría desactivada, el cliente tampoco crea un ID de instalación.
+`DesignRouterTelemetry.configure(null)` desactiva los envíos en las pestañas
+que usan esa configuración compartida. Las páginas con un endpoint explícito
+en `window.DESIGN_ROUTER_TELEMETRY` se rigen por ese valor.
 
 La instrumentación opt-in se ensambla en las fuentes, en `.preview/` y en la
 pizarra publicada `release/design-router-pizarra-v1.4*.html`. El HTML dorado

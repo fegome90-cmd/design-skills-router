@@ -31,3 +31,60 @@ class FinalAuditTests(unittest.TestCase):
   run=subprocess.run([sys.executable,'-B',self.h.r.__file__,'--state',str(state),'grant-packet','--file',str(p)],capture_output=True,text=True)
   self.assertEqual(run.returncode,0,run.stderr);out=json.loads(run.stdout)
   self.assertEqual(out['target_hash'],self.r.grant_hash(self.s,g));self.assertEqual(out['grant'],g)
+
+ def register_inventory_source(self,skill,path,ref):
+  data=path.read_bytes()
+  blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+  self.r.register_source(self.s,skill,path,self.r.inventory[skill]['candidate_commit'],blob,ref)
+
+ def test_inventory_rejects_ambiguous_source_alias(self):
+  first,second=list(self.r.inventory)[:2]
+  other=self.h.work/'other.txt';other.write_text('Independent reviewed document')
+  self.register_inventory_source(first,self.h.ev,'fetch:shared')
+  self.register_inventory_source(second,other,'fetch:shared')
+  rows=[{'skill_id':sid,'disposition':'DEFERRED','reason':'Review later',
+         'evidence_refs':['fetch:shared']} for sid in self.r.inventory]
+  with self.assertRaisesRegex(self.h.r.GateError,'EVIDENCE_REFERENCE_AMBIGUOUS'):
+   self.r.propose_inventory(self.s,rows)
+
+ def test_inventory_receipt_binds_each_reference_to_its_evidence(self):
+  first,second=list(self.r.inventory)[:2]
+  other=self.h.work/'other.txt';other.write_text('Independent reviewed document')
+  self.register_inventory_source(first,self.h.ev,'fetch:a')
+  self.register_inventory_source(second,other,'fetch:b')
+  rows=[{'skill_id':sid,'disposition':'DEFERRED','reason':'Review later',
+         'evidence_refs':['fetch:a' if sid==first else 'fetch:b']} for sid in self.r.inventory]
+  receipt=self.h.receipt(self.r.propose_inventory(self.s,rows),'inventory')
+  self.r.confirm_inventory(self.s,receipt)
+  self.register_inventory_source(first,self.h.ev,'fetch:b')
+  self.register_inventory_source(second,other,'fetch:a')
+  self.assertFalse(self.r.inventory_confirmed(self.s))
+  with self.assertRaisesRegex(self.h.r.GateError,'INVENTORY_EVIDENCE_CHANGED'):
+   self.r.confirm_inventory(self.s,receipt)
+  revised=self.r.propose_inventory(self.s,rows)
+  self.assertNotEqual(receipt['target_hash'],revised)
+  with self.assertRaisesRegex(self.h.r.GateError,'RECEIPT_HASH_MISMATCH'):
+   self.r.confirm_inventory(self.s,receipt)
+  self.r.confirm_inventory(self.s,self.h.receipt(revised,'inventory'))
+  self.assertTrue(self.r.inventory_confirmed(self.s))
+
+ def test_phase_receipt_cannot_accept_rebound_inventory_evidence(self):
+  self.h.complete('Q00','F00')
+  phase_map={'schema':'design-tree-phases/1','project_kind':'bounded','phases':[
+   {'id':'root','family':'foundations','revision':1,'node_instance_ids':['Q00'],
+    'dependency_ids':[],'deliverables':['Root decision']}]}
+  self.r.configure_phases(self.s,phase_map,self.h.receipt(self.h.r.digest(phase_map),'phase_map'))
+  grant=self.r.grant_template(self.s,'root')
+  self.r.grant_assistance(self.s,grant,self.h.receipt(self.r.grant_hash(self.s,grant),'delegation'))
+  skill=next(sid for sid in self.r.inventory if sid not in self.r.skills_for('Q00'))
+  self.register_inventory_source(skill,self.h.ev,'fetch:inventory')
+  rows=[{'skill_id':sid,'disposition':'DEFERRED','reason':'Review later',
+         'evidence_refs':['fetch:inventory']} for sid in self.r.inventory]
+  self.r.propose_inventory(self.s,rows)
+  packet=self.r.prepare_phase(self.s,'root',[self.h.evidence()])
+  other=self.h.work/'updated.txt';other.write_text('Revised scope')
+  self.register_inventory_source(skill,other,'fetch:inventory')
+  before=copy.deepcopy(self.s)
+  with self.assertRaisesRegex(self.h.r.GateError,'INVENTORY_EVIDENCE_CHANGED'):
+   self.r.accept_phase(self.s,'root',self.h.receipt(packet['gate_packet_hash'],'phase'))
+  self.assertEqual(self.s,before)

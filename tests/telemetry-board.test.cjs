@@ -6,6 +6,11 @@ const { test } = require('node:test');
 const telemetry = require('../board/src/telemetria/telemetria.js');
 const localKeys = telemetry.keys.forEndpoint('http://127.0.0.1:8787');
 
+function ack(options) {
+  const count = JSON.parse(options.body).events.length;
+  return { ok: true, status: 202, json: async () => ({ schema: telemetry.SCHEMA, accepted: count, duplicates: 0 }) };
+}
+
 const selection = {
   selectedFunctions: ['visual-qa'],
   nodesByFunction: { 'visual-qa': ['QA01', 'QA01'] },
@@ -80,7 +85,7 @@ test('successful delivery sends one idempotent batch and clears the outbox', asy
     instanceId: context().instanceId,
     fetch: async (url, options) => {
       calls.push({ url, options, body: JSON.parse(options.body) });
-      return { ok: true };
+      return ack(options);
     }
   });
   const events = client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
@@ -114,7 +119,7 @@ test('a configured token is sent as an authorization header', async () => {
     endpoint: 'https://telemetry.example.com',
     token: 'token-value',
     instanceId: context().instanceId,
-    fetch: async (_url, options) => { headers = options.headers; return { ok: true }; }
+    fetch: async (_url, options) => { headers = options.headers; return ack(options); }
   });
   client.trackEvaluation(selection, { route: 'auditoria' });
   await client.flush();
@@ -134,7 +139,7 @@ test('init reads the selection through the read-only preview getter', async () =
   const window = {
     DESIGN_ROUTER_TELEMETRY: {
       endpoint: 'http://127.0.0.1:8787',
-      fetch: async () => ({ ok: true })
+      fetch: async (_url, options) => ack(options)
     },
     __minimalRouterPreview: {
       getState: () => ({ route: 'auditoria', scope: 'function' }),
@@ -164,7 +169,7 @@ test('a click that detaches its target still records the evaluation', async () =
   const window = {
     DESIGN_ROUTER_TELEMETRY: {
       endpoint: 'http://127.0.0.1:8787',
-      fetch: async () => ({ ok: true })
+      fetch: async (_url, options) => ack(options)
     },
     __minimalRouterPreview: {
       getState: () => ({ route: 'auditoria', scope: 'function' }),
@@ -217,7 +222,7 @@ function transactionalCollector() {
       }
     }
     accepted.push(...body.events);
-    return { ok: true, status: 202 };
+    return ack(options);
   };
   return { fetch, accepted, calls };
 }
@@ -269,7 +274,7 @@ test('a poison event in the middle keeps its valid neighbours in order', async (
       const index = body.events.findIndex(event => event.evaluation_id === 'not-good');
       if (index >= 0) return { ok: false, status: 422, json: async () => ({ error: 'INVALID_EVALUATION_ID', index }) };
       collector.accepted.push(...body.events);
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
 
@@ -297,7 +302,7 @@ test('a batch-level rejection without index quarantines that batch and the queue
         // Batch-level rejection: the collector names no offending index.
         return { ok: false, status: 422, json: async () => ({ error: 'INVALID_BATCH_SCHEMA' }) };
       }
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
@@ -319,7 +324,7 @@ test('a batch-level rejection without index quarantines that batch and the queue
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
       delivered.push(...body.events);
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   client2.trackEvaluation(selection, { route: 'tipografia', scope: 'function' });
@@ -390,7 +395,7 @@ test('overlapping flushes share one in-flight run and never drop undelivered eve
       seenBatches.push(body.events.length);
       if (seenBatches.length === 1) {
         await firstPending;
-        return { ok: true, status: 202 };
+        return ack(options);
       }
       return { ok: false, status: 503 };
     }
@@ -415,7 +420,7 @@ test('overlapping flushes share one in-flight run and never drop undelivered eve
     instanceId: '22222222-2222-4222-8222-222222222222',
     fetch: async (_url, options) => {
       callsAfter.push(JSON.parse(options.body).events.length);
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   client3.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
@@ -432,9 +437,9 @@ test('in-flight eviction during flush removes only delivered events by id', asyn
   const client = telemetry.createClient({
     storage, endpoint: 'http://127.0.0.1:8787',
     instanceId: '22222222-2222-4222-8222-222222222222',
-    fetch: async () => {
+    fetch: async (_url, options) => {
       await fetchGate;
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   const firstEvents = client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
@@ -460,11 +465,11 @@ test('in-flight eviction during flush removes only delivered events by id', asyn
   const client2 = telemetry.createClient({
     storage: storage2, endpoint: 'http://127.0.0.1:8787',
     instanceId: '22222222-2222-4222-8222-222222222222',
-    fetch: async () => {
+    fetch: async (_url, options) => {
       calls++;
       if (calls === 1) {
         await pending2;
-        return { ok: true, status: 202 };
+        return ack(options);
       }
       return { ok: false, status: 503 };
     }
@@ -492,7 +497,7 @@ test('flushing an empty queue never wedges subsequent flushes', async () => {
     instanceId: '22222222-2222-4222-8222-222222222222',
     fetch: async (_url, options) => {
       requests.push(JSON.parse(options.body).events);
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   // Flush on empty queue first (exact regression from d2351ca).
@@ -695,7 +700,7 @@ test('init endpoint override to a different origin never forwards previous inlin
   const clientA = telemetry.init(winInline, doc, {
     storage,
     endpoint: 'http://collector-b.local:9000',
-    fetch: async (_url, opts) => { sentHeaders.push(opts.headers); return { ok: true, status: 202 }; }
+    fetch: async (_url, opts) => { sentHeaders.push(opts.headers); return ack(opts); }
   });
   clientA.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
   await clientA.flush();
@@ -714,7 +719,7 @@ test('init endpoint override to a different origin never forwards previous inlin
   const clientB = telemetry.init(winStored, doc, {
     storage: storageB,
     endpoint: 'http://collector-c.local:9001',
-    fetch: async (_url, opts) => { sentHeaders.push(opts.headers); return { ok: true, status: 202 }; }
+    fetch: async (_url, opts) => { sentHeaders.push(opts.headers); return ack(opts); }
   });
   clientB.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
   await clientB.flush();
@@ -734,7 +739,7 @@ test('unwritable localStorage never loops delivered or rejected events 1001 time
   const client = telemetry.createClient({
     endpoint: 'http://127.0.0.1:8787',
     storage: fullStorage,
-    fetch: async () => { posts += 1; return { ok: true, status: 202 }; }
+    fetch: async (_url, options) => { posts += 1; return ack(options); }
   });
   const ok = await client.flush();
   assert.equal(ok, true);
@@ -759,7 +764,7 @@ test('unwritable localStorage never loops delivered or rejected events 1001 time
       if (badIdx >= 0) {
         return { ok: false, status: 422, json: async () => ({ error: 'INVALID', index: badIdx }) };
       }
-      return { ok: true, status: 202 };
+      return ack(opts);
     }
   });
   client2.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
@@ -782,7 +787,7 @@ test('enumerable shared storage preserves concurrent two-tab evaluations during 
   const fetcher = async (_url, opts) => {
     if (fail) return { ok: false, status: 503 };
     delivered.push(...JSON.parse(opts.body).events);
-    return { ok: true, status: 202 };
+    return ack(opts);
   };
   const tabA = telemetry.createClient({ endpoint: 'http://127.0.0.1:8787', storage: browserStorage, fetch: fetcher });
   const tabB = telemetry.createClient({ endpoint: 'http://127.0.0.1:8787', storage: browserStorage, fetch: fetcher });
@@ -814,7 +819,7 @@ test('endpoint URLs with query strings or fragments still post to /v1/events', a
     const client = telemetry.createClient({
       endpoint,
       storage: memoryStorage(),
-      fetch: async (url) => { urls.push(url); return { ok: true, status: 202 }; }
+      fetch: async (url, options) => { urls.push(url); return ack(options); }
     });
     client.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
     await client.flush();
@@ -852,10 +857,10 @@ test('canonical repo/name skill_id is emitted when present and online event trig
   let delivered = 0;
   const client = telemetry.init(win, doc, {
     storage: memoryStorage(),
-    fetch: async () => {
+    fetch: async (_url, options) => {
       if (!online) return { ok: false, status: 503 };
       delivered += 1;
-      return { ok: true, status: 202 };
+      return ack(options);
     }
   });
   client.trackEvaluation(canonicalSelection, { route: 'tipografia', scope: 'route' });
@@ -888,7 +893,7 @@ test('empty endpoint override disables telemetry instead of falling back to cros
     endpoint: '',
     fetch: async (url, opts) => {
       requests.push({ url, headers: opts.headers });
-      return { ok: true, status: 202 };
+      return ack(opts);
     }
   });
   assert.equal(client.enabled, false);
@@ -904,7 +909,7 @@ test('empty endpoint override disables telemetry instead of falling back to cros
     storage,
     fetch: async (url, opts) => {
       requests.push({ url, headers: opts.headers });
-      return { ok: true, status: 202 };
+      return ack(opts);
     }
   });
   assert.equal(direct.enabled, false);
@@ -942,7 +947,7 @@ test('malformed stored event without event_id does not loop under quota errors a
         return { ok: false, status: 422, json: async () => ({ error: 'MISSING_EVENT_ID', index: badIdx }) };
       }
       delivered.push(...batch);
-      return { ok: true, status: 202 };
+      return ack(opts);
     }
   });
   client.trackEvaluation(selection, { route: 'tipografia', scope: 'route' });
@@ -959,4 +964,155 @@ test('malformed stored event without event_id does not loop under quota errors a
   assert.equal(savedRejected.length, 1);
   assert.equal(savedRejected[0].name, 'router.invoked');
   assert.equal(savedRejected[0].event_id, undefined);
+});
+
+test('three tabs retain only the newest 1000 distinct events after an outage and reload', async () => {
+  const storage = enumerableStorage();
+  const offline = async () => ({ ok: false, status: 503 });
+  const makeTab = fetch => telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch });
+  const tabs = [makeTab(offline), makeTab(offline), makeTab(offline)];
+  const generated = [];
+  for (let round = 0; round < 400; round++) {
+    for (const tab of tabs) generated.push(...tab.trackEvaluation({}, {}));
+  }
+  for (const tab of tabs) assert.equal(await tab.flush(), false);
+  const persisted = [...storage.values.keys()].filter(key => key.startsWith(localKeys.entryPrefix));
+  assert.equal(persisted.length, 1000);
+  const collector = transactionalCollector();
+  assert.equal(await makeTab(collector.fetch).flush(), true);
+  assert.deepEqual(collector.accepted, generated.slice(-1000));
+  assert.equal(await makeTab(collector.fetch).flush(), true);
+  assert.equal(collector.accepted.length, 1000);
+  assert.ok([...storage.values.keys()].every(key => !key.startsWith(localKeys.entryPrefix)));
+});
+
+test('old scoped mirrors and shards drain once, including IDs stored only in a shard', async () => {
+  const storage = enumerableStorage();
+  const make = n => boardEvent('00000000-0000-4000-8000-' + String(n).padStart(12, '0'), 'router.invoked');
+  const shared = make(1), mirrorOnly = make(2), shardOnly = make(3);
+  storage.setItem(localKeys.outbox, JSON.stringify([shared, mirrorOnly]));
+  storage.setItem(localKeys.shardPrefix + 'legacy', JSON.stringify([shared, shardOnly]));
+  const collector = transactionalCollector();
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch });
+  const fresh = client.trackEvaluation({}, {});
+  assert.equal(await client.flush(), true);
+  assert.deepEqual(collector.accepted, [shared, mirrorOnly, shardOnly, ...fresh]);
+  assert.equal(storage.getItem(localKeys.shardPrefix + 'legacy'), null);
+  assert.equal(storage.getItem(localKeys.outbox), '[]');
+});
+
+test('storage revocation stops capture and outgoing batches in open tabs before any storage event', async () => {
+  const storage = enumerableStorage();
+  const endpoint = 'http://127.0.0.1:8787';
+  telemetry.configure(endpoint, { storage });
+  const win = { localStorage: storage };
+  const doc = { readyState: 'loading', addEventListener() {} };
+  const calls = [];
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const client = telemetry.init(win, doc, { storage, fetch: async (_url, options) => {
+    calls.push(JSON.parse(options.body).events);
+    await gate;
+    return ack(options);
+  } });
+  for (let i = 0; i < 101; i++) client.trackEvaluation({}, {});
+  const sending = client.flush();
+  assert.equal(calls[0].length, 100);
+  telemetry.configure(null, { storage });
+  assert.equal(client.enabled, false);
+  assert.deepEqual(client.trackEvaluation(selection, {}), []);
+  release();
+  assert.equal(await sending, false);
+  await client.flush();
+  assert.equal(calls.length, 1, 'the deferred second batch must observe the revoked endpoint');
+  const inline = telemetry.init({ ...win, DESIGN_ROUTER_TELEMETRY: { endpoint: endpoint + '/inline' } },
+    doc, { storage, fetch: transactionalCollector().fetch });
+  assert.equal(inline.trackEvaluation({}, {}).length, 1, 'an explicit inline collector remains independent');
+  assert.equal(await inline.flush(), true);
+});
+
+test('only a matching 202 receipt with full integer accounting retires a batch', async () => {
+  const storage = enumerableStorage();
+  let reply;
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: async () => reply });
+  const batch = client.trackEvaluation(selection, {});
+  for (const [status, body] of [
+    [200, '<html>login</html>'], [204, null], [202, null],
+    [202, { schema: 'wrong', accepted: 3, duplicates: 0 }],
+    [202, { schema: telemetry.SCHEMA, accepted: 1, duplicates: 1 }],
+    [202, { schema: telemetry.SCHEMA, accepted: '3', duplicates: 0 }],
+    [202, { schema: telemetry.SCHEMA, accepted: 1.5, duplicates: 1.5 }],
+    [202, { schema: telemetry.SCHEMA, accepted: 4, duplicates: -1 }]
+  ]) {
+    reply = { ok: true, status, json: async () => body };
+    assert.equal(await client.flush(), false);
+    assert.equal([...storage.values.keys()].filter(key => key.startsWith(localKeys.entryPrefix)).length, batch.length);
+  }
+  reply = { ok: true, status: 202, json: async () => ({ schema: telemetry.SCHEMA, accepted: 1, duplicates: 2 }) };
+  assert.equal(await client.flush(), true);
+  assert.ok([...storage.values.keys()].every(key => !key.startsWith(localKeys.entryPrefix)));
+});
+
+test('429 schedules one idle retry and respects Retry-After', async () => {
+  const storage = enumerableStorage();
+  let calls = 0;
+  let delivered;
+  const recovered = new Promise(resolve => { delivered = resolve; });
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: async (_url, options) => {
+    if (++calls === 1) return { ok: false, status: 429, headers: new Headers({ 'Retry-After': '1' }) };
+    delivered();
+    return ack(options);
+  } });
+  client.trackEvaluation({}, {});
+  assert.equal(await client.flush(), false);
+  assert.equal(await client.flush(), false);
+  assert.equal(calls, 1);
+  const started = Date.now();
+  const deadline = setTimeout(() => delivered(), 3000);
+  try {
+    await recovered;
+    assert.ok(Date.now() - started >= 950);
+    assert.equal(calls, 2);
+    assert.equal(await client.flush(), true);
+  } finally {
+    clearTimeout(deadline);
+  }
+});
+
+test('quota-limited events remain in memory and are persisted when writes recover during a 503', async () => {
+  const storage = enumerableStorage();
+  const originalWrite = storage.setItem;
+  let blocked = true;
+  storage.setItem = (key, value) => {
+    if (blocked && key.startsWith(localKeys.entryPrefix)) throw new Error('QuotaExceededError');
+    originalWrite(key, value);
+  };
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787',
+    fetch: async () => ({ ok: false, status: 503 }) });
+  const batch = client.trackEvaluation(selection, {});
+  assert.equal(await client.flush(), false);
+  blocked = false;
+  assert.equal(await client.flush(), false);
+  const collector = transactionalCollector();
+  const reopened = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch });
+  assert.equal(await reopened.flush(), true);
+  assert.deepEqual(collector.accepted, batch);
+});
+
+test('corrupt immutable entries are diagnosed locally and never block later deliveries', async () => {
+  const storage = enumerableStorage();
+  const offline = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787',
+    fetch: async () => ({ ok: false, status: 503 }) });
+  const events = offline.trackEvaluation(selection, {});
+  const keys = [...storage.values.keys()].filter(key => key.startsWith(localKeys.entryPrefix)).sort();
+  storage.setItem(keys[0], '{');
+  storage.setItem(keys[1], JSON.stringify({ name: 'router.invoked' }));
+  const collector = transactionalCollector();
+  const client = telemetry.createClient({ storage, endpoint: 'http://127.0.0.1:8787', fetch: collector.fetch });
+  assert.equal(await client.flush(), true);
+  assert.deepEqual(collector.accepted, [events[2]]);
+  assert.deepEqual(JSON.parse(storage.getItem(localKeys.rejected)), events.slice(0, 2).map(event => ({
+    event_id: event.event_id, error: 'INVALID_STORED_EVENT'
+  })));
+  assert.ok(keys.every(key => storage.getItem(key) === null));
 });

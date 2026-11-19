@@ -356,14 +356,11 @@ class Store:
                 f"FROM events{where}",
                 params,
             ).fetchone()
-            # All-time evidence, independent of the requested window: whether
-            # an emitter was ever accredited by real accepted events.
-            all_time_counts = {
-                row["name"]: int(row["count"])
-                for row in connection.execute(
-                    "SELECT name, COUNT(*) AS count FROM events GROUP BY name"
-                )
-            }
+            # A terminal is only accepted after a matching host start. One
+            # indexed lookup is enough to establish historical emitter evidence.
+            host_observed = connection.execute(
+                "SELECT 1 FROM events WHERE name = 'skill.execution_started' LIMIT 1"
+            ).fetchone() is not None
             # Instance concentration within the requested window, for the
             # data_quality signal.
             instance_stats = connection.execute(
@@ -377,10 +374,9 @@ class Store:
         observability = {}
         for name in contract.EVENT_NAMES:
             in_window = event_counts.get(name, 0)
-            ever = all_time_counts.get(name, 0)
             if in_window > 0:
                 observability[name] = "observed"
-            elif name in contract.UNOBSERVABLE_BY_ROUTER and ever == 0:
+            elif name in contract.UNOBSERVABLE_BY_ROUTER and not host_observed:
                 # No execution event has ever been accepted: no emitter can be
                 # accredited from evidence. An empty window alone must never
                 # produce this state, because absence of events inside a

@@ -242,11 +242,14 @@ class StoreTests(unittest.TestCase):
 
         # All-time evidence: executions really happened and were observed.
         self.assertEqual(whole["observability"]["skill.execution_started"], "observed")
+        self.assertEqual(whole["observability"]["skill.execution_failed"], "observed_zero_events")
+        self.assertEqual(whole["totals"]["executions_failed"], 0)
         self.assertEqual(whole["totals"]["executions_started"], 1)
         # The empty window must not claim there is no emitter: an emitter was
         # accredited by real events, just not inside this window.
         self.assertEqual(window["observability"]["skill.execution_started"], "observed_zero_events")
         self.assertEqual(window["observability"]["skill.execution_completed"], "observed_zero_events")
+        self.assertEqual(window["observability"]["skill.execution_failed"], "observed_zero_events")
         self.assertEqual(window["totals"]["executions_started"], 0)
         # A store with no execution event ever keeps the conservative state.
         fresh = Store(self.path.with_name("fresh.sqlite3"))

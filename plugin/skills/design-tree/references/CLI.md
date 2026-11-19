@@ -86,7 +86,7 @@ No ejecutar las dos alternativas como receta automática. La segunda deja DECIDE
 
 ## Inventario y hechos
 
-`inventory` muestra el catálogo sin modificar el expediente. `inventory --file propuesta.json` registra una propuesta pendiente de revisión humana. El archivo debe contener una lista JSON con una entrada por skill y los campos `skill_id`, `disposition`, `reason` y `evidence_refs`. Los valores admitidos para `disposition` son APPLICABLE, NOT_APPLICABLE, DEFERRED y GOVERNANCE_ONLY. Cada evidencia debe existir.
+`inventory` muestra el catálogo sin modificar el expediente. `inventory --file propuesta.json` registra una propuesta pendiente de revisión humana. El archivo debe contener una lista JSON con una entrada por skill y los campos `skill_id`, `disposition`, `reason` y `evidence_refs`. Los valores admitidos para `disposition` son APPLICABLE, NOT_APPLICABLE, DEFERRED y GOVERNANCE_ONLY. Cada evidencia debe existir. La huella de la propuesta vincula cada referencia con su ruta lógica y el SHA-256 de sus bytes. Si una referencia de fuente identifica varios archivos, asígnales referencias distintas antes de presentar el inventario. Los expedientes anteriores conservan sus filas. Para renovar una confirmación cuya huella no incluía evidencia, vuelve a presentar las filas con `inventory --file` y solicita aceptación de la nueva huella.
 
 Si el archivo contiene `null`, el CLI devuelve `INVENTORY_COVERAGE_REQUIRED` con código 2 y conserva el expediente. Si el propio expediente contiene una raíz JSON distinta de un objeto, el error es `STATE_OBJECT_REQUIRED`.
 
