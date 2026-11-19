@@ -9,5 +9,5 @@ Conjunto de ajustes de GitHub y archivos de política que el repositorio adopta 
 _Avoid_: subconjunto seguro, mejores prácticas
 
 **Thread de revisión**:
-Comentario anclado a una línea del diff de un pull request, con estado resuelto o pendiente; es el único tipo de comentario que bloquea el merge cuando la resolución de conversaciones está activa.
+Comentario resolvible de un pull request, anclado a una línea del diff o a un archivo completo, con estado resuelto o pendiente. Bloquea el merge cuando la resolución de conversaciones está activa; un comentario de timeline no se resuelve y no bloquea.
 _Avoid_: comentario, conversación
