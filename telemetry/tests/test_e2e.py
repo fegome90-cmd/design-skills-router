@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -81,6 +82,22 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(metrics["totals"]["skills_selected"], 0)
         self.assertIn("Q00", [item["node_id"] for item in metrics["nodes"]])
         self.assertEqual(metrics["skills"], [])
+
+    @unittest.skipUnless(os.name == "posix", "console launcher fixture uses a POSIX shebang")
+    def test_console_launcher_on_path_records_a_real_node(self):
+        launcher = self.base / "design-skills-router"
+        launcher.write_text("#!/bin/sh\nexec " + shlex.join([sys.executable, "-B", str(RUNNER)]) + ' "$@"\n')
+        launcher.chmod(0o755)
+        env = {**self.env, "PATH": str(self.base) + os.pathsep + self.env.get("PATH", "")}
+        result = subprocess.run(
+            [sys.executable, "-B", str(OBSERVE), "--exec", launcher.name, "--",
+             "--state", str(self.state), "node", "Q00"],
+            capture_output=True, env=env,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["node_id"], "Q00")
+        totals = self.collector.metrics()["totals"]
+        self.assertEqual((totals["invocations"], totals["nodes_visited"], totals["events"]), (1, 1, 2))
 
     def test_telemetry_off_does_not_touch_the_collector(self):
         env = {key: value for key, value in self.env.items() if not key.startswith("DESIGN_ROUTER_TELEMETRY")}

@@ -39,24 +39,40 @@ class ClientTests(unittest.TestCase):
             self.assertTrue(client.flush())
             events = post.call_args.args[0]
         self.assertEqual([item["name"] for item in events], ["router.invoked"])
-        self.assertEqual(list(self.state.glob("outbox-*.jsonl")), [])
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
 
     def test_failed_delivery_spools_and_retries_once(self):
         client = Telemetry(self.config())
         client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
         with patch.object(client, "_post", return_value=POST_RETRY):
             self.assertFalse(client.flush())
-        spool = list(self.state.glob("outbox-*.jsonl"))
+        spool = list(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(spool), 1)
         payload = json.loads(spool[0].read_text())
         self.assertEqual(len(payload["events"]), 1)
         with patch.object(client, "_post", return_value=POST_OK):
             self.assertTrue(client.flush())
-        self.assertEqual(list(self.state.glob("outbox-*.jsonl")), [])
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+
+    def test_equivalent_collector_origins_share_pending_events(self):
+        def configured(url):
+            return Telemetry(contract.TelemetryConfig(True, url, state_dir=self.state))
+
+        first = configured("https://Collector.Example:443/")
+        event = first.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        with patch.object(first, "_post", return_value=POST_RETRY):
+            self.assertFalse(first.flush())
+        reopened = configured("https://collector.example")
+        with patch.object(reopened, "_post", return_value=POST_OK) as post:
+            self.assertTrue(reopened.flush())
+            post.assert_called_once_with([event])
 
     def test_permanent_rejection_is_quarantined_without_blocking_later_batches(self):
-        first = self.state / "outbox-0001-a.jsonl"
-        second = self.state / "outbox-0002-b.jsonl"
+        client = Telemetry(self.config())
+        directory = client._outbox_dir()
+        directory.mkdir(parents=True)
+        first = directory / "outbox-0001-a.jsonl"
+        second = directory / "outbox-0002-b.jsonl"
         payload = {"schema": contract.SCHEMA, "events": []}
         for path, command in ((first, "node"), (second, "status")):
             payload["events"] = [{
@@ -67,20 +83,19 @@ class ClientTests(unittest.TestCase):
                 "command": command,
             }]
             path.write_text(json.dumps(payload))
-        client = Telemetry(self.config())
         with patch.object(client, "_post", side_effect=[POST_REJECT, POST_OK]):
             self.assertFalse(client.flush_spool())
         self.assertFalse(first.exists())
         self.assertFalse(second.exists())
-        self.assertTrue(list(self.state.glob("rejected-*.jsonl")))
+        self.assertTrue(list(self.state.rglob("rejected-*.jsonl")))
 
     def test_current_batch_rejected_is_quarantined_not_retried(self):
         client = Telemetry(self.config())
         client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
         with patch.object(client, "_post", return_value=POST_REJECT):
             self.assertFalse(client.flush())
-        self.assertEqual(list(self.state.glob("outbox-*.jsonl")), [])
-        self.assertEqual(len(list(self.state.glob("rejected-*.jsonl"))), 1)
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
+        self.assertEqual(len(list(self.state.rglob("rejected-*.jsonl"))), 1)
 
     def test_instance_identifier_is_random_and_persistent(self):
         first = Telemetry(self.config())
@@ -127,13 +142,13 @@ class ClientTests(unittest.TestCase):
                  for _ in range(3)]
         with patch.object(client, "_post", return_value=POST_RETRY):
             self.assertFalse(client.flush())
-        files = sorted(self.state.glob("outbox-*.jsonl"))
+        files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 1)
         with patch.object(client, "_write_spool", return_value=False):
             more = [client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
                     for _ in range(2)]
             self.assertFalse(client.flush())
-        after = sorted(self.state.glob("outbox-*.jsonl"))
+        after = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(after, files, "a failed merge must leave the spooled file untouched")
         self.assertEqual(len(json.loads(after[0].read_text())["events"]), 3)
         self.assertEqual(len(client._events), 2,
@@ -166,7 +181,7 @@ class ClientTests(unittest.TestCase):
             self.assertFalse(client.flush())
             emit(40)
             self.assertFalse(client.flush())
-        files = sorted(self.state.glob("outbox-*.jsonl"))
+        files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 2)
         counts = [len(json.loads(path.read_text())["events"]) for path in files]
         self.assertEqual(counts, [100, 40])
@@ -180,7 +195,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(len(delivered), 140)
         self.assertEqual(len({event["event_id"] for event in delivered}), 140,
                          "no event may be duplicated or lost by compaction")
-        self.assertEqual(list(self.state.glob("outbox-*.jsonl")), [])
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
 
     def test_spool_evicts_the_oldest_file_beyond_the_cap(self):
         client = Telemetry(self.config())
@@ -193,12 +208,12 @@ class ClientTests(unittest.TestCase):
 
         with patch("telemetry.client.MAX_SPOOL_FILES", 3):
             failed_flush_of(100)
-            oldest = sorted(self.state.glob("outbox-*.jsonl"))[0]
+            oldest = sorted(self.state.rglob("outbox-*.jsonl"))[0]
             failed_flush_of(100)
             failed_flush_of(100)
-            self.assertEqual(len(list(self.state.glob("outbox-*.jsonl"))), 3)
+            self.assertEqual(len(list(self.state.rglob("outbox-*.jsonl"))), 3)
             failed_flush_of(100)
-            files = sorted(self.state.glob("outbox-*.jsonl"))
+            files = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(len(files), 3)
             self.assertNotIn(oldest, files, "the oldest file is evicted at the cap")
             total = sum(len(json.loads(path.read_text())["events"]) for path in files)
@@ -218,14 +233,14 @@ class ClientTests(unittest.TestCase):
         with patch("telemetry.client.MAX_SPOOL_FILES", 2):
             failed_flush_of(100)
             failed_flush_of(100)
-            before = sorted(self.state.glob("outbox-*.jsonl"))
+            before = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(len(before), 2)
             for _ in range(10):
                 client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
             with patch.object(client, "_post", return_value=POST_RETRY):
                 with patch.object(client, "_write_spool", return_value=False):
                     self.assertFalse(client.flush())
-            after = sorted(self.state.glob("outbox-*.jsonl"))
+            after = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(after, before,
                              "a failed write at spool cap must not unlink existing files")
             self.assertEqual(len(client._events), 10,
@@ -253,9 +268,11 @@ class ClientTests(unittest.TestCase):
         # Regression: _quarantine() renamed outbox files into rejected-* without
         # enforcing MAX_SPOOL_FILES, letting rejected files grow unboundedly.
         client = Telemetry(self.config())
+        directory = client._outbox_dir()
+        directory.mkdir(parents=True)
         with patch("telemetry.client.MAX_SPOOL_FILES", 2):
             for idx in range(4):
-                path = self.state / f"outbox-000{idx}-test.jsonl"
+                path = directory / f"outbox-000{idx}-test.jsonl"
                 payload = {"schema": contract.SCHEMA, "events": [{
                     "event_id": str(uuid.uuid4()), "name": "router.invoked",
                     "occurred_at": contract.iso_now(), "source": "cli",
@@ -266,7 +283,7 @@ class ClientTests(unittest.TestCase):
                 path.write_text(json.dumps(payload), encoding="utf-8")
                 with patch.object(client, "_post", return_value=POST_REJECT):
                     self.assertFalse(client.flush_spool())
-            rejected = sorted(self.state.glob("rejected-*.jsonl"))
+            rejected = sorted(self.state.rglob("rejected-*.jsonl"))
             self.assertEqual(len(rejected), 2,
                              "quarantine must cap rejected-* files at MAX_SPOOL_FILES")
             self.assertTrue(any("0003" in p.name for p in rejected))
@@ -303,14 +320,14 @@ class ClientTests(unittest.TestCase):
         ))
         client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
         self.assertFalse(client.flush())
-        self.assertEqual(len(list(self.state.glob("outbox-*.jsonl"))), 1,
+        self.assertEqual(len(list(self.state.rglob("outbox-*.jsonl"))), 1,
                          "a rate-limited batch must be spooled for retry")
-        self.assertEqual(list(self.state.glob("rejected-*.jsonl")), [],
+        self.assertEqual(list(self.state.rglob("rejected-*.jsonl")), [],
                          "429 must never quarantine the batch")
 
         mode["fail"] = False
         self.assertTrue(client.flush())
-        self.assertEqual(list(self.state.glob("outbox-*.jsonl")), [])
+        self.assertEqual(list(self.state.rglob("outbox-*.jsonl")), [])
 
 
     def test_emit_defaults_router_version_to_1_4_0(self):
@@ -329,15 +346,16 @@ class ClientTests(unittest.TestCase):
         client.emit("skill.execution_started", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
         with patch.object(client, "_post", return_value=POST_RETRY):
             self.assertFalse(client.flush())
-        os.chmod(self.state, 0o300)
-        self.addCleanup(lambda: os.chmod(self.state, 0o700))
+        directory = client._outbox_dir()
+        os.chmod(directory, 0o300)
+        self.addCleanup(lambda: os.chmod(directory, 0o700))
         posted: list[list[dict]] = []
         client.emit("skill.execution_completed", source="host", execution_id=ex_id, skill_id="emilkowalski/skills/ask-emil")
         client.emit("router.invoked", evaluation_id=ev_id, command="node")
         with patch.object(client, "_post", side_effect=lambda batch: (posted.append(batch), POST_OK)[1]):
             self.assertFalse(client.flush())
         self.assertEqual(posted, [], "unreadable spool dir must block direct posting of newer events")
-        os.chmod(self.state, 0o700)
+        os.chmod(directory, 0o700)
         with patch.object(client, "_post", side_effect=lambda batch: (posted.append(batch), POST_OK)[1]):
             self.assertTrue(client.flush())
         names = [e["name"] for batch in posted for e in batch]
@@ -356,7 +374,7 @@ class ClientTests(unittest.TestCase):
             c2.emit("router.invoked", evaluation_id=ev_id, command="status")
             with patch.object(c2, "_post", return_value=POST_RETRY):
                 c2.flush()
-        files = sorted(self.state.glob("outbox-*.jsonl"))
+        files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 2)
         first = json.loads(files[0].read_text())["events"][0]["command"]
         second = json.loads(files[1].read_text())["events"][0]["command"]
@@ -376,7 +394,7 @@ class ClientTests(unittest.TestCase):
                 client.emit("router.invoked", evaluation_id=ev_id, command="node")
             with patch.object(client, "_post", return_value=POST_RETRY):
                 self.assertFalse(client.flush())
-            spooled = sorted(self.state.glob("outbox-*.jsonl"))
+            spooled = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(len(spooled), 3)
             self.assertEqual(json.loads(spooled[0].read_text())["events"][0]["name"], "skill.execution_started")
             self.assertEqual(len(client._events), contract.MAX_BATCH_EVENTS)
@@ -386,7 +404,7 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(len(delivered), contract.MAX_BATCH_EVENTS * 4)
             self.assertEqual(delivered[0]["name"], "skill.execution_started")
             self.assertEqual(delivered[contract.MAX_BATCH_EVENTS]["name"], "skill.execution_completed")
-            self.assertEqual(list(self.state.glob("rejected-*.jsonl")), [])
+            self.assertEqual(list(self.state.rglob("rejected-*.jsonl")), [])
 
         # Indexed 422 from HTTP collector isolates only offending event and delivers valid neighbors.
         received: list[list[dict]] = []
@@ -423,7 +441,7 @@ class ClientTests(unittest.TestCase):
         c_http.emit("router.invoked", evaluation_id=ev_id, command="status")
         self.assertFalse(c_http.flush())
         self.assertEqual([e["command"] for batch in received for e in batch], ["node", "status"])
-        rejected_files = list(self.state.glob("rejected-*.jsonl"))
+        rejected_files = list(self.state.rglob("rejected-*.jsonl"))
         self.assertEqual(len(rejected_files), 1)
         self.assertEqual(len(json.loads(rejected_files[0].read_text())["events"]), 1)
 

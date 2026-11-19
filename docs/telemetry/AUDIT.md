@@ -39,7 +39,7 @@ El subsistema se diseñó para ser **opt-in**, **sin dependencias externas** y
 | Evento | Dónde se observa realmente | Evidencia | Límite |
 | --- | --- | --- | --- |
 | `router.invoked` | CLI: wrapper de proceso `telemetry/observe.py` tras una ejecución exitosa. Tablero: cada acción de evaluación del simulador (ruta, función, alcance, dominio, permiso, aplicabilidad). | Código de salida 0 + comando; `window.__minimalRouterPreview`. | Una invocación directa de `runner.py` no pasa por el wrapper. El plugin no puede instrumentarse por dentro sin romper su contrato de “sin red”. |
-| `decision.node_visited` | CLI: comando `node`, leyendo `packet.node_id`. | Salida JSON del packet. | El tablero **no** lo emite: `nodesByFunction` es un lookup derivado de la selección, no una visita. |
+| `decision.node_visited` | CLI clásico y Typer a través de `observe.py`, al consultar `node`. | Comando exitoso y respuesta JSON de hasta 1 MiB. | La pizarra usa `nodesByFunction` para calcular selecciones y no registra visitas. |
 | `decision.branch_selected` | CLI: comando `propose`, leyendo `selected` del archivo de propuesta y `node_id` del argumento. | Propuesta aceptada por el runner (salida 0). | No se emite en `confirm`; la rama se elige al proponer. |
 | `skill.selected` | Tablero: contribuciones `support.read`/`support.write` de `resolveSelection`. | IDs estables del catálogo. | El CLI **no** lo emite: `packet.skills` es una lista de candidatas del nodo, no una selección algorítmica. Nunca es ejecución. |
 | `skill.execution_started` | Sólo un host que controla la invocación, mediante `telemetry/host_adapter.py`. | Context manager alrededor de la llamada real; `source=host` obligatorio. | No hay host integrado en este repositorio. Cero eventos hasta que exista uno. |
@@ -186,8 +186,9 @@ escalabilidad horizontal.
   ventana, pero existe evidencia real fuera de ella) y
   `schema_supported_no_emitter` (nunca se aceptó un evento de ejecución: no
   hay emisor acreditable).
-- **Invocaciones directas del plugin**: si se ejecuta `runner.py` sin el wrapper,
-  no hay evento. No se puede instrumentar dentro sin violar el contrato de red.
+- La observación del CLI requiere `observe.py` con telemetría habilitada.
+  El runner clásico es el predeterminado y `--exec design-skills-router`
+  ejecuta el Typer instalado. Las invocaciones directas quedan fuera del conteo.
 - **Host/LLM**: no se observa si el host obedece la selección, si instala una
   skill o si ejecuta otra distinta.
 - **Despliegue global**: no hay servicio desplegado ni credenciales. Las pruebas
@@ -202,8 +203,8 @@ escalabilidad horizontal.
 
 | Comando | Resultado |
 | --- | --- |
-| `python3 -B -m unittest discover -s telemetry/tests` | 109 pruebas OK (contrato, store, HTTP, cliente, wrapper, ejecución, E2E, exposición y endurecimiento). |
-| `node --test tests/telemetry-board.test.cjs` | 25 pruebas OK (eventos del tablero, outbox, concurrencia, token, getter). |
+| `python3 -B -m unittest discover -s telemetry/tests` | 116 pruebas OK, incluidas la entrega a dos colectores con un directorio compartido y la salida del CLI en streaming. |
+| `node --test tests/telemetry-board.test.cjs` | 31 pruebas OK, incluido el aislamiento de colas por destino y la ausencia de escrituras con el cliente desactivado. |
 | `npm run test:telemetry:e2e` | PASS: tablero real en Chromium (6 eventos, sin nodos inferidos, cero ejecuciones inventadas), colector HTTP E2E y dashboard con datos reales, cero y `schema_supported_no_emitter`. |
 | `npm test` | 8 pruebas del núcleo + 11/11 del contrato semántico sobre v1.4. |
 | `npm run test:golden` | 11/11 del contrato semántico y prueba offline sobre v1.3 congelada. |

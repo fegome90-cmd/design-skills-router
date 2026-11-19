@@ -1,8 +1,10 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const { test } = require('node:test');
 const telemetry = require('../board/src/telemetria/telemetria.js');
+const localKeys = telemetry.keys.forEndpoint('http://127.0.0.1:8787');
 
 const selection = {
   selectedFunctions: ['visual-qa'],
@@ -62,7 +64,11 @@ test('disabled client does not persist or call fetch', async () => {
   assert.equal(client.enabled, false);
   assert.deepEqual(client.trackEvaluation(selection, { route: 'auditoria' }), []);
   assert.equal(await client.flush(), true);
-  assert.equal(storage.getItem(telemetry.keys.OUTBOX_KEY), null);
+  assert.equal(storage.values.size, 0);
+  const optedOut = telemetry.createClient({ enabled: false, endpoint: 'https://configured.example', storage });
+  assert.deepEqual(optedOut.trackEvaluation(selection, {}), []);
+  assert.equal(await optedOut.flush(), true);
+  assert.equal(storage.values.size, 0);
 });
 
 test('successful delivery sends one idempotent batch and clears the outbox', async () => {
@@ -84,7 +90,7 @@ test('successful delivery sends one idempotent batch and clears the outbox', asy
   assert.equal(calls[0].url, 'http://127.0.0.1:8787/v1/events');
   assert.equal(calls[0].body.schema, 'design-router-telemetry/1');
   assert.equal(calls[0].body.events.length, 3);
-  assert.equal(storage.getItem(telemetry.keys.OUTBOX_KEY), '[]');
+  assert.equal(storage.getItem(localKeys.outbox), '[]');
 });
 
 test('failed delivery keeps events in the bounded outbox', async () => {
@@ -97,7 +103,7 @@ test('failed delivery keeps events in the bounded outbox', async () => {
   });
   client.trackEvaluation(selection, { route: 'auditoria' });
   assert.equal(await client.flush(), false);
-  const saved = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY));
+  const saved = JSON.parse(storage.getItem(localKeys.outbox));
   assert.equal(saved.length, 3);
 });
 
@@ -225,7 +231,7 @@ const boardEvent = (id, name, extra = {}) => ({
 test('a permanently rejected event is isolated and later events are delivered exactly once', async () => {
   const storage = memoryStorage();
   const poisoned = boardEvent('not-a-uuid-at-all', 'router.invoked', { evaluation_id: '11111111-1111-4111-8111-111111111111', command: 'board' });
-  storage.setItem(telemetry.keys.OUTBOX_KEY, JSON.stringify([poisoned]));
+  storage.setItem(localKeys.outbox, JSON.stringify([poisoned]));
   const collector = transactionalCollector();
   const client = telemetry.createClient({
     storage, endpoint: 'http://127.0.0.1:8787',
@@ -238,9 +244,9 @@ test('a permanently rejected event is isolated and later events are delivered ex
   const flushed = await client.flush();
 
   assert.equal(flushed, true, 'flush must complete after isolating the rejection');
-  const pending = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const pending = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   assert.equal(pending.length, 0, 'valid events must not stay blocked behind the poison');
-  const rejected = JSON.parse(storage.getItem(telemetry.keys.REJECTED_KEY) || '[]');
+  const rejected = JSON.parse(storage.getItem(localKeys.rejected) || '[]');
   assert.deepEqual(rejected.map(event => event.event_id), ['not-a-uuid-at-all']);
   assert.ok(collector.accepted.length >= 2, 'valid events must reach the collector');
   const ids = collector.accepted.map(event => event.event_id);
@@ -253,7 +259,7 @@ test('a poison event in the middle keeps its valid neighbours in order', async (
   const first = boardEvent('11111111-1111-4111-8111-111111111111', 'router.invoked', { evaluation_id: '33333333-3333-4333-8333-333333333333', command: 'board' });
   const poisoned = boardEvent('22222222-2222-4222-8222-222222222222', 'router.invoked', { evaluation_id: 'not-good', command: 'board' });
   const last = boardEvent('44444444-4444-4444-8444-444444444444', 'router.invoked', { evaluation_id: '55555555-5555-4555-8555-555555555555', command: 'board' });
-  storage.setItem(telemetry.keys.OUTBOX_KEY, JSON.stringify([first, poisoned, last]));
+  storage.setItem(localKeys.outbox, JSON.stringify([first, poisoned, last]));
   const collector = transactionalCollector();
   const client = telemetry.createClient({
     storage, endpoint: 'http://127.0.0.1:8787',
@@ -271,14 +277,14 @@ test('a poison event in the middle keeps its valid neighbours in order', async (
   assert.deepEqual(collector.accepted.map(event => event.event_id),
     ['11111111-1111-4111-8111-111111111111', '44444444-4444-4444-8444-444444444444'],
     'neighbours must survive, once each, in causal order');
-  const rejected = JSON.parse(storage.getItem(telemetry.keys.REJECTED_KEY) || '[]');
+  const rejected = JSON.parse(storage.getItem(localKeys.rejected) || '[]');
   assert.deepEqual(rejected.map(event => event.event_id), ['22222222-2222-4222-8222-222222222222']);
 });
 
 test('a batch-level rejection without index quarantines that batch and the queue continues', async () => {
   const storage = memoryStorage();
   const marker = boardEvent('11111111-1111-4111-8111-111111111111', 'router.invoked', { evaluation_id: '33333333-3333-4333-8333-333333333333', command: 'board' });
-  storage.setItem(telemetry.keys.OUTBOX_KEY, JSON.stringify([marker]));
+  storage.setItem(localKeys.outbox, JSON.stringify([marker]));
   const calls = [];
   let failBatch = true;
   const client = telemetry.createClient({
@@ -300,8 +306,8 @@ test('a batch-level rejection without index quarantines that batch and the queue
   // The malformed batch is quarantined whole (mirrors the Python client) and
   // never retried; events valid on their own in a later batch still deliver.
   assert.equal(first, true, 'flush must not retry the rejected batch forever');
-  assert.equal(JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]').length, 0);
-  const rejected = JSON.parse(storage.getItem(telemetry.keys.REJECTED_KEY) || '[]');
+  assert.equal(JSON.parse(storage.getItem(localKeys.outbox) || '[]').length, 0);
+  const rejected = JSON.parse(storage.getItem(localKeys.rejected) || '[]');
   assert.ok(rejected.some(event => event.event_id === '11111111-1111-4111-8111-111111111111'),
     'the rejected batch is kept for inspection, not silently lost');
 
@@ -331,9 +337,9 @@ test('a retryable failure still keeps the queue untouched for the next attempt',
   });
   client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
   assert.equal(await client.flush(), false);
-  const pending = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const pending = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   assert.ok(pending.length >= 1, 'a server error must keep events queued, not drop them');
-  assert.equal(JSON.parse(storage.getItem(telemetry.keys.REJECTED_KEY) || '[]').length, 0);
+  assert.equal(JSON.parse(storage.getItem(localKeys.rejected) || '[]').length, 0);
 });
 
 test('the outbox evicts the oldest events beyond its bound', async () => {
@@ -348,7 +354,7 @@ test('the outbox evicts the oldest events beyond its bound', async () => {
   for (let index = 0; index < 340; index++) {
     returned.push(client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' }));
   }
-  const stored = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const stored = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   assert.equal(stored.length, 1000, 'the queue is bounded at 1000 events');
   const firstIds = new Set(returned[0].map(event => event.event_id));
   const lastIds = new Set(returned[339].map(event => event.event_id));
@@ -371,7 +377,7 @@ test('overlapping flushes share one in-flight run and never drop undelivered eve
     evaluation_id: `10000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
     command: 'board'
   }));
-  storage.setItem(telemetry.keys.OUTBOX_KEY, JSON.stringify(seeded));
+  storage.setItem(localKeys.outbox, JSON.stringify(seeded));
 
   const seenBatches = [];
   let releaseFirst;
@@ -398,7 +404,7 @@ test('overlapping flushes share one in-flight run and never drop undelivered eve
   assert.equal(r1, false);
   assert.equal(r2, false);
   assert.deepEqual(seenBatches, [100, 1]);
-  const pending = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const pending = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   assert.equal(pending.length, 1, 'event 101 must survive a 503 after overlapping flush calls');
   assert.equal(pending[0].event_id, seeded[100].event_id);
 
@@ -439,12 +445,12 @@ test('in-flight eviction during flush removes only delivered events by id', asyn
   for (let i = 0; i < 350; i++) {
     latestBatch.push(client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' }));
   }
-  const expectedIds = new Set(JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]').map(e => e.event_id));
+  const expectedIds = new Set(JSON.parse(storage.getItem(localKeys.outbox) || '[]').map(e => e.event_id));
   for (const ev of firstEvents) assert.ok(!expectedIds.has(ev.event_id));
   // Fail the next batch once the first completes so we inspect queue state right after first batch removal.
   releaseFetch();
   await flushing;
-  const remaining = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const remaining = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   assert.equal(remaining.length, 0);
   // Also verify single-batch removal by id when next batch returns 503:
   const storage2 = memoryStorage();
@@ -468,11 +474,11 @@ test('in-flight eviction during flush removes only delivered events by id', asyn
   for (let i = 0; i < 350; i++) {
     client2.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
   }
-  const beforeResolve = JSON.parse(storage2.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const beforeResolve = JSON.parse(storage2.getItem(localKeys.outbox) || '[]');
   assert.equal(beforeResolve.length, 1000);
   gate2();
   assert.equal(await flushing2, false);
-  const afterResolve = JSON.parse(storage2.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const afterResolve = JSON.parse(storage2.getItem(localKeys.outbox) || '[]');
   assert.equal(afterResolve.length, 1000,
     'evicted in-flight batch must not slice newer queued events out by position');
   assert.equal(afterResolve[0].event_id, beforeResolve[0].event_id);
@@ -496,14 +502,14 @@ test('flushing an empty queue never wedges subsequent flushes', async () => {
   client.trackEvaluation(selection, { route: 'auditoria', scope: 'function' });
   assert.equal(await client.flush(), true);
   assert.equal(requests.length, 1, 'flush after an empty flush must still POST new events');
-  assert.equal(JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]').length, 0);
+  assert.equal(JSON.parse(storage.getItem(localKeys.outbox) || '[]').length, 0);
 
   // Also verify sequential empty-flush cycle between delivered evaluations.
   assert.equal(await client.flush(), true);
   client.trackEvaluation(selection, { route: 'tipografia', scope: 'function' });
   assert.equal(await client.flush(), true);
   assert.equal(requests.length, 2);
-  assert.equal(JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]').length, 0);
+  assert.equal(JSON.parse(storage.getItem(localKeys.outbox) || '[]').length, 0);
 });
 
 test('two tabs sharing storage preserve both evaluations during a 503 outage', async () => {
@@ -525,11 +531,99 @@ test('two tabs sharing storage preserve both evaluations during a 503 outage', a
   const eventsB = tabB.trackEvaluation(selection, { route: 'tipografia', scope: 'function' });
   assert.equal(await tabB.flush(), false);
 
-  const persisted = JSON.parse(storage.getItem(telemetry.keys.OUTBOX_KEY) || '[]');
+  const persisted = JSON.parse(storage.getItem(localKeys.outbox) || '[]');
   const persistedIds = new Set(persisted.map(event => event.event_id));
   for (const event of [...eventsA, ...eventsB]) {
     assert.ok(persistedIds.has(event.event_id), 'both tabs events must survive in shared storage');
   }
+});
+
+function enumerableStorage() {
+  const storage = memoryStorage();
+  return {
+    get length() { return storage.values.size; },
+    key: i => Array.from(storage.values.keys())[i] ?? null,
+    removeItem: k => storage.values.delete(k),
+    ...storage
+  };
+}
+
+for (const [name, first, second, inline] of [
+  ['configured origins', 'https://a.example', 'https://b.example', false],
+  ['inline paths', 'https://shared.example/a', 'https://shared.example/b', true],
+  ['inline queries', 'https://shared.example?tenant=a', 'https://shared.example?tenant=b', true]
+]) {
+  test(`an outage keeps queues isolated across ${name} and recovers on return`, async () => {
+    const storage = enumerableStorage();
+    telemetry.configure(first, { storage });
+    const firstTab = telemetry.createClient({ storage, fetch: async () => ({ ok: false, status: 503 }) });
+    const firstEvents = firstTab.trackEvaluation(selection, { route: 'auditoria' });
+    assert.equal(await firstTab.flush(), false);
+
+    const window = { localStorage: storage };
+    if (inline) window.DESIGN_ROUTER_TELEMETRY = { endpoint: second };
+    else telemetry.configure(second, { storage });
+    const secondCollector = transactionalCollector();
+    const secondTab = telemetry.init(window, { readyState: 'loading', addEventListener() {} }, {
+      storage, fetch: secondCollector.fetch
+    });
+    const secondEvents = secondTab.trackEvaluation(selection, { route: 'tipografia' });
+    assert.equal(await secondTab.flush(), true);
+    assert.deepEqual(secondCollector.accepted, secondEvents);
+
+    telemetry.configure(first + '#return', { storage });
+    const recovered = transactionalCollector();
+    const returningTab = telemetry.createClient({ storage, fetch: recovered.fetch });
+    assert.equal(await returningTab.flush(), true);
+    assert.deepEqual(recovered.accepted, firstEvents);
+  });
+}
+
+test('inline endpoint secrets never appear in persisted keys or values', async () => {
+  const storage = enumerableStorage();
+  const secret = 'ephemeral-signed-value';
+  const endpoint = 'https://collector.example/api?sig=' + secret;
+  const collector = telemetry.init({ DESIGN_ROUTER_TELEMETRY: { endpoint } },
+    { readyState: 'loading', addEventListener() {} },
+    { storage, fetch: async () => ({ ok: false, status: 503 }) });
+  collector.trackEvaluation(selection, { route: 'auditoria' });
+  assert.equal(await collector.flush(), false);
+  assert.ok(storage.values.size > 0);
+  for (const [key, value] of storage.values) {
+    assert.ok(!key.includes(secret) && !value.includes(secret));
+  }
+});
+
+test('collector storage keys use SHA-256 of the normalized ingestion URL', () => {
+  const urls = ['https://例え.jp/ñ?tenant=山', 'https://example.com/' + 'x'.repeat(4096)];
+  // Exercise both sides of the SHA-256 padding boundary and multiple blocks.
+  for (const length of [55, 56, 63, 64, 65]) {
+    const prefix = 'https://example.org/';
+    urls.push(prefix + 'x'.repeat(length - prefix.length - '/v1/events'.length));
+  }
+  for (const endpoint of urls) {
+    const { eventsUrl, outbox } = telemetry.keys.forEndpoint(endpoint);
+    const digest = createHash('sha256').update(eventsUrl).digest('hex');
+    assert.equal(outbox, telemetry.keys.OUTBOX_KEY + ':' + digest);
+  }
+});
+
+test('unattributed legacy queues and shards stay local on upgrade', async () => {
+  const storage = enumerableStorage();
+  const endpoint = 'https://configured.example';
+  const legacyKey = 'design-router.telemetry.outbox';
+  const oldShard = legacyKey + '.tab.old';
+  const legacy = JSON.stringify([{ event_id: 'legacy-event' }]);
+  storage.setItem(telemetry.keys.ENDPOINT_KEY, endpoint);
+  storage.setItem(legacyKey, legacy);
+  storage.setItem(oldShard, legacy);
+  const collector = transactionalCollector();
+  const client = telemetry.createClient({ storage, fetch: collector.fetch });
+  const fresh = client.trackEvaluation(selection, { route: 'auditoria' });
+  assert.equal(await client.flush(), true);
+  assert.deepEqual(collector.calls, [fresh.map(event => event.event_id)]);
+  assert.equal(storage.getItem(legacyKey), legacy);
+  assert.equal(storage.getItem(oldShard), legacy);
 });
 
 test('switching collector clears previous token and binds tokens to their origin', () => {
@@ -630,7 +724,7 @@ test('init endpoint override to a different origin never forwards previous inlin
 
 test('unwritable localStorage never loops delivered or rejected events 1001 times', async () => {
   const seededDelivered = boardEvent('00000000-0000-4000-8000-000000000901', 'router.invoked', { evaluation_id: '11111111-1111-4111-8111-111111111111', command: 'board' });
-  const map = new Map([[telemetry.keys.OUTBOX_KEY, JSON.stringify([seededDelivered])]]);
+  const map = new Map([[localKeys.outbox, JSON.stringify([seededDelivered])]]);
   const fullStorage = {
     getItem: k => (map.has(k) ? map.get(k) : null),
     setItem: () => { throw new Error('QuotaExceededError'); },
@@ -648,7 +742,7 @@ test('unwritable localStorage never loops delivered or rejected events 1001 time
 
   // Indexed 422 while storage is full must isolate bad event and deliver valid neighbor without looping.
   const poisoned = boardEvent('00000000-0000-4000-8000-000000000902', 'router.invoked', { evaluation_id: '11111111-1111-4111-8111-111111111111', command: 'bad' });
-  const map2 = new Map([[telemetry.keys.OUTBOX_KEY, JSON.stringify([poisoned])]]);
+  const map2 = new Map([[localKeys.outbox, JSON.stringify([poisoned])]]);
   const fullStorage2 = {
     getItem: k => (map2.has(k) ? map2.get(k) : null),
     setItem: () => { throw new Error('QuotaExceededError'); },
@@ -709,8 +803,8 @@ test('enumerable shared storage preserves concurrent two-tab evaluations during 
   const deliveredIds = new Set(delivered.map(e => e.event_id));
   assert.equal(deliveredIds.size, 80);
   for (const id of expectedIds) assert.ok(deliveredIds.has(id));
-  assert.equal(JSON.parse(browserStorage.getItem(telemetry.keys.OUTBOX_KEY) || '[]').length, 0);
-  const leftoverShards = Array.from(map.keys()).filter(k => k.startsWith(telemetry.keys.OUTBOX_SHARD_PREFIX));
+  assert.equal(JSON.parse(browserStorage.getItem(localKeys.outbox) || '[]').length, 0);
+  const leftoverShards = Array.from(map.keys()).filter(k => k.startsWith(localKeys.shardPrefix));
   assert.deepEqual(leftoverShards, []);
 });
 

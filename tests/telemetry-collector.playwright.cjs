@@ -15,6 +15,7 @@ const { tmpdir } = require('node:os');
 const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
+const telemetry = require('../board/src/telemetria/telemetria.js');
 
 const root = path.join(__dirname, '..');
 const board = process.argv[2] ||
@@ -61,7 +62,8 @@ function serveBoard(html) {
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-    await page.addInitScript(({ boardOrigin, collectorOrigin }) => {
+    const keys = telemetry.keys.forEndpoint(collector.origin);
+    await page.addInitScript(({ outbox, collectorOrigin }) => {
       window.DESIGN_ROUTER_TELEMETRY = { endpoint: collectorOrigin, routerVersion: '1.3.0' };
       // P1-01: a poisoned event already sitting in the outbox.
       const poisoned = {
@@ -75,9 +77,8 @@ function serveBoard(html) {
         evaluation_id: 'not-a-valid-evaluation-id',
         command: 'board'
       };
-      window.localStorage.setItem('design-router.telemetry.outbox', JSON.stringify([poisoned]));
-      void boardOrigin;
-    }, { boardOrigin: fixture.origin, collectorOrigin: collector.origin });
+      window.localStorage.setItem(outbox, JSON.stringify([poisoned]));
+    }, { outbox: keys.outbox, collectorOrigin: collector.origin });
     await page.goto(fixture.origin + '/', { waitUntil: 'load' });
     await page.waitForSelector('#capRouteButtons [data-route]');
     await page.waitForTimeout(400);
@@ -105,12 +106,11 @@ function serveBoard(html) {
     assert.equal(metrics.observability['skill.execution_started'], 'schema_supported_no_emitter',
       'no host is integrated, so execution stays explicitly unobservable');
 
-    const queue = await page.evaluate(() =>
-      window.localStorage.getItem('design-router.telemetry.outbox'));
+    const queue = await page.evaluate(key => window.localStorage.getItem(key), keys.outbox);
     const pending = JSON.parse(queue || '[]');
     assert.equal(pending.length, 0, 'the poisoned event must not wedge the queue');
     const rejected = JSON.parse(
-      await page.evaluate(() => window.localStorage.getItem('design-router.telemetry.rejected')) || '[]');
+      await page.evaluate(key => window.localStorage.getItem(key), keys.rejected) || '[]');
     assert.ok(rejected.some(event => event.evaluation_id === 'not-a-valid-evaluation-id'),
       'the poison is kept isolated for inspection, not silently lost');
 

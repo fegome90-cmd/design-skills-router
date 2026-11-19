@@ -8,6 +8,7 @@ then emits only identifiers already present in the command or its JSON reply.
 Usage:
     python3 -B telemetry/observe.py -- <runner.py arguments...>
     python3 -B telemetry/observe.py --runner path/to/runner.py -- node Q00
+    python3 -B telemetry/observe.py --exec design-skills-router -- node Q00
 
 Telemetry is OFF unless DESIGN_ROUTER_TELEMETRY=1 and
 DESIGN_ROUTER_TELEMETRY_URL are present. Telemetry failures never change the
@@ -17,7 +18,9 @@ observed command's behavior.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 
@@ -29,6 +32,7 @@ from telemetry import contract
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RUNNER = ROOT / "plugin/skills/design-tree/scripts/runner.py"
+MAX_NODE_PACKET_BYTES = 1024 * 1024
 
 
 _SUBCOMMAND_VALUE_OPTIONS = (
@@ -174,25 +178,51 @@ def observe(client, command: str | None, argv: list[str], stdout: bytes, returnc
             )
 
 
+def _run_child(argv: list[str], inspect_node: bool) -> tuple[int, bytes]:
+    if not inspect_node:
+        completed = subprocess.run(argv, stdout=sys.stdout.buffer, stderr=sys.stderr.buffer, check=False)
+        return completed.returncode, b""
+
+    # stderr is inherited. Forward stdout as it arrives, retaining only a
+    # complete, size-bounded node packet for inspection after successful exit.
+    packet: bytearray | None = bytearray()
+    with subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=sys.stderr.buffer, bufsize=0) as child:
+        assert child.stdout is not None
+        while chunk := child.stdout.read(64 * 1024):
+            sys.stdout.buffer.write(chunk)
+            sys.stdout.buffer.flush()
+            if packet is not None:
+                if len(packet) + len(chunk) <= MAX_NODE_PACKET_BYTES:
+                    packet.extend(chunk)
+                else:
+                    packet = None
+        return child.wait(), bytes(packet) if packet is not None else b""
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    runner = DEFAULT_RUNNER
+    launcher: list[str] | None = None
     verbose = False
-    if "--runner" in args:
-        index = args.index("--runner")
-        if index + 1 >= len(args):
-            print("--runner requires a path", file=sys.stderr)
+    while args and args[0] in ("--runner", "--exec", "--verbose"):
+        option = args.pop(0)
+        if option == "--verbose":
+            verbose = True
+            continue
+        if launcher is not None or not args or args[0] == "--":
+            print("choose one of --runner PATH or --exec PROGRAM", file=sys.stderr)
             return 2
-        runner = Path(args[index + 1])
-        del args[index:index + 2]
-    if "--verbose" in args:
-        args.remove("--verbose")
-        verbose = True
+        target = args.pop(0)
+        if option == "--runner":
+            if not Path(target).is_file():
+                print(f"runner not found: {target}", file=sys.stderr)
+                return 2
+            launcher = [sys.executable, "-B", target]
+        else:
+            launcher = [target]
     if args and args[0] == "--":
         args = args[1:]
-    if not runner.is_file():
-        print(f"runner not found: {runner}", file=sys.stderr)
-        return 2
+    if launcher is None:
+        launcher = [sys.executable, "-B", str(DEFAULT_RUNNER)]
 
     client = None
     try:
@@ -206,29 +236,30 @@ def main(argv: list[str] | None = None) -> int:
         client = Telemetry(contract.DISABLED)
     command = command_of(args)
     try:
-        completed = subprocess.run(
-            [sys.executable, "-B", str(runner), *args],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-        )
+        returncode, output = _run_child([*launcher, *args], client.enabled and command == "node")
     except OSError as error:
         print(f"could not start runner: {error}", file=sys.stderr)
         return 2
-    sys.stdout.buffer.write(completed.stdout)
-    sys.stdout.buffer.flush()
-    sys.stderr.buffer.write(completed.stderr)
-    sys.stderr.buffer.flush()
     try:
-        observe(client, command, args, completed.stdout, completed.returncode)
+        if client.enabled:
+            observe(client, command, args, output, returncode)
         if not client.flush() and verbose:
             print("telemetry: event batch not delivered; see telemetry state directory", file=sys.stderr)
     except Exception as error:
         # Telemetry must never change stdout, stderr or the observed exit code.
         if verbose:
             print(f"telemetry: local failure ({type(error).__name__}); command unaffected", file=sys.stderr)
-    return completed.returncode
+    return returncode
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    code = main()
+    if os.name == "posix" and code < 0:
+        # SystemExit(-SIGTERM) would report a normal exit with status 241.
+        # Deliver the same signal so both waitpid and shell callers see it.
+        signum = -code
+        if signum != signal.SIGKILL:
+            signal.signal(signum, signal.SIG_DFL)
+            signal.pthread_sigmask(signal.SIG_UNBLOCK, {signum})
+        signal.raise_signal(signum)
+    raise SystemExit(code)

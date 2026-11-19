@@ -88,6 +88,46 @@ class HttpTests(unittest.TestCase):
         self.server = Server(self.directory / "db.sqlite3")
         self.addCleanup(self.server.close)
 
+    def test_shared_client_state_retries_each_batch_at_its_original_collector(self):
+        from telemetry.client import Telemetry
+
+        state = self.directory / "shared-state"
+        other = Server(self.directory / "other.sqlite3")
+        self.addCleanup(other.close)
+        first = contract.TelemetryConfig(True, self.server.base, state_dir=state)
+        second = contract.TelemetryConfig(True, other.base, state_dir=state)
+        client = Telemetry(first)
+        # A temporarily unavailable store forces a real HTTP 503 and disk retry.
+        original = self.server.server.store
+        self.server.server.store = BrokenStore()
+        client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        self.assertFalse(client.flush())
+        self.server.server.store = original
+
+        client = Telemetry(second)
+        client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
+        self.assertTrue(client.flush())
+        self.assertEqual(other.server.store.metrics()["totals"]["invocations"], 1)
+        self.assertEqual(original.metrics()["totals"]["invocations"], 0)
+        self.assertTrue(Telemetry(first).flush())
+        for server, expected in ((self.server, "node"), (other, "status")):
+            with sqlite3.connect(server.db) as database:
+                self.assertEqual(database.execute("select command from events").fetchall(), [(expected,)])
+
+    def test_untagged_legacy_file_is_preserved_without_automatic_delivery(self):
+        from telemetry.client import Telemetry
+
+        state = self.directory / "old-state"
+        state.mkdir()
+        legacy = state / "outbox-0001-a.jsonl"
+        record = event("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
+        payload = json.dumps({"schema": contract.SCHEMA, "events": [record]})
+        legacy.write_text(payload)
+        client = Telemetry(contract.TelemetryConfig(True, self.server.base, state_dir=state))
+        self.assertTrue(client.flush())
+        self.assertEqual(self.server.server.store.metrics()["totals"]["invocations"], 0)
+        self.assertEqual(legacy.read_text(), payload)
+
     def test_batch_roundtrip_and_metrics(self):
         evaluation = str(uuid.uuid4())
         status, body = self.server.post([
@@ -574,21 +614,21 @@ class HttpTests(unittest.TestCase):
         client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
         client.emit("skill.execution_started", execution_id=execution_id, skill_id=skill_id, source="host")
         self.assertFalse(client.flush())
-        self.assertEqual(len(list(state_dir.glob("outbox-*.jsonl"))), 1)
+        self.assertEqual(len(list(state_dir.rglob("outbox-*.jsonl"))), 1)
 
         # Now emit completed (1 event, which would fit the remaining budget of 1
         # if sent ahead of the spooled outbox!). Client must preserve order and
         # NOT send completed ahead of the pending outbox.
         client.emit("skill.execution_completed", execution_id=execution_id, skill_id=skill_id, source="host")
         self.assertFalse(client.flush())
-        self.assertEqual(list(state_dir.glob("rejected-*.jsonl")), [],
+        self.assertEqual(list(state_dir.rglob("rejected-*.jsonl")), [],
                          "completed must never be sent ahead of spooled started and quarantined")
 
         # Advance collector rate-limit window and flush again.
         server.server.rate_limiter._window_start -= 120
         self.assertTrue(client.flush())
-        self.assertEqual(list(state_dir.glob("outbox-*.jsonl")), [])
-        self.assertEqual(list(state_dir.glob("rejected-*.jsonl")), [])
+        self.assertEqual(list(state_dir.rglob("outbox-*.jsonl")), [])
+        self.assertEqual(list(state_dir.rglob("rejected-*.jsonl")), [])
         metrics = server.server.store.metrics()
         self.assertEqual(metrics["totals"]["executions_started"], 1)
         self.assertEqual(metrics["totals"]["executions_completed"], 1)

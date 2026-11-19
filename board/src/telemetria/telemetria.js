@@ -26,7 +26,6 @@
   const OUTBOX_KEY = 'design-router.telemetry.outbox';
   const OUTBOX_SHARD_PREFIX = 'design-router.telemetry.outbox.tab.';
   const REJECTED_KEY = 'design-router.telemetry.rejected';
-  const FLUSH_LOCK_NAME = 'design-router.telemetry.flush';
   const ROUTER_VERSION = '1.4.0';
   const MAX_OUTBOX = 1000;
   const MAX_REJECTED = 100;
@@ -65,13 +64,77 @@
   function buildEventsUrl(endpoint) {
     if (!endpoint || typeof endpoint !== 'string') return '';
     try {
-      const parsed = new URL(endpoint);
+      const base = typeof document !== 'undefined' ? document.baseURI : undefined;
+      const parsed = new URL(endpoint, base);
       parsed.pathname = parsed.pathname.replace(/\/+$/, '') + '/v1/events';
       parsed.hash = '';
       return parsed.toString();
     } catch (_) {
       return endpoint.replace(/#.*$/, '').replace(/\?.*$/, '').replace(/\/+$/, '') + '/v1/events';
     }
+  }
+
+  // SHA-256 (FIPS 180-4, §6.2). Storage keys are needed synchronously:
+  // trackEvaluation must persist even if the page closes before another task.
+  function sha256(text) {
+    const roundConstants = [
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ];
+    const state = new Uint32Array([
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+    ]);
+    const input = new TextEncoder().encode(text);
+    const padded = new Uint8Array(Math.ceil((input.length + 9) / 64) * 64);
+    padded.set(input);
+    padded[input.length] = 0x80;
+    const view = new DataView(padded.buffer);
+    const bitLength = input.length * 8;
+    view.setUint32(padded.length - 8, Math.floor(bitLength / 0x100000000));
+    view.setUint32(padded.length - 4, bitLength);
+
+    const words = new Uint32Array(64);
+    const rotate = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      for (let i = 0; i < 16; i++) words[i] = view.getUint32(offset + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const x = words[i - 15], y = words[i - 2];
+        const sigma0 = rotate(x, 7) ^ rotate(x, 18) ^ (x >>> 3);
+        const sigma1 = rotate(y, 17) ^ rotate(y, 19) ^ (y >>> 10);
+        words[i] = words[i - 16] + sigma0 + words[i - 7] + sigma1;
+      }
+      let [a, b, c, d, e, f, g, h] = state;
+      for (let i = 0; i < 64; i++) {
+        const sum1 = rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25);
+        const choose = (e & f) ^ (~e & g);
+        const t1 = h + sum1 + choose + roundConstants[i] + words[i];
+        const sum0 = rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22);
+        const majority = (a & b) ^ (a & c) ^ (b & c);
+        [a, b, c, d, e, f, g, h] = [(t1 + sum0 + majority) >>> 0, a, b, c, (d + t1) >>> 0, e, f, g];
+      }
+      const block = [a, b, c, d, e, f, g, h];
+      for (let i = 0; i < state.length; i++) state[i] += block[i];
+    }
+    return Array.from(state, word => word.toString(16).padStart(8, '0')).join('');
+  }
+
+  function collectorKeys(endpoint) {
+    const eventsUrl = buildEventsUrl(endpoint);
+    // Signed inline endpoints stay in memory. Old, unscoped queues have
+    // no reliable destination and remain untouched for local inspection.
+    const scope = ':' + sha256(eventsUrl);
+    return {
+      eventsUrl,
+      outbox: OUTBOX_KEY + scope,
+      shardPrefix: OUTBOX_KEY + scope + ':tab.',
+      rejected: REJECTED_KEY + scope
+    };
   }
 
   function canonicalSkillId(skill) {
@@ -180,13 +243,13 @@
     }
   }
 
-  function listShardKeys(storage) {
+  function listShardKeys(storage, prefix) {
     if (!canEnumerateStorage(storage)) return [];
     const keys = [];
     try {
       for (let i = 0; i < storage.length; i++) {
         const key = storage.key(i);
-        if (typeof key === 'string' && key.startsWith(OUTBOX_SHARD_PREFIX)) {
+        if (typeof key === 'string' && key.startsWith(prefix)) {
           keys.push(key);
         }
       }
@@ -215,10 +278,10 @@
     return list.filter(item => !refs.has(item) && !(item && item.event_id && ids.has(item.event_id)));
   }
 
-  function runWithFlushLock(fn) {
+  function runWithFlushLock(name, fn) {
     try {
       if (typeof navigator !== 'undefined' && navigator.locks && typeof navigator.locks.request === 'function') {
-        return navigator.locks.request(FLUSH_LOCK_NAME, fn);
+        return navigator.locks.request(name, fn);
       }
     } catch (_) {}
     return fn();
@@ -230,8 +293,9 @@
     const fetcher = config.fetch || (typeof fetch === 'function' ? fetch : null);
     const endpoint = config.endpoint || (storage ? read(storage, ENDPOINT_KEY) : null);
     const enabled = Boolean(config.enabled !== false && endpoint && fetcher);
-    const supportsShards = canEnumerateStorage(storage);
-    const shardKey = supportsShards ? OUTBOX_SHARD_PREFIX + uuid().slice(0, 12) : null;
+    const { eventsUrl, outbox, shardPrefix, rejected: rejectedKey } = collectorKeys(endpoint);
+    const supportsShards = enabled && canEnumerateStorage(storage);
+    const shardKey = supportsShards ? shardPrefix + uuid().slice(0, 12) : null;
 
     // Delivered or permanently rejected event identities kept in memory so a
     // full/unwritable localStorage can never resurrect and resend them.
@@ -257,17 +321,17 @@
       return true;
     });
 
-    let queue = readList(storage, OUTBOX_KEY, MAX_OUTBOX) || [];
+    let queue = [];
     let queueUnsynced = false;
     let shardQueue = [];
     let shardUnsynced = false;
     // Events the collector rejected permanently. Kept for inspection so a
     // rejection is never a silent loss; never retried.
-    let rejected = readList(storage, REJECTED_KEY, MAX_REJECTED) || [];
+    let rejected = enabled ? readList(storage, rejectedKey, MAX_REJECTED) || [] : [];
     let rejectedUnsynced = false;
 
-    let instanceId = config.instanceId || (storage ? read(storage, INSTANCE_KEY) : null);
-    if (!instanceId) {
+    let instanceId = enabled ? config.instanceId || read(storage, INSTANCE_KEY) : null;
+    if (enabled && !instanceId) {
       instanceId = uuid();
       write(storage, INSTANCE_KEY, instanceId);
     }
@@ -275,11 +339,11 @@
     let inFlightFlush = null;
 
     const loadOutbox = () => {
-      const stored = readList(storage, OUTBOX_KEY, MAX_OUTBOX);
+      const stored = readList(storage, outbox, MAX_OUTBOX);
       if (stored === null) return excludeRetired(queue);
       let merged = stored;
       if (supportsShards) {
-        for (const key of listShardKeys(storage)) {
+        for (const key of listShardKeys(storage, shardPrefix)) {
           const shard = readList(storage, key, MAX_OUTBOX);
           if (shard && shard.length) {
             merged = appendUnique(merged, shard, MAX_OUTBOX);
@@ -293,7 +357,7 @@
     };
 
     const loadRejected = () => {
-      const stored = readList(storage, REJECTED_KEY, MAX_REJECTED);
+      const stored = readList(storage, rejectedKey, MAX_REJECTED);
       if (stored === null) return rejected;
       return rejectedUnsynced ? appendUnique(stored, rejected, MAX_REJECTED) : stored;
     };
@@ -302,14 +366,14 @@
       const cleaned = excludeRetired(next);
       queue = cleaned.length > MAX_OUTBOX ? cleaned.slice(-MAX_OUTBOX) : cleaned;
       if (storage) {
-        queueUnsynced = !write(storage, OUTBOX_KEY, JSON.stringify(queue));
+        queueUnsynced = !write(storage, outbox, JSON.stringify(queue));
       }
     };
 
     const saveRejected = (next) => {
       rejected = next.length > MAX_REJECTED ? next.slice(-MAX_REJECTED) : next;
       if (storage) {
-        rejectedUnsynced = !write(storage, REJECTED_KEY, JSON.stringify(rejected));
+        rejectedUnsynced = !write(storage, rejectedKey, JSON.stringify(rejected));
       }
     };
 
@@ -325,7 +389,7 @@
       if (shardQueue.length) {
         shardQueue = excludeRetired(filterOutBatch(shardQueue, items));
       }
-      for (const key of listShardKeys(storage)) {
+      for (const key of listShardKeys(storage, shardPrefix)) {
         const shard = readList(storage, key, MAX_OUTBOX);
         if (!shard) continue;
         const remaining = excludeRetired(filterOutBatch(shard, items));
@@ -340,10 +404,10 @@
       }
     };
 
-    const reconcileOutbox = () => {
-      if (!storage || !supportsShards) return;
+    const reconcileOutbox = (changedKey) => {
+      if (!supportsShards || (changedKey !== undefined && !changedKey.startsWith(shardPrefix))) return;
       const merged = loadOutbox();
-      const current = readList(storage, OUTBOX_KEY, MAX_OUTBOX);
+      const current = readList(storage, outbox, MAX_OUTBOX);
       if (current === null) return;
       const currentIds = new Set(current.map(e => e && e.event_id).filter(Boolean));
       const missing = merged.some(e => e && e.event_id && !currentIds.has(e.event_id));
@@ -382,8 +446,8 @@
         });
         if (!events.length) return [];
         // Persist first to this tab's uncontended shard (when enumerable
-        // localStorage is available), then mirror the merged queue into
-        // OUTBOX_KEY so concurrent tabs never overwrite each other during 503s.
+        // localStorage is available), then mirror the merged queue for
+        // concurrent tabs using the same collector.
         appendToShard(events);
         const current = loadOutbox();
         saveOutbox(appendUnique(current, events, MAX_OUTBOX));
@@ -403,7 +467,7 @@
         let run;
         run = (async () => {
           try {
-            return await runWithFlushLock(async () => {
+            return await runWithFlushLock(outbox, async () => {
               let allDelivered = true;
               // Every iteration removes at least one event from the queue or stops,
               // so a poisoned event can never wedge the loop or the queue.
@@ -416,7 +480,7 @@
                 try {
                   const headers = { 'Content-Type': 'application/json' };
                   if (config.token) headers.Authorization = 'Bearer ' + config.token;
-                  const response = await fetcher(buildEventsUrl(endpoint), {
+                  const response = await fetcher(eventsUrl, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({ schema: SCHEMA, events: batch }),
@@ -483,8 +547,10 @@
         return run;
       }
     };
-    queue = loadOutbox();
-    if (enabled && queue.length) client.schedule();
+    if (enabled) {
+      queue = loadOutbox();
+      if (queue.length) client.schedule();
+    }
     return client;
   }
 
@@ -581,8 +647,8 @@
         client.flush();
       });
       win.addEventListener('storage', event => {
-        if (event && typeof event.key === 'string' && event.key.startsWith(OUTBOX_SHARD_PREFIX)) {
-          client.reconcileOutbox();
+        if (event && typeof event.key === 'string') {
+          client.reconcileOutbox(event.key);
         }
       });
     }
@@ -609,7 +675,8 @@
       INSTANCE_KEY,
       OUTBOX_KEY,
       OUTBOX_SHARD_PREFIX,
-      REJECTED_KEY
+      REJECTED_KEY,
+      forEndpoint: collectorKeys
     }
   };
 });

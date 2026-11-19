@@ -11,7 +11,7 @@ Design Skills Router. No es una plataforma de analítica general.
 | `store.py` | SQLite WAL, idempotencia semántica, agregados exactos. |
 | `collector.py` | HTTP mínimo: `POST /v1/events`, `GET /v1/metrics`, `GET /`, `/healthz`. |
 | `client.py` | Cliente opt-in con outbox local acotada. |
-| `observe.py` | Wrapper del CLI del plugin; no modifica el plugin. |
+| `observe.py` | Observa el runner clásico o el ejecutable instalado de Design Skills Router. |
 | `host_adapter.py` | Context manager para hosts que sí ejecutan skills. |
 | `dashboard.html` | Vista compacta de métricas reales. |
 
@@ -63,28 +63,46 @@ token.
 
 ## Instrumentar el CLI
 
-El plugin no tiene red por contrato. Inicializa primero un expediente (si aún no existe) y luego usa el wrapper:
+Desde la raíz del repositorio, inicializa un expediente si aún no existe y
+activa la telemetría para la sesión de terminal:
 
 ```sh
 python3 -B plugin/skills/design-tree/scripts/runner.py --state /ruta/ledger.json \
   init --project-id demo --scope "Proyecto de prueba"
 
-DESIGN_ROUTER_TELEMETRY=1 \
-DESIGN_ROUTER_TELEMETRY_URL=http://127.0.0.1:8787 \
+export DESIGN_ROUTER_TELEMETRY=1
+export DESIGN_ROUTER_TELEMETRY_URL=http://127.0.0.1:8787
+```
+
+Para observar el **runner clásico**:
+
+```sh
 python3 -B telemetry/observe.py -- --state /ruta/ledger.json node Q00
 ```
 
-El wrapper reenvía todos los argumentos, conserva stdout/stderr/código de salida
-y sólo agrega eventos después de un resultado exitoso. Comandos observados:
+Para observar el **CLI Typer instalado**, invoca su ejecutable por nombre
+(si está en `PATH`) o pasa la ruta completa de su entorno virtual:
 
-- `node`: invocación + nodo visitado. **No** emite `skill.selected`: las
-  skills del packet son candidatas, no una selección algorítmica.
-- `status`: invocación.
-- `propose`: invocación + rama elegida.
-- Cualquier otro comando exitoso: invocación con `command`.
+```sh
+python3 -B telemetry/observe.py --exec design-skills-router -- --state /ruta/ledger.json node Q00
+```
 
-Una ejecución directa de `plugin/skills/design-tree/scripts/runner.py` no se
-cuenta. Es un límite deliberado.
+`--exec` usa el intérprete del propio ejecutable. Para un archivo Python que
+deba ejecutarse con el intérprete del observador, usa `--runner ruta/runner.py`.
+Los argumentos después de `--` pasan intactos al CLI. La observación es
+explícita por invocación: si llamas directamente a cualquiera de los dos CLI,
+el colector no recibe eventos de ese comando.
+
+El observador reenvía stdout y stderr durante la ejecución y conserva el código
+de salida. Ambos CLI usan la fuente `cli` y generan los mismos eventos:
+
+- Un `node` exitoso emite una invocación y, si su respuesta es un packet JSON
+  válido de hasta 1 MiB, una visita al nodo. Una respuesta mayor se muestra
+  completa y solo cuenta la invocación. Las skills del packet son candidatas.
+- `propose` emite una invocación y la rama elegida cuando el archivo de propuesta
+  contiene `selected`.
+- `status` y los demás comandos exitosos emiten una invocación. La ayuda y los
+  comandos que terminan con error no se cuentan.
 
 ### Variables
 
@@ -96,17 +114,17 @@ cuenta. Es un límite deliberado.
 | `DESIGN_ROUTER_TELEMETRY_TIMEOUT` | no | 0.1–5 s; default 0.5. |
 | `DESIGN_ROUTER_TELEMETRY_STATE` | no | Directorio de instancia/outbox. |
 
-La configuración falla cerrada: si está activada pero la URL es inválida, no se
-envía nada. Los fallos de red no cambian el comando observado; los lotes no
-entregados quedan en `outbox-*.jsonl`. La outbox compacta: cada archivo
-almacena hasta 100 eventos (un lote POST), de modo que el máximo de 100
-archivos representa hasta 10.000 eventos (~5.000 corridas `node`); al
-superarlo se descarta el archivo más antiguo. La compactación no preserva
-estrictamente el orden de entrega entre archivos: los agregados son
-insensibles al orden y el store deduplica por `event_id`. Un lote rechazado
-de forma permanente (`400`, `413`, `415`, `422`) se mueve a `rejected-*.jsonl`
-y no bloquea los lotes posteriores. Un `429` del tope por minuto es retryable:
-el lote queda en la outbox y se reintenta.
+Una URL inválida desactiva el envío. Ante un fallo transitorio, como un
+`429` o `503`, el cliente guarda los eventos en el directorio de estado,
+en `collectors/<sha256-del-endpoint>/outbox-*.jsonl`. Al volver a usar ese
+endpoint, reintenta sus pendientes antes de enviar los eventos nuevos. Cada
+colector admite hasta 100 archivos de 100 eventos. Al alcanzar el límite,
+el cliente puede descartar el archivo más antiguo. Un rechazo permanente se
+guarda en `rejected-*.jsonl` junto a la cola de ese colector.
+
+Al actualizar, los archivos antiguos en la raíz del directorio de estado
+quedan disponibles para inspección local. Como esos archivos carecen de
+destino registrado, el cliente no los reenvía automáticamente.
 
 ## Instrumentar el tablero
 
@@ -131,6 +149,12 @@ acotado a 1000 eventos (~330-1000 evaluaciones, ~372 KiB) reintenta si el
 colector cae —al superarlo conserva los 1000 eventos más recientes; si un corte
 divide la evaluación más antigua, el colector pone en cuarentena los eventos
 huérfanos al reintentar—; no es la fuente de verdad.
+
+La cola de la pizarra, sus fragmentos por pestaña y los rechazos pertenecen
+a la URL de ingesta configurada, incluida su ruta y consulta. Si cambias de
+colector, los pendientes esperan hasta que vuelvas a usar el original. Las
+colas antiguas sin destino permanecen en el navegador para inspección local.
+Con la telemetría desactivada, el cliente tampoco crea un ID de instalación.
 
 La instrumentación opt-in se ensambla en las fuentes, en `.preview/` y en la
 pizarra publicada `release/design-router-pizarra-v1.4*.html`. El HTML dorado

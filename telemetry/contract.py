@@ -140,7 +140,11 @@ def endpoint_origin(value: object) -> str:
         raise ContractError(None, invalid)
     if port == 0:
         raise ContractError(None, invalid)
-    return f"{parts.scheme}://{parts.netloc}"
+    host = parts.hostname
+    authority = f"[{host}]" if ":" in host else host
+    if port is not None and port != (443 if parts.scheme == "https" else 80):
+        authority += f":{port}"
+    return f"{parts.scheme}://{authority}"
 
 
 def _bounded_timeout(value: object) -> float:

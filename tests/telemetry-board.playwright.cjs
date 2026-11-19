@@ -24,7 +24,7 @@ function serve(html) {
       response.end();
       return;
     }
-    if (request.method === 'GET' && request.url === '/board.html') {
+    if (request.method === 'GET' && request.url.split('?')[0] === '/board.html') {
       response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       response.end(html);
       return;
@@ -56,6 +56,55 @@ function serve(html) {
       origin: `http://127.0.0.1:${server.address().port}`
     }));
   });
+}
+
+async function checkCollectorSwitch(browser, origin) {
+  const page = await browser.newPage();
+  const board = origin + '/board.html';
+  const collectorA = origin + '/tenant-a';
+  const collectorB = origin + '/tenant-b';
+  const sentToA = [];
+  const sentToB = [];
+  let offline = true;
+  try {
+    await page.route(collectorA + '/v1/events', async route => {
+      sentToA.push(...route.request().postDataJSON().events.map(event => event.event_id));
+      await route.fulfill({ status: offline ? 503 : 202 });
+    });
+    await page.route(collectorB + '/v1/events', async route => {
+      sentToB.push(...route.request().postDataJSON().events.map(event => event.event_id));
+      await route.fulfill({ status: 202 });
+    });
+    await page.addInitScript(endpoint => {
+      if (location.search === '?inline') window.DESIGN_ROUTER_TELEMETRY = { endpoint };
+    }, collectorB);
+    await page.goto(board);
+    await page.evaluate(endpoint => window.DesignRouterTelemetry.configure(endpoint), collectorA);
+
+    const loadAndWait = (url, endpoint) => Promise.all([
+      page.waitForResponse(endpoint + '/v1/events'),
+      page.goto(url)
+    ]);
+    const [failed] = await loadAndWait(board, collectorA);
+    assert.equal(failed.status(), 503);
+    const pending = new Set(sentToA);
+    assert.ok(pending.size > 0);
+
+    const [switched] = await loadAndWait(board + '?inline', collectorB);
+    assert.equal(switched.status(), 202);
+    assert.ok(sentToB.length > 0);
+    assert.ok(sentToB.every(id => !pending.has(id)), 'the inline collector received an A event');
+
+    offline = false;
+    sentToA.length = 0;
+    const [recovered] = await loadAndWait(board, collectorA);
+    assert.equal(recovered.status(), 202);
+    assert.deepEqual(sentToA.filter(id => pending.has(id)).sort(), [...pending].sort(),
+      'each pending event returns to its original collector exactly once');
+    assert.ok(sentToA.every(id => !sentToB.includes(id)), 'A received a B event');
+  } finally {
+    await page.close();
+  }
 }
 
 (async () => {
@@ -103,6 +152,7 @@ function serve(html) {
     await disabled.close();
 
     await page.close();
+    await checkCollectorSwitch(browser, fixture.origin);
     console.log(`PASS tablero: ${fixture.events.length} eventos observados, sin ejecuciones inventadas`);
   } finally {
     await browser.close();

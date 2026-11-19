@@ -12,6 +12,7 @@ idempotency and multi-instance tests honest; it is not a user identity.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -131,10 +132,7 @@ class Telemetry:
         ]
 
     def _has_pending_outbox(self) -> bool:
-        directory = self.config.state_dir or contract.default_state_dir()
-        if not directory.exists():
-            return False
-        files = self._list_spool_files(directory, "outbox")
+        files = self._list_spool_files(self._outbox_dir(), "outbox")
         if files is None:
             # Directory exists but cannot be listed (e.g. mode 0300): never assume
             # it is empty or post newer events ahead of potentially spooled ones.
@@ -253,10 +251,17 @@ class Telemetry:
         except (urllib.error.URLError, TimeoutError, OSError, ValueError):
             return POST_RETRY
 
-    def _outbox(self) -> Path:
+    def _outbox_dir(self) -> Path:
         directory = self.config.state_dir or contract.default_state_dir()
-        directory.mkdir(parents=True, exist_ok=True)
-        return directory
+        assert self.config.endpoint is not None  # only enabled clients spool
+        # Legacy files at the state root have no recoverable destination.
+        try:
+            endpoint = contract.endpoint_origin(self.config.endpoint)
+        except contract.ContractError:
+            # Directly constructed clients may supply a more specific URL.
+            endpoint = self.config.endpoint
+        destination = hashlib.sha256(endpoint.encode("utf-8")).hexdigest()
+        return directory / "collectors" / destination
 
     def _write_spool(self, path: Path, events: list[dict]) -> bool:
         payload = json.dumps({"schema": contract.SCHEMA, "events": events}, ensure_ascii=False)
@@ -317,7 +322,8 @@ class Telemetry:
         not be persisted (disk failure or protected cap reached).
         """
         try:
-            directory = self._outbox()
+            directory = self._outbox_dir()
+            directory.mkdir(parents=True, exist_ok=True)
         except OSError:
             return None
         files = self._list_spool_files(directory, prefix)
@@ -373,12 +379,9 @@ class Telemetry:
         return True
 
     def flush_spool(self) -> bool:
-        directory = self.config.state_dir or contract.default_state_dir()
-        if not directory.exists():
+        if not self.enabled:
             return True
-        if not directory.is_dir():
-            return False
-        files = self._list_spool_files(directory, "outbox")
+        files = self._list_spool_files(self._outbox_dir(), "outbox")
         if files is None:
             return False
         ok = True
