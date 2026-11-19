@@ -123,6 +123,17 @@ async function checkSharedOptOut(browser, fixture) {
       response.url() === fixture.origin + '/v1/events' && response.status() === 202;
     await Promise.all([otherTab.waitForResponse(isPost), otherTab.goto(board)]);
     await Promise.all([otherTab.waitForResponse(isPost), otherTab.click('#capRouteButtons [data-route="auditoria"]')]);
+    // A completed HTTP response does not imply the client has retired its
+    // outbox entries. Verify the queue is drained before revocation.
+    await otherTab.waitForFunction(endpoint => {
+      const keys = DesignRouterTelemetry.keys.forEndpoint(endpoint);
+      return !Object.keys(localStorage).some(key => key.startsWith(keys.entryPrefix));
+    }, fixture.origin);
+    const outbox = async () => otherTab.evaluate(endpoint => {
+      const keys = DesignRouterTelemetry.keys.forEndpoint(endpoint);
+      return Object.keys(localStorage).filter(key => key.startsWith(keys.entryPrefix)).sort();
+    }, fixture.origin);
+    const before = await outbox();
     const posts = [];
     otherTab.on('request', req => {
       if (req.method() === 'POST') posts.push(req.url());
@@ -132,6 +143,7 @@ async function checkSharedOptOut(browser, fixture) {
     await otherTab.evaluate(() => window.dispatchEvent(new Event('online')));
     await otherTab.waitForTimeout(400);
     assert.deepEqual(posts, [], 'an already-open tab must respect revocation on its next click and flush');
+    assert.deepEqual(await outbox(), before, 'an opted-out tab must not enqueue new events');
   } finally {
     await context.close();
   }

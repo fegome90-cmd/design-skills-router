@@ -333,6 +333,32 @@ test('a batch-level rejection without index quarantines that batch and the queue
   assert.ok(delivered.every(event => event.event_id !== '11111111-1111-4111-8111-111111111111'));
 });
 
+test('truncated and untrusted 422 receipts retain the batch for retry', async () => {
+  const invalid = [
+    { ok: false, status: 422, json: async () => { throw new SyntaxError('truncated JSON'); } },
+    { ok: false, status: 422, json: async () => ({ error: 'UNKNOWN_COLLECTOR_ERROR' }) },
+    { ok: false, status: 422, json: async () => ({ error: 'INVALID_EVENT', index: 999 }) }
+  ];
+  for (const failed of invalid) {
+    const storage = enumerableStorage();
+    const collector = transactionalCollector();
+    let attempts = 0;
+    const client = telemetry.createClient({
+      storage, endpoint: 'http://127.0.0.1:8787',
+      fetch: (...args) => ++attempts === 1 ? Promise.resolve(failed) : collector.fetch(...args)
+    });
+    client.schedule = () => {};
+    const events = client.trackEvaluation(selection, {});
+    assert.equal(await client.flush(), false);
+    assert.equal([...storage.values.keys()].filter(key => key.startsWith(localKeys.entryPrefix)).length,
+      events.length, 'unconfirmed events remain durable');
+    assert.deepEqual(JSON.parse(storage.getItem(localKeys.rejected) || '[]'), []);
+    assert.equal(await client.flush(), true);
+    assert.deepEqual(collector.accepted, events);
+    assert.equal(attempts, 2);
+  }
+});
+
 test('a retryable failure still keeps the queue untouched for the next attempt', async () => {
   const storage = memoryStorage();
   const client = telemetry.createClient({
