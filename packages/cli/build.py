@@ -52,11 +52,12 @@ def _copy_regular_file(root: Path, stage: Path, relative: Path) -> None:
     shutil.copyfile(source, destination)
 
 
-def _build(root: Path, out_dir: Path) -> None:
+def _build(root: Path, out_dir: Path, *, allow_network: bool) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="design-skills-router-cli-") as temporary:
         stage = Path(temporary) / "project"
         stage.mkdir()
+        _copy_regular_file(root, stage, Path("LICENSE"))
         for relative in PACKAGE_FILES:
             _copy_regular_file(root / "packages/cli", stage, relative)
         for relative in PLUGIN_FILES:
@@ -64,7 +65,8 @@ def _build(root: Path, out_dir: Path) -> None:
 
         subprocess.run(
             [
-                "uv", "--no-config", "build", "--offline", "--no-python-downloads",
+                "uv", "--no-config", "build", *([] if allow_network else ["--offline"]),
+                "--no-python-downloads",
                 "--python", sys.executable, "--sdist", "--wheel",
                 "--out-dir", str(out_dir),
             ],
@@ -76,6 +78,7 @@ def _build(root: Path, out_dir: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", required=True, type=Path, help="Distribution output directory outside the checkout.")
+    parser.add_argument("--allow-network", action="store_true", help="Allow uv to download missing build dependencies.")
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[2]
@@ -83,7 +86,7 @@ def main() -> int:
     if output == root or root in output.parents:
         parser.error("--out-dir must be outside the repository checkout")
     try:
-        _build(root, output)
+        _build(root, output, allow_network=args.allow_network)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"CLI package build failed: {error}", file=sys.stderr)
         return 1

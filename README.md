@@ -43,16 +43,16 @@ El árbol contiene 239 declaraciones que se expanden a 3.660 apariciones en dife
 
 ## Instalar y probar la CLI
 
-La CLI `design-skills-router` empaqueta el runner portable y sus recursos desde `plugin/`. Su manifiesto está en [`packages/cli/pyproject.toml`](packages/cli/pyproject.toml); el manifiesto raíz sigue siendo el del Workbench.
+La CLI `design-skills-router` empaqueta el runner portable y sus recursos desde `plugin/`. El manifiesto raíz corresponde al Workbench. El de la CLI está en [`packages/cli/pyproject.toml`](packages/cli/pyproject.toml).
 
-Desde la raíz, con Python 3.10 o posterior y `uv`, construye el wheel y el paquete fuente (`sdist`) en un directorio temporal. Para hacerlo sin red, la caché de `uv` debe contener las dependencias de compilación y de instalación.
+Desde la raíz, con Python 3.10 o posterior y `uv`, puedes construir e instalar la CLI aunque tu caché esté vacía. La primera ejecución descarga las dependencias de compilación e instalación y las guarda en la caché de `uv`.
 
 ```sh
 repo="$PWD"
 tmp=$(mktemp -d)
-python3 -B packages/cli/build.py --out-dir "$tmp/dist"
+python3 -B packages/cli/build.py --allow-network --out-dir "$tmp/dist"
 uv --no-config venv --offline --no-python-downloads --python "$(command -v python3)" "$tmp/venv"
-uv --no-config pip install --offline --python "$tmp/venv/bin/python" "$tmp"/dist/*.whl
+uv --no-config pip install --python "$tmp/venv/bin/python" "$tmp"/dist/*.whl
 uv --no-config pip check --python "$tmp/venv/bin/python"
 (
   cd "$tmp" || exit 1
@@ -60,6 +60,8 @@ uv --no-config pip check --python "$tmp/venv/bin/python"
   "$tmp/venv/bin/python" -IB -m unittest discover -s "$repo/packages/cli/tests" -p test_installed_cli.py
 )
 ```
+
+Para repetir el proceso sin red con la misma caché, omite `--allow-network` al construir y añade `--offline` a `uv pip install`.
 
 La salida de datos conserva el formato JSON del runner. Usa `status --pretty` para mostrar el estado como tabla en la terminal.
 

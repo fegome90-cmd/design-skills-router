@@ -48,6 +48,16 @@ def options(
     ctx.obj = state
 
 
+def _echo_json(payload: bytes, *, err: bool = False) -> None:
+    try:
+        typer.get_binary_stream("stderr" if err else "stdout")
+    except RuntimeError:
+        # Embedded callers may redirect a standard stream to a text-only writer.
+        typer.echo(payload.decode("utf-8"), err=err, nl=False)
+    else:
+        typer.echo(payload, err=err, nl=False)
+
+
 def _safe_console_value(value: object, encoding: str) -> str:
     escaped: list[str] = []
     for character in str(value):
@@ -63,13 +73,13 @@ def _safe_console_value(value: object, encoding: str) -> str:
     return "".join(escaped)
 
 
-def _status_table(stdout: str) -> None:
+def _status_table(stdout: bytes) -> None:
     try:
         status = json.loads(stdout)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         status = None
     if not isinstance(status, dict):
-        typer.echo('{"status":"BLOCKED","error":"INVALID_STATUS_OUTPUT"}', err=True)
+        _echo_json(b'{"status":"BLOCKED","error":"INVALID_STATUS_OUTPUT"}\n', err=True)
         raise typer.Exit(1)
     console = Console(
         force_terminal=False if not sys.stdout.isatty() or os.getenv("CI") else None,
@@ -116,20 +126,20 @@ def _run(
     try:
         result = subprocess.run(
             [sys.executable, "-ESB", "-X", "utf8", str(_RUNNER), *argv],
-            stdin=subprocess.DEVNULL, capture_output=True, encoding="utf-8", check=False,
+            stdin=subprocess.DEVNULL, capture_output=True, check=False,
         )
     except KeyboardInterrupt:
         raise typer.Exit(130) from None
     except OSError:
-        typer.echo('{"status":"BLOCKED","error":"PORTABLE_RUNNER_LAUNCH_FAILED"}', err=True)
+        _echo_json(b'{"status":"BLOCKED","error":"PORTABLE_RUNNER_LAUNCH_FAILED"}\n', err=True)
         raise typer.Exit(1) from None
     if result.stderr:
-        typer.echo(result.stderr, err=True, nl=False, color=True)
+        _echo_json(result.stderr, err=True)
     if result.stdout:
         if pretty and result.returncode == 0:
             _status_table(result.stdout)
         else:
-            typer.echo(result.stdout, nl=False, color=True)
+            _echo_json(result.stdout)
     if result.returncode:
         code = result.returncode
         raise typer.Exit(code if code > 0 else 128 - code)
@@ -178,7 +188,10 @@ def upgrade_state(
 
 
 @app.command()
-def configure(ctx: typer.Context, file: Payload) -> None:
+def configure(
+    ctx: typer.Context,
+    file: Annotated[Path, typer.Option(help="JSON object containing phase_map and receipt.")],
+) -> None:
     """Record a confirmed phase map and its receipt."""
     _run(ctx, "configure", file=file)
 
@@ -307,9 +320,12 @@ def invalidate(ctx: typer.Context, node_id: Node, reason: Reason) -> None:
 @app.command()
 def inventory(
     ctx: typer.Context,
-    file: Annotated[Path | None, typer.Option(help="JSON proposal. Omit to list the inventory.")] = None,
+    file: Annotated[Path | None, typer.Option(help=(
+        "JSON array with one entry per skill. Each entry requires "
+        "skill_id, disposition, reason and evidence_refs."
+    ))] = None,
 ) -> None:
-    """List the pinned inventory or submit a disposition proposal."""
+    """List the skill catalog or submit a disposition proposal with --file."""
     _run(ctx, "inventory", file=file)
 
 

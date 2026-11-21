@@ -6,6 +6,8 @@ build-backend = "hatchling.build"
 name = "design-skills-router"
 version = "0.3.1"
 description = "Terminal interface for the Design Skills Router portable ledger"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = ["typer>=0.29.1,<0.30", "rich>=15,<16"]
 
