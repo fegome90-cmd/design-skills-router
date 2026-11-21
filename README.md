@@ -41,6 +41,28 @@ El [prototipo React](board/desktop-demo/README.md) incluye un espacio de trabajo
 
 El árbol contiene 239 declaraciones que se expanden a 3.660 apariciones en diferentes recorridos. El inventario original contiene 82 skills. La capa de investigación añade 47 fichas candidatas, 18 compartidas con ese inventario. El grafo reúne 111 identidades y 171 relaciones, 14 documentadas y 157 propuestas. El índice mantiene el estado de cada nodo y distingue las revisiones fijadas por el plugin y por la pizarra. La skill instalable de entrada es `design-tree`. El inventario y las propuestas sirven para inspección y selección supervisada.
 
+## Instalar y probar la CLI
+
+La CLI `design-skills-router` empaqueta el runner portable y sus recursos desde `plugin/`. Su manifiesto está en [`packages/cli/pyproject.toml`](packages/cli/pyproject.toml); el manifiesto raíz sigue siendo el del Workbench.
+
+Desde la raíz, con Python 3.10 o posterior y `uv`, construye el wheel y el paquete fuente (`sdist`) en un directorio temporal. Para hacerlo sin red, la caché de `uv` debe contener las dependencias de compilación y de instalación.
+
+```sh
+repo="$PWD"
+tmp=$(mktemp -d)
+python3 -B packages/cli/build.py --out-dir "$tmp/dist"
+uv --no-config venv --offline --no-python-downloads --python "$(command -v python3)" "$tmp/venv"
+uv --no-config pip install --offline --python "$tmp/venv/bin/python" "$tmp"/dist/*.whl
+uv --no-config pip check --python "$tmp/venv/bin/python"
+(
+  cd "$tmp" || exit 1
+  "$tmp/venv/bin/design-skills-router" --help
+  "$tmp/venv/bin/python" -IB -m unittest discover -s "$repo/packages/cli/tests" -p test_installed_cli.py
+)
+```
+
+La salida de datos conserva el formato JSON del runner. Usa `status --pretty` para mostrar el estado como tabla en la terminal.
+
 ## Reconstruir y comprobar
 
 Desde la raíz, con Python 3.10 o posterior y Node.js 18 o posterior:
