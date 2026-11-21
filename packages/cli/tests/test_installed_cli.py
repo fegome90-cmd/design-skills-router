@@ -1,3 +1,6 @@
+from contextlib import redirect_stderr, redirect_stdout
+from importlib.metadata import distribution
+from io import StringIO
 import json
 import os
 from pathlib import Path
@@ -12,6 +15,9 @@ from typer.testing import CliRunner
 from design_skills_router.cli import app
 
 
+CLI = Path(sys.executable).with_name('design-skills-router.exe' if os.name == 'nt' else 'design-skills-router')
+
+
 class InstalledCliTests(unittest.TestCase):
     def setUp(self):
         self.cli = CliRunner()
@@ -23,6 +29,27 @@ class InstalledCliTests(unittest.TestCase):
         self.assertIn('--project-id', result.stdout)
         self.assertEqual(result.stderr, '')
         self.assertNotIn('\x1b', result.stdout)
+
+    def test_help_names_the_fields_required_in_json_inputs(self):
+        fields = {
+            'configure': ('phase_map', 'receipt'),
+            'inventory': ('skill_id', 'disposition', 'reason', 'evidence_refs'),
+        }
+        for command, names in fields.items():
+            with self.subTest(command=command):
+                result = self.cli.invoke(app, [command, '--help'], env={'NO_COLOR': '1', 'COLUMNS': '100'})
+                self.assertEqual(result.exit_code, 0, result.output)
+                for name in names:
+                    self.assertIn(name, result.stdout)
+
+    def test_distribution_includes_the_project_license(self):
+        package = distribution('design-skills-router')
+        self.assertEqual(package.metadata.get('License-Expression'), 'MIT')
+        self.assertIn('LICENSE', package.metadata.get_all('License-File') or [])
+        license_text = package.read_text('licenses/LICENSE')
+        self.assertIsNotNone(license_text)
+        self.assertIn('Felipe González', license_text)
+        self.assertIn('Permission is hereby granted', license_text)
 
     def test_validation_failures_go_to_stderr(self):
         for args in (['unknown'], ['init'], ['init', '--project-id', 'test', '--scope', 'test', '--mode', 'bad']):
@@ -42,6 +69,20 @@ class InstalledCliTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertEqual(result.stdout, '')
         self.assertEqual(json.loads(result.stderr), {'status': 'BLOCKED', 'error': 'STATE_PATH_REQUIRED'})
+
+    def test_json_can_be_captured_by_text_only_streams(self):
+        with self.subTest(command='verify-package'):
+            with redirect_stdout(StringIO()) as out, redirect_stderr(StringIO()) as err:
+                app(args=['verify-package'], standalone_mode=False)
+            self.assertTrue(json.loads(out.getvalue())['baseline_verified'])
+            self.assertEqual(err.getvalue(), '')
+
+        with self.subTest(command='status'):
+            with redirect_stdout(StringIO()) as out, redirect_stderr(StringIO()) as err:
+                code = app(args=['status'], standalone_mode=False)
+            self.assertEqual(code, 2)
+            self.assertEqual(out.getvalue(), '')
+            self.assertEqual(json.loads(err.getvalue()), {'status': 'BLOCKED', 'error': 'STATE_PATH_REQUIRED'})
 
     def test_status_is_read_only_and_pretty_renders_literal_project(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -64,16 +105,47 @@ class InstalledCliTests(unittest.TestCase):
             self.assertEqual(pretty.stderr, '')
             self.assertEqual(ledger.read_bytes(), before)
 
+    def test_json_streams_preserve_unicode_with_redirected_cp1252_output(self):
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = Path(temp) / 'ledger.json'
+
+            def run(*args):
+                return subprocess.run(
+                    [CLI, '--state', ledger, *args], cwd=temp, capture_output=True,
+                    env={**os.environ, 'PYTHONIOENCODING': 'cp1252:strict'},
+                )
+
+            with self.subTest(command='init'):
+                result = run('init', '--project-id', '東京', '--scope', 'test')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stderr, b'')
+                self.assertEqual(json.loads(result.stdout.decode('utf-8'))['project_id'], '東京')
+                self.assertEqual(json.loads(ledger.read_bytes())['project_id'], '東京')
+
+            with self.subTest(command='node'):
+                result = run('node', 'Q00')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stderr, b'')
+                self.assertEqual(json.loads(result.stdout.decode('utf-8'))['node_id'], 'Q00')
+
+            with self.subTest(command='configure'):
+                missing = 'diseño-東京.json'
+                result = run('configure', '--file', missing)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertEqual(result.stdout, b'')
+                error = json.loads(result.stderr.decode('utf-8'))
+                self.assertEqual(error['status'], 'BLOCKED')
+                self.assertIn(missing, error['error'])
+
     @unittest.skipUnless(os.name == 'posix', 'pseudo-terminal requires POSIX')
     def test_tty_help_respects_no_color(self):
         import errno
         import pty
 
-        exe = Path(sys.executable).with_name('design-skills-router')
         master, slave = pty.openpty()
         env = {**os.environ, 'TERM': 'xterm-256color', 'NO_COLOR': '1', 'COLUMNS': '48'}
         env.pop('FORCE_COLOR', None)
-        with subprocess.Popen([str(exe), 'status', '--help'], stdout=slave, stderr=slave, env=env) as proc:
+        with subprocess.Popen([CLI, 'status', '--help'], stdout=slave, stderr=slave, env=env) as proc:
             os.close(slave)
             chunks = []
             try:
@@ -93,19 +165,18 @@ class InstalledCliTests(unittest.TestCase):
         self.assertIsNone(re.search(rb'\x1b\[(?:[0-9;]*;)?(?:3[0-9]|9[0-7])m', output))
 
     def test_pretty_status_escapes_values_unrepresentable_in_console_encoding(self):
-        exe = Path(sys.executable).with_name('design-skills-router')
         with tempfile.TemporaryDirectory() as temp:
             ledger = Path(temp) / 'ledger.json'
             env = {**os.environ, 'NO_COLOR': '1'}
             initialized = subprocess.run(
-                [str(exe), '--state', str(ledger), 'init', '--project-id', 'diseño', '--scope', 'test'],
+                [CLI, '--state', str(ledger), 'init', '--project-id', 'diseño', '--scope', 'test'],
                 cwd=temp, env={**env, 'PYTHONIOENCODING': 'utf-8'}, capture_output=True,
             )
             self.assertEqual(initialized.returncode, 0, initialized.stderr)
             self.assertEqual(initialized.stderr, b'')
 
             ascii_pretty = subprocess.run(
-                [str(exe), '--state', str(ledger), 'status', '--pretty'],
+                [CLI, '--state', str(ledger), 'status', '--pretty'],
                 cwd=temp, env={**env, 'PYTHONIOENCODING': 'ascii'}, capture_output=True,
             )
             self.assertEqual(ascii_pretty.returncode, 0, ascii_pretty.stderr)
@@ -113,7 +184,7 @@ class InstalledCliTests(unittest.TestCase):
             self.assertEqual(ascii_pretty.stderr, b'')
 
             utf8_pretty = subprocess.run(
-                [str(exe), '--state', str(ledger), 'status', '--pretty'],
+                [CLI, '--state', str(ledger), 'status', '--pretty'],
                 cwd=temp, env={**env, 'PYTHONIOENCODING': 'utf-8'}, capture_output=True,
             )
             self.assertEqual(utf8_pretty.returncode, 0, utf8_pretty.stderr)
@@ -121,9 +192,8 @@ class InstalledCliTests(unittest.TestCase):
             self.assertEqual(utf8_pretty.stderr, b'')
 
     def test_installed_entrypoint_runs_outside_checkout_with_redirected_stdout(self):
-        exe = Path(sys.executable).parent / ('design-skills-router.exe' if os.name == 'nt' else 'design-skills-router')
         with tempfile.TemporaryDirectory() as temp, tempfile.TemporaryFile() as output:
-            result = subprocess.run([str(exe), 'verify-package'], cwd=temp, stdout=output, stderr=subprocess.PIPE)
+            result = subprocess.run([CLI, 'verify-package'], cwd=temp, stdout=output, stderr=subprocess.PIPE)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stderr, b'')
             output.seek(0)
