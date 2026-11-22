@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "design-skills-router"
+version = "0.3.1"
+description = "Terminal interface for the Design Skills Router portable ledger"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = ["typer>=0.29.1,<0.30", "rich>=15,<16"]
+
+[project.scripts]
+design-skills-router = "design_skills_router.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/design_skills_router"]
+exclude = ["**/__pycache__"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"plugin/NOTICE.md" = "design_skills_router/_portable/NOTICE.md"
+"plugin/skills/design-tree/scripts/assistance.py" = "design_skills_router/_portable/skills/design-tree/scripts/assistance.py"
+"plugin/skills/design-tree/scripts/contracts.py" = "design_skills_router/_portable/skills/design-tree/scripts/contracts.py"
+"plugin/skills/design-tree/scripts/diagnostics.py" = "design_skills_router/_portable/skills/design-tree/scripts/diagnostics.py"
+"plugin/skills/design-tree/scripts/doctor.py" = "design_skills_router/_portable/skills/design-tree/scripts/doctor.py"
+"plugin/skills/design-tree/scripts/migration.py" = "design_skills_router/_portable/skills/design-tree/scripts/migration.py"
+"plugin/skills/design-tree/scripts/runner.py" = "design_skills_router/_portable/skills/design-tree/scripts/runner.py"
+"plugin/skills/design-tree/scripts/tree_model.py" = "design_skills_router/_portable/skills/design-tree/scripts/tree_model.py"
+"plugin/skills/design-tree/scripts/verification.py" = "design_skills_router/_portable/skills/design-tree/scripts/verification.py"
+"plugin/skills/design-tree/references/baseline-lock.json" = "design_skills_router/_portable/skills/design-tree/references/baseline-lock.json"
+"plugin/skills/design-tree/references/contracts.json" = "design_skills_router/_portable/skills/design-tree/references/contracts.json"
+"plugin/skills/design-tree/references/tree-v0.4/AUDIT.md" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/AUDIT.md"
+"plugin/skills/design-tree/references/tree-v0.4/README.md" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/README.md"
+"plugin/skills/design-tree/references/tree-v0.4/criterion-map.json" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/criterion-map.json"
+"plugin/skills/design-tree/references/tree-v0.4/index.html" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/index.html"
+"plugin/skills/design-tree/references/tree-v0.4/rules.json" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/rules.json"
+"plugin/skills/design-tree/references/tree-v0.4/skill-inventory.json" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/skill-inventory.json"
+"plugin/skills/design-tree/references/tree-v0.4/tree.json" = "design_skills_router/_portable/skills/design-tree/references/tree-v0.4/tree.json"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/pyproject.toml",
+  "/src/design_skills_router/__init__.py",
+  "/src/design_skills_router/cli.py",
+  "/tests/test_installed_cli.py",
+  "/plugin/NOTICE.md",
+  "/plugin/skills/design-tree/scripts/assistance.py",
+  "/plugin/skills/design-tree/scripts/contracts.py",
+  "/plugin/skills/design-tree/scripts/diagnostics.py",
+  "/plugin/skills/design-tree/scripts/doctor.py",
+  "/plugin/skills/design-tree/scripts/migration.py",
+  "/plugin/skills/design-tree/scripts/runner.py",
+  "/plugin/skills/design-tree/scripts/tree_model.py",
+  "/plugin/skills/design-tree/scripts/verification.py",
+  "/plugin/skills/design-tree/references/baseline-lock.json",
+  "/plugin/skills/design-tree/references/contracts.json",
+  "/plugin/skills/design-tree/references/tree-v0.4/AUDIT.md",
+  "/plugin/skills/design-tree/references/tree-v0.4/README.md",
+  "/plugin/skills/design-tree/references/tree-v0.4/criterion-map.json",
+  "/plugin/skills/design-tree/references/tree-v0.4/index.html",
+  "/plugin/skills/design-tree/references/tree-v0.4/rules.json",
+  "/plugin/skills/design-tree/references/tree-v0.4/skill-inventory.json",
+  "/plugin/skills/design-tree/references/tree-v0.4/tree.json",
+]
