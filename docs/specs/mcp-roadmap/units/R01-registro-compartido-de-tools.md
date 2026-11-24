@@ -1,6 +1,6 @@
 # R01 · Contrato compartido de tools
 
-Estado: protección de paridad implementada; pendiente de revisión del PR. Fase: Fundamentos. Dependencia: R00, piloto G5 integrado mediante el PR #6, commit e1aa16f2fe20540dd4de47704d169c4690e5c42a.
+Estado: protección de paridad implementada; pendiente de revisión del PR. Fase: Fundamentos. Dependencia: piloto G5 integrado mediante el PR #6, commit e1aa16f2fe20540dd4de47704d169c4690e5c42a.
 
 Fuentes: [dossier R01](../research/R01-dossier-v0.1.md). El operador decidió el 24-11-2026 que los experimentos A/B no sean requisito para esta fase: seleccionar una solución coherente, implementar y verificar el comportamiento real. El cambio no modifica el árbol canónico ni autoriza merge.
 
@@ -19,16 +19,16 @@ Adoptar la alternativa A: conservar handlers explícitos y añadir una prueba de
 | search_context(node_id, query) | context-search NODE --query QUERY | Busca secciones; puede reconstruir el índice derivado sin cambiar el ledger. |
 | submit_evidence(node_id, expected_revision, proposal) | propose NODE --file FILE | Presenta una propuesta mediante Router.propose; queda AWAITING_HUMAN. |
 
-Las diferencias de frontera son deliberadas: MCP exige revisión esperada y evidencia en evidence/; la CLI genérica utiliza la revisión leída al comenzar y conserva sus reglas de evidencia. No forzar paridad de firmas ni debilitar estas restricciones. La autorización permanece en el runner.
+Las diferencias de frontera son deliberadas: submit_evidence se limita a nodos del piloto G5, exige revisión esperada y rutas de evidencia absolutas y canónicas dentro de evidence/ junto al ledger, cuyo directorio no puede ser un enlace simbólico. La CLI genérica propose también admite nodos fuera del piloto, sujetos a los gates del runner; utiliza la revisión leída al comenzar y conserva sus propias reglas de evidencia. No forzar paridad de firmas ni debilitar estas restricciones. La autorización permanece en el runner.
 
 ## Prueba de aceptación
 
-La prueba checkout-level vive en packages/cli/tests/test_mcp_parity.py. Reutiliza el fixture G5 sintético del plugin y copia el paquete instalado a un directorio temporal; solo sustituye los pins de fuentes por los del fixture. Ejecuta el código Typer de esa copia y conecta un cliente MCP real al proceso stdio. Usa dos ledgers independientes con el mismo estado inicial y los mismos bytes de evidencia. No altera el paquete instalado, el árbol v0.4 ni el proyecto del usuario.
+La prueba checkout-level vive en packages/cli/tests/test_mcp_parity.py. Reutiliza el fixture G5 sintético del plugin y copia el paquete instalado a un directorio temporal; verifica que el contrato instalado coincide con el checkout antes de adaptar únicamente los git_blob de las fuentes sintéticas. Ejecuta el código Typer de esa copia y conecta un cliente MCP real al proceso stdio. Usa dos ledgers independientes con el mismo estado inicial y los mismos bytes de evidencia, y comprueba que son idénticos antes de actualizar el mandato en ambos. No altera el paquete instalado, el árbol v0.4 ni el proyecto del usuario.
 
 - El catálogo anunciado por tools/list conserva exactamente los cuatro nombres, campos, tipos y campos obligatorios.
-- Next, open y search devuelven resultados estructurados equivalentes. Open prepara cinco secciones, aumenta una revisión al persistir por primera vez y no modifica el ledger al repetirse. Search reconstruye SQLite sin modificar el ledger.
-- Un nodo fuera del piloto, un borrador sin permiso y una propuesta incompleta se rechazan. Un expected_revision obsoleto y una ruta fuera del proyecto se rechazan en MCP. Ningún rechazo altera el ledger.
-- Con permiso de borrador, ambos transportes obtienen la misma propuesta y revisión, en AWAITING_HUMAN, sin autoaprobación.
+- Next, open y search devuelven resultados estructurados equivalentes. Open prepara cinco secciones, aumenta una revisión al persistir por primera vez y no modifica el ledger al repetirse. Search devuelve exactamente las dos secciones Example del fixture, reconstruye los dos índices SQLite después de eliminarlos y no modifica el ledger.
+- Un open fuera del piloto, un borrador sin permiso y una propuesta incompleta se rechazan en ambos transportes. MCP también rechaza submit_evidence fuera del piloto, un expected_revision obsoleto y rutas que no cumplen su restricción de evidence/, incluso si están dentro del proyecto. Se comprueban los bytes de ambos ledgers antes y después de cada rechazo.
+- Con permiso de borrador, ambos transportes obtienen la misma propuesta y revisión, en AWAITING_HUMAN, sin autoaprobación. Se comparan los estados completos tras verificar su integridad, excluyendo solo las marcas de tiempo de la presentación y su evento de historial.
 - El extra MCP sigue siendo opcional. En instalación base se omite únicamente la prueba que requiere el SDK.
 
 ## Verificación y límites

@@ -1,6 +1,6 @@
 # R01 · Dossier de investigación: registro compartido de herramientas
 
-Fecha: 2026-11-24. Estado: G1, investigación estática avanzada; G2 experimental pendiente. Decisión provisional: `INCONCLUSIVE` respecto de la incorporación de un registro. No autoriza código, merge ni publicación del plugin. Este registro conserva la investigación anterior a la apertura del PR borrador.
+Fecha: 2026-11-24. Decisión vigente: alternativa A, handlers explícitos y prueba de paridad implementada, pendiente de cierre del PR. No autoriza merge ni publicación del plugin. Se conserva a continuación la investigación estática original (G1), cuyo resultado provisional sobre incorporar un registro fue `INCONCLUSIVE`; los experimentos G2 no fueron ejecutados.
 
 ## Encargo y alcance
 
@@ -56,7 +56,7 @@ Fuentes: [mcp_server.py](https://github.com/fegome90-cmd/design-skills-router/bl
 | next_node() | context-next | context_command('next'); obtiene estado y frontier. |
 | open_node(node_id) | context-open NODE | context_command('open'); puede persistir paquete de contexto y aumentar revisión; no es solo lectura estricta. |
 | search_context(node_id, query) | context-search NODE --query QUERY | context_command('search'); puede reconstruir índice derivado SQLite; no registra un paquete nuevo en el ledger por una búsqueda. |
-| submit_evidence(node_id, expected_revision, proposal) | propose NODE --file FILE | Ambas usan Router.propose y save_state. MCP exige revisión esperada por el cliente y evidencia absoluta canónica dentro de evidence/. CLI genérica lee la revisión de inicio de la llamada y la usa al guardar; no exige revisión explícita del cliente y conserva su propio contrato de evidencia. |
+| submit_evidence(node_id, expected_revision, proposal) | propose NODE --file FILE | Ambas usan Router.propose y save_state. MCP se limita a nodos del piloto G5 y exige revisión esperada por el cliente y evidencia absoluta canónica dentro de evidence/ junto al ledger, sin que ese directorio sea un enlace simbólico. CLI genérica también admite nodos fuera del piloto bajo los gates del runner; lee la revisión de inicio de la llamada y la usa al guardar, sin exigir revisión explícita del cliente, y conserva su propio contrato de evidencia. |
 
 `context_command` comprueba `expected_revision` antes de `Router.propose` en MCP; `save_state` protege la escritura concurrente en ambas rutas. No son garantías idénticas. Una propuesta confirmada por persona no es lo mismo que el registro `AWAITING_HUMAN`. El runner sigue siendo autoridad. La CLI Typer construye argv para el parser portable, mientras MCP llama a la función Python directamente. No igualar la totalidad de las CLI y MCP, ni eliminar las restricciones deliberadas del transporte.
 
@@ -75,7 +75,7 @@ Preferencia provisional: A como primer incremento comprobable. Si B demuestra re
 
 1. Revalidar HEAD actual del router y pins de fuentes; checkout aislado, sin cambios a main. Leer las reglas vigentes.
 2. Construir wheel/sdist e instalar en entornos separados base y [mcp]. Con cliente stdio capturar `tools/list`, argumentos, tipos, required y resultados. No inferir esquemas desde Python.
-3. Usar F01 del spec R01, con copias independientes del mismo ledger. Comparar cuatro operaciones y estados observables. Probar primer open (paquete persistido) y segundo open (sin cambio si paquete idéntico); search con índice perdido; borrador sin permiso; propuesta válida AWAITING_HUMAN; revisión obsoleta y rutas fuera de evidence/. Separar diferencias intencionales de defectos. Comparar semántica, no formato textual. Capturar hash/revisión antes y después.
+3. Usar el fixture sintético G5 descrito en el spec R01, con copias independientes del mismo ledger. Comparar cuatro operaciones y estados observables. Probar primer open (paquete persistido) y segundo open (sin cambio si paquete idéntico); search con índice perdido; borrador sin permiso; propuesta válida AWAITING_HUMAN; revisión obsoleta y rutas fuera de evidence/. Separar diferencias intencionales de defectos. Comparar semántica, no formato textual. Capturar hash/revisión antes y después.
 4. Añadir a una copia desechable de A y B una operación de lectura sintética equivalente a R03, sin incorporarla al catálogo productivo. Medir definiciones tocadas, esquemas duplicados, dependencias, pruebas que detectan deriva de nombre/campo/handler y preservación del contrato instalado. Registrar líneas y archivos modificados, no fijar conteos a priori. En OP, ejecutar un caso equivalente usando tool list/describe/call y MCP si el runtime está disponible. Si no, NOT_RUN.
 5. Ejecutar pruebas G5, CLI instalada, suite plugin y doctor según baseline actual. Revisión independiente EGM con evidencias reales y decisión GO/ADAPT/NO_GO. Si A cumple y B no demuestra valor, cerrar sin registry nuevo. Si B aporta valor, pedir autorización de implementación y congelar plan separado. No ejecutar R02 por inercia.
 
@@ -85,16 +85,16 @@ Resultado de esta sesión: investigación estática y ADR provisional. Paridad e
 
 El operador decidió el 24-11-2026 que los experimentos A/B no sean requisito para esta fase de desarrollo. Seleccionamos A: handlers explícitos, runner existente y prueba de paridad. B queda como opción futura, no como trabajo pendiente de R01. Se conserva el texto histórico del estudio; la versión vigente del contrato es el spec R01.
 
-La prueba checkout-level packages/cli/tests/test_mcp_parity.py usa un wheel instalado, una copia temporal de sus módulos y pins sintéticos, dos expedientes equivalentes y un cliente MCP stdio real. No altera el runtime. El 24-11-2026 se ejecutó en macOS, Python 3.12.16 y MCP 1.30.0:
+La prueba checkout-level packages/cli/tests/test_mcp_parity.py usa una copia temporal del paquete CLI instalado (en la verificación histórica, instalado desde un wheel), pins sintéticos, dos expedientes independientes y un cliente MCP stdio real. La revisión posterior verifica primero la igualdad del contrato instalado con el checkout y adapta solo los git_blob de las fuentes sintéticas. No altera el runtime. El 24-11-2026 se ejecutó en macOS, Python 3.12.16 y MCP 1.30.0:
 
 | Control | Resultado observado |
 |---|---|
 | Build wheel/sdist | PASS |
-| Prueba de paridad F01 | 1/1 PASS |
+| Prueba de paridad G5 | 1/1 PASS |
 | Suite plugin | 209/209 PASS |
 | Suite CLI con MCP | 12/12 PASS |
 | CLI base sin MCP | 11 PASS, 1 omitida por extra ausente |
 | Recursos portables | 20/20 idénticos entre wheel y sdist |
 | Doctor y verify-package | Exit 0; baseline_verified=true |
 
-No se ejecutó A/B ni se probó el código externo en runtime. Revisión independiente EGM y CI del PR: pendientes. Las cifras corresponden a las pruebas ejecutadas localmente sobre el runtime sin cambios y la nueva prueba; no implican que se haya fusionado el PR ni que el juicio visual del agente mejore.
+No se ejecutó A/B ni se probó el código externo en runtime. Las cifras son históricas, de las pruebas ejecutadas localmente sobre el runtime sin cambios y la prueba original; la revisión independiente y los checks del HEAD actualizado se consultan en el [PR #7](https://github.com/fegome90-cmd/design-skills-router/pull/7). No representan por sí solas el resultado de revisiones posteriores, un merge del PR ni una mejora del juicio visual del agente.

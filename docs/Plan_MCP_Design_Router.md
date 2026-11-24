@@ -4,6 +4,10 @@
 **Base comprobada:** pizarra 1.3, política de selección 1.2, plugin 0.3.1 y árbol 0.4.  
 **Objetivo del primer piloto:** desde un chat, obtener la misma propuesta de especialistas y apoyos que en la pizarra, y poder inspeccionar el nodo que justifica la recomendación.
 
+## Evolución del runner MCP
+
+Este documento conserva el plan inicial del piloto. El contrato del MCP stdio G5 y su paridad con la CLI instalada se documentan en [R01](specs/mcp-roadmap/units/R01-registro-compartido-de-tools.md), con la investigación y decisión de implementación en el [dossier R01](specs/mcp-roadmap/research/R01-dossier-v0.1.md).
+
 ## La experiencia que queremos probar
 
 Felipe escribe «Audita el layout de esta pantalla». El host interpreta «auditoría» y «layout» usando el catálogo del router. La herramienta recibe la ruta, el alcance del escenario y el dominio G5. Devuelve G5 (layout, grilla y jerarquía), las funciones aplicables y los apoyos agrupados según su efecto. El agente puede explicar por qué dejó fuera la revisión de movimiento y qué fuente tendría que consultar antes de avanzar. Si Felipe escribe solo «audita la interfaz», la herramienta devuelve una pregunta para delimitar el dominio. El modelo formula esa pregunta en español, usando los nombres de las disciplinas.
