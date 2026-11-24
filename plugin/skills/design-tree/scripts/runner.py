@@ -284,13 +284,13 @@ class Router:
                 'policy': policy_hash(self.node(node_id), self.rules, self.contracts),
                 'context': self.context_hash(state, node_id),
                 'source_pins': {skill: {'commit': pins[skill]['commit'], 'git_blob': pins[skill]['git_blob'],
-                                        'title': title} for skill, title in node_context.REQUIRED.items()}}
+                                        'title': title} for skill, title in node_context.SKILL_SECTIONS.items()}}
 
     def check_context_action(self, state, node_id, action):
         permission = assistance_action(state, self.node(node_id), action)
         require(permission['allowed'], 'CONTEXT_ACTION_FORBIDDEN:'+str(permission['stop_reason']))
 
-    def context_sections(self, state, node_id):
+    def context_sections(self, state, node_id, required_titles):
         sections, required = [], {}
         for skill in self.skills_for(node_id):
             source = state['sources'].get(skill)
@@ -304,12 +304,13 @@ class Router:
             git_blob = hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
             require(git_blob == reviewed['git_blob'], 'CONTEXT_SOURCE_PIN_MISMATCH:'+skill)
             rows = node_context.sections(skill, raw.decode('utf-8'))
-            matching = [row for row in rows if row['title'] == node_context.REQUIRED[skill]]
-            require(len(matching) == 1, 'CONTEXT_SECTION_MISSING_OR_AMBIGUOUS:'+skill)
             for row in rows:
                 row.update(commit=source['commit'], git_blob=git_blob, url=source['url'])
             sections.extend(rows)
-            required[skill] = matching[0]
+            for title in sorted(required_titles[skill]):
+                matching = [row for row in rows if row['title'] == title]
+                require(len(matching) == 1, f'CONTEXT_SECTION_MISSING_OR_AMBIGUOUS:{skill}#{title}')
+                required[skill, title] = matching[0]
         return sections, required
 
     def open_context(self, state, node_id, index_path, *, query=None):
@@ -321,26 +322,39 @@ class Router:
         identity = self.context_identity(state, node_id)
         grant = state.get('active_grant_id')
         require(identity['phase_id'] and grant, 'CONTEXT_ACTIVE_PHASE_REQUIRED')
-        sections, required = self.context_sections(state, node_id)
+        rules = [self.rules[rule_id] for rule_id in self.node(node_id)['rule_ids']]
+        rule_sections = {rule['id']: [(rule['skill'], title.strip()) for title in rule['source_section'].split(';')]
+                         for rule in rules}
+        required_titles = {skill: {title} for skill, title in node_context.SKILL_SECTIONS.items()}
+        for entries in rule_sections.values():
+            for skill, title in entries:
+                required_titles[skill].add(title)
+        sections, required = self.context_sections(state, node_id, required_titles)
+        required_rows = [row for row in sections if (row['skill_id'], row['title']) in required]
         facts = self.context_facts(state, node_id)
         for fact in facts.values():
             if fact.get('state') in ('PRESENT', 'ABSENT'):
                 self.check_evidence(fact.get('evidence'), state)
+        skill_rows = {skill: required[skill, title] for skill, title in node_context.SKILL_SECTIONS.items()}
         binding = {**identity, 'grant': grant,
                    'sections': {skill: {'id': row['id'], 'hash': digest(row), 'git_blob': row['git_blob']}
-                                for skill, row in required.items()}}
+                                for skill, row in skill_rows.items()},
+                   'criteria_sections': {rule_id: {required[key]['id']: digest(required[key]) for key in entries}
+                                         for rule_id, entries in rule_sections.items()}}
         context_id = digest(binding)
         try:
             results = node_context.read_index(index_path, context_id, sections,
-                                              tuple(row['id'] for row in required.values()), query)
+                                              tuple(row['id'] for row in required_rows), query)
         except (sqlite3.Error, ValueError) as error:
             raise GateError('CONTEXT_INDEX_UNAVAILABLE: '+str(error)) from error
         if query is not None:
             return {'context_id': context_id, 'matches': results}
-        require(results == list(required.values()), 'CONTEXT_INDEX_REQUIRED_SECTIONS_MISSING')
+        require(results == required_rows, 'CONTEXT_INDEX_REQUIRED_SECTIONS_MISSING')
         state['context_packets'][node_id] = binding
         return {'context_id': context_id, 'packet': self.packet(state, node_id), 'scope': state['scope'],
-                'facts': facts, 'required_sections': results, 'coverage': 'PACKET_PREPARED'}
+                'facts': facts, 'required_sections': results, 'coverage': 'PACKET_PREPARED',
+                'section_ids': {'skills': {skill: row['id'] for skill, row in skill_rows.items()},
+                                'criteria': {rule_id: list(rows) for rule_id, rows in binding['criteria_sections'].items()}}}
 
     def check_context_application(self, state, node_id, proposal):
         binding = state['context_packets'].get(node_id)
@@ -356,11 +370,26 @@ class Router:
             if hashlib.sha256(raw).hexdigest() == ev['sha256'] and node_context.is_png(raw):
                 captures.add(ev['path'])
         require(bool(captures), 'CONTEXT_CAPTURE_REQUIRED')
+        for review in proposal['skill_reviews']:
+            skill = review['skill_id']
+            require(review.get('section_id') == binding['sections'][skill]['id'],
+                    'CONTEXT_APPLICATION_REQUIRED:'+skill)
+        criteria_sections = binding.get('criteria_sections')
+        for review in proposal['criterion_reviews']:
+            rule_id = review['rule_id']
+            if criteria_sections is None:
+                skill = self.rules[rule_id]['skill']
+                linked = review.get('section_id') == binding['sections'][skill]['id']
+            else:
+                expected = criteria_sections[rule_id]
+                section_ids = review.get('section_ids')
+                linked = (isinstance(section_ids, list) and len(section_ids) == len(expected)
+                          and all(isinstance(section_id, str) for section_id in section_ids)
+                          and set(section_ids) == set(expected))
+            require(linked, 'CONTEXT_APPLICATION_REQUIRED:'+rule_id)
         for review in proposal['skill_reviews'] + proposal['criterion_reviews']:
-            skill = review['skill_id'] if 'skill_id' in review else self.rules[review['rule_id']]['skill']
-            require(review.get('section_id') == binding['sections'][skill]['id']
-                    and nonblank(review.get('observation'))
-                    and bool(captures.intersection(review['evidence_refs'])), 'CONTEXT_APPLICATION_REQUIRED:'+skill)
+            require(nonblank(review.get('observation')) and captures.intersection(review['evidence_refs']),
+                    'CONTEXT_OBSERVATION_AND_CAPTURE_REQUIRED')
 
     def confirm_structure(self,state,node_id,receipt):
         self.check_open(state,node_id)
@@ -537,6 +566,8 @@ class Router:
         if self.context_required(state, node_id):
             require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
             require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
+            packet = state['context_packets'].get(node_id)
+            require(packet is None or 'criteria_sections' in packet, 'CONTEXT_PACKET_REOPEN_REQUIRED')
         self.validate_proposal(state,node_id,proposal)
         if self.context_required(state, node_id):
             self.check_context_action(state, node_id, 'draft')

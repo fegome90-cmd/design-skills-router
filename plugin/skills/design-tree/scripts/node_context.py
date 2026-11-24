@@ -11,7 +11,7 @@ import zlib
 
 PROFILE = 'g5'
 NODE = 'E05__LAY01'
-REQUIRED = {
+SKILL_SECTIONS = {
     'fegome90-cmd/my-skills/layout-grid-hierarchy': 'Fase 3: Jerarquía Visual y Squint Test',
     'jakubkrehel/skills/better-layout': 'Plan for growth and clipping',
 }

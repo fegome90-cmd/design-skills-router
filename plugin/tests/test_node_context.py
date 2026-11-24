@@ -14,6 +14,13 @@ import test_runner as fixtures
 
 NODE = 'E05__LAY01'
 PHASE = 'mobile-layout'
+LAYOUT_SKILL = 'jakubkrehel/skills/better-layout'
+LAYOUT_TITLES = (
+    'Group with space, not lines',
+    'Hold structure until it breaks',
+    'Plan for growth and clipping',
+    'Reporting',
+)
 
 
 def png(image_data=None):
@@ -67,12 +74,15 @@ class NodeContextTests(unittest.TestCase):
         self.router.grant_assistance(self.state, grant,
                                     self.fixture.receipt(self.router.grant_hash(self.state, grant), 'delegation'))
 
-    def pin_test_sources(self, *, metadata_only=False):
-        for skill, title in self.runtime.node_context.REQUIRED.items():
+    def pin_test_sources(self, *, metadata_only=False, omitted_title=None):
+        for skill, title in self.runtime.node_context.SKILL_SECTIONS.items():
             source = self.state['sources'][skill]
             path = Path(source['path'])
             head = f'---\ndescription: {title}\n---\n'
-            body = f'## {title}\n\nObserva la jerarquía y el orden en móvil.\n\n## Example\n\nAjusta la jerarquía.\n'
+            titles = LAYOUT_TITLES if skill == LAYOUT_SKILL else (title,)
+            body = ''.join(f'## {name}\n\nObserva la jerarquía y el orden en móvil.\n\n'
+                           for name in titles if name != omitted_title)
+            body += '## Example\n\nAjusta la jerarquía.\n'
             raw = (head if metadata_only else head + body).encode()
             path.write_bytes(raw)
             blob = hashlib.sha1(b'blob ' + str(len(raw)).encode() + b'\0' + raw).hexdigest()
@@ -85,11 +95,13 @@ class NodeContextTests(unittest.TestCase):
         proposal['context_id'] = packet['context_id']
         proposal['evidence'] = [{'path': str(capture), 'sha256': hashlib.sha256(capture.read_bytes()).hexdigest(),
                                  'note': 'Fixture capture for explicit application'}]
-        by_skill = {row['skill_id']: row['id'] for row in packet['required_sections']}
+        section_ids = packet['section_ids']
         for review in proposal['skill_reviews'] + proposal['criterion_reviews']:
-            skill = review.get('skill_id') or self.router.rules[review['rule_id']]['skill']
-            review.update(section_id=by_skill[skill], observation='The filter dominates the total.',
-                          evidence_refs=[str(capture)])
+            review.update(observation='The filter dominates the total.', evidence_refs=[str(capture)])
+            if 'skill_id' in review:
+                review['section_id'] = section_ids['skills'][review['skill_id']]
+            else:
+                review['section_ids'] = list(section_ids['criteria'][review['rule_id']])
         return capture
 
     def test_phase_routes_before_authorizing_context(self):
@@ -112,6 +124,36 @@ class NodeContextTests(unittest.TestCase):
             self.router.open_context(self.state, NODE, self.index)
         self.assertFalse(self.index.exists())
 
+    def test_packet_covers_exactly_the_sections_declared_for_layout(self):
+        self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        expected = [f'{LAYOUT_SKILL}#{title}' for title in LAYOUT_TITLES]
+        self.assertEqual(packet['section_ids']['criteria']['layout'], expected)
+        bodies = {section['id']: section['body'] for section in packet['required_sections']}
+        self.assertEqual(len(bodies), 5)
+        self.assertTrue(all(bodies[section_id].startswith('Observa') for section_id in expected))
+
+    def test_omitting_a_rule_section_blocks_open(self):
+        self.prepare_case()
+        self.pin_test_sources(omitted_title='Reporting')
+        with self.assertRaisesRegex(self.runtime.GateError, 'SECTION_MISSING_OR_AMBIGUOUS:.*#Reporting'):
+            self.router.open_context(self.state, NODE, self.index)
+        self.assertEqual(self.state['context_packets'], {})
+
+    def test_old_packet_must_be_reopened_to_submit(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+        old_binding = self.state['context_packets'][NODE]
+        old_binding.pop('criteria_sections')
+        proposal['context_id'] = self.runtime.digest(old_binding)
+        with self.assertRaisesRegex(self.runtime.GateError, 'PACKET_REOPEN_REQUIRED'):
+            self.router.propose(self.state, NODE, proposal)
+        reopened = self.router.open_context(self.state, NODE, self.index)
+        self.assertEqual(reopened, packet)
+
     def test_phase_authorization_applies_to_analysis_and_drafting(self):
         proposal = self.prepare_case()
         self.pin_test_sources()
@@ -130,7 +172,7 @@ class NodeContextTests(unittest.TestCase):
         self.pin_test_sources()
         packet = self.router.open_context(self.state, NODE, self.index)
         self.attach_application(proposal, packet)
-        skill = next(iter(self.runtime.node_context.REQUIRED))
+        skill = next(iter(self.runtime.node_context.SKILL_SECTIONS))
         self.router.contracts['source_reviews'][skill]['git_blob'] = 'f' * 40
         with self.assertRaisesRegex(self.runtime.GateError, 'PACKET_STALE'):
             self.router.validate_proposal(self.state, NODE, proposal)
@@ -145,7 +187,7 @@ class NodeContextTests(unittest.TestCase):
         packet = self.router.open_context(self.state, NODE, self.index)
         self.assertEqual(hits['context_id'], packet['context_id'])
         self.assertEqual(self.router.open_context(self.state, NODE, self.index), packet)
-        self.assertEqual(len(packet['required_sections']), 2)
+        self.assertEqual(len(packet['required_sections']), 5)
         self.assertTrue(all(row['body'].startswith('Observa') for row in packet['required_sections']))
 
     def test_gate_binds_application_to_project_evidence_and_persists_without_index(self):
@@ -165,7 +207,7 @@ class NodeContextTests(unittest.TestCase):
                 self.router.propose(self.state, NODE, proposal)
         self.attach_application(proposal, packet)
         incorrect = copy.deepcopy(proposal)
-        incorrect['criterion_reviews'][0]['section_id'] = 'Metadata only'
+        incorrect['criterion_reviews'][0]['section_ids'].pop()
         with self.assertRaisesRegex(self.runtime.GateError, 'APPLICATION_REQUIRED'):
             self.router.propose(self.state, NODE, incorrect)
         proposal_hash = self.router.propose(self.state, NODE, proposal)
