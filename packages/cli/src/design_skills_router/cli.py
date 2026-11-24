@@ -152,9 +152,46 @@ def init(
     scope: Annotated[str, typer.Option(help="Authorized project scope.")],
     mode: Annotated[Mode, typer.Option(help="Design or read-only audit proposals.")] = Mode.design,
     medium: Annotated[str, typer.Option(help="Project medium.")] = "web",
+    context_pilot: Annotated[bool, typer.Option("--context-pilot", help="Enable the G5 context audit pilot.")] = False,
 ) -> None:
     """Create a new ledger. Does not approve or publish anything."""
-    _run(ctx, "init", project_id=project_id, scope=scope, mode=mode, medium=medium)
+    _run(ctx, "init", project_id=project_id, scope=scope, mode=mode, medium=medium, context_pilot=context_pilot)
+
+
+@app.command()
+def context_next(ctx: typer.Context) -> None:
+    """Show pending nodes in the current project and phase."""
+    _run(ctx, "context-next")
+
+
+@app.command()
+def context_open(ctx: typer.Context, node_id: Node) -> None:
+    """Prepare the required source sections for the G5 pilot node."""
+    _run(ctx, "context-open", node_id)
+
+
+@app.command()
+def context_search(ctx: typer.Context, node_id: Node, query: Annotated[str, typer.Option()]) -> None:
+    """Search optional sections in the current G5 node."""
+    _run(ctx, "context-search", node_id, query=query)
+
+
+@app.command()
+def mcp(ctx: typer.Context) -> None:
+    """Serve the local G5 context tools over MCP stdio."""
+    if ctx.obj is None:
+        raise typer.BadParameter("Pass --state before mcp.", param_hint="--state")
+    executable = _RUNNER.with_name("mcp_server.py")
+    try:
+        result = subprocess.run([sys.executable, "-EB", "-X", "utf8", str(executable),
+                                 f"--state={ctx.obj}"], check=False)
+    except KeyboardInterrupt:
+        raise typer.Exit(130) from None
+    except OSError:
+        _echo_json(b'{"status":"BLOCKED","error":"MCP_SERVER_LAUNCH_FAILED"}\n', err=True)
+        raise typer.Exit(1) from None
+    if result.returncode:
+        raise typer.Exit(result.returncode if result.returncode > 0 else 128 - result.returncode)
 
 
 @app.command()

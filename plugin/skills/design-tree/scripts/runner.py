@@ -9,6 +9,7 @@ import argparse
 import copy
 import hashlib
 import json
+import sqlite3
 import os
 import re
 import sys
@@ -26,6 +27,7 @@ LEGACY_SCHEMA = 'design-tree-ledger/0.1'
 from contracts import evaluate_contracts, validate_contracts, policy_hash
 from verification import validate_results, evaluate_results
 from assistance import validate_assistance, assistance_action
+import node_context
 
 class GateError(ValueError):
     """An explicit gate failure; no requested mutation has been committed."""
@@ -115,11 +117,12 @@ class Router:
             require(file_hash(self.base/name) == expected, 'BASELINE_FILE_DRIFT:'+name)
         return True
 
-    def new_state(self, project_id, medium, mode, scope):
+    def new_state(self, project_id, medium, mode, scope, *, context_pilot=False):
         require(nonblank(project_id) and nonblank(scope), 'PROJECT_AND_SCOPE_REQUIRED')
         require(medium == 'web', 'PILOT_SUPPORTS_WEB_ONLY')
         require(mode in ('design', 'audit'), 'INVALID_MODE')
-        return {'schema': SCHEMA, 'project_id': project_id, 'medium': medium,
+        require(not context_pilot or mode == 'audit', 'CONTEXT_PILOT_REQUIRES_AUDIT')
+        state = {'schema': SCHEMA, 'project_id': project_id, 'medium': medium,
                 'mode': mode, 'scope': scope, 'revision': 0,
                 'tree_hash': self.tree_hash, 'inventory_hash': self.inventory_hash,
                 'structures': {}, 'records': {}, 'sources': {}, 'candidates': {},
@@ -128,6 +131,10 @@ class Router:
                 'assistance_level':'manual','grants':{},'active_grant_id':None,
                 'phase_map':None,'phase_map_hash':None,'phase_map_receipt':None,
                 'phases':{},'active_phase_id':None}
+        if context_pilot:
+            state['context_profile'] = node_context.PROFILE
+            state['context_packets'] = {}
+        return state
 
     def check_state(self, state):
         require(state.get('schema') == SCHEMA, 'STATE_SCHEMA_MISMATCH')
@@ -247,6 +254,113 @@ class Router:
             require(all(self.phase_current(state,d) for d in phase['dependency_ids']),'PHASE_DEPENDENCY_PENDING')
         for dep in self.node(node_id).get('requires',[]):
             require(self.complete(state,dep), 'PREREQUISITE_PENDING:'+dep)
+
+    def context_next(self, state):
+        self.check_state(state)
+        pending = []
+        awaiting = []
+        for node_id in self.frontier(state):
+            try:
+                self.check_open(state, node_id)
+            except GateError:
+                continue
+            if state['records'].get(node_id, {}).get('status') == 'AWAITING_HUMAN':
+                awaiting.append(node_id)
+            else:
+                pending.append(node_id)
+        return {'project': state['project_id'], 'revision': state['revision'],
+                'active_phase': state.get('active_phase_id'), 'pending_nodes': pending, 'awaiting_human': awaiting,
+                'phase_status': state['phases'].get(state.get('active_phase_id'), {}).get('status'),
+                'context_nodes': [node_id for node_id in pending if self.context_required(state, node_id)
+                                  and assistance_action(state, self.node(node_id), 'analyze')['allowed']]}
+
+    def context_required(self, state, node_id):
+        return state.get('context_profile') == node_context.PROFILE and node_id == node_context.NODE
+
+    def context_identity(self, state, node_id):
+        pins = self.contracts['source_reviews']
+        return {'project': state['project_id'], 'node_id': node_id,
+                'phase_id': self.phase_for(state, node_id), 'phase_map': state.get('phase_map_hash'),
+                'policy': policy_hash(self.node(node_id), self.rules, self.contracts),
+                'context': self.context_hash(state, node_id),
+                'source_pins': {skill: {'commit': pins[skill]['commit'], 'git_blob': pins[skill]['git_blob'],
+                                        'title': title} for skill, title in node_context.REQUIRED.items()}}
+
+    def check_context_action(self, state, node_id, action):
+        permission = assistance_action(state, self.node(node_id), action)
+        require(permission['allowed'], 'CONTEXT_ACTION_FORBIDDEN:'+str(permission['stop_reason']))
+
+    def context_sections(self, state, node_id):
+        sections, required = [], {}
+        for skill in self.skills_for(node_id):
+            source = state['sources'].get(skill)
+            require(source is not None, 'CONTEXT_SOURCE_MISSING:'+skill)
+            reviewed = self.contracts['source_reviews'].get(skill, {})
+            require(source['commit'] == reviewed.get('commit')
+                    and source['git_blob'] == reviewed.get('git_blob'), 'CONTEXT_SOURCE_PIN_MISMATCH:'+skill)
+            path = Path(self.artifact_path(state, source['path']))
+            require(file_hash(path) == source['sha256'], 'SOURCE_BYTES_CHANGED')
+            raw = path.read_bytes()
+            git_blob = hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+            require(git_blob == reviewed['git_blob'], 'CONTEXT_SOURCE_PIN_MISMATCH:'+skill)
+            rows = node_context.sections(skill, raw.decode('utf-8'))
+            matching = [row for row in rows if row['title'] == node_context.REQUIRED[skill]]
+            require(len(matching) == 1, 'CONTEXT_SECTION_MISSING_OR_AMBIGUOUS:'+skill)
+            for row in rows:
+                row.update(commit=source['commit'], git_blob=git_blob, url=source['url'])
+            sections.extend(rows)
+            required[skill] = matching[0]
+        return sections, required
+
+    def open_context(self, state, node_id, index_path, *, query=None):
+        require(self.context_required(state, node_id), 'CONTEXT_NODE_OUTSIDE_PILOT')
+        self.check_open(state, node_id)
+        require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
+        require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
+        self.check_context_action(state, node_id, 'analyze')
+        identity = self.context_identity(state, node_id)
+        grant = state.get('active_grant_id')
+        require(identity['phase_id'] and grant, 'CONTEXT_ACTIVE_PHASE_REQUIRED')
+        sections, required = self.context_sections(state, node_id)
+        facts = self.context_facts(state, node_id)
+        for fact in facts.values():
+            if fact.get('state') in ('PRESENT', 'ABSENT'):
+                self.check_evidence(fact.get('evidence'), state)
+        binding = {**identity, 'grant': grant,
+                   'sections': {skill: {'id': row['id'], 'hash': digest(row), 'git_blob': row['git_blob']}
+                                for skill, row in required.items()}}
+        context_id = digest(binding)
+        try:
+            results = node_context.read_index(index_path, context_id, sections,
+                                              tuple(row['id'] for row in required.values()), query)
+        except (sqlite3.Error, ValueError) as error:
+            raise GateError('CONTEXT_INDEX_UNAVAILABLE: '+str(error)) from error
+        if query is not None:
+            return {'context_id': context_id, 'matches': results}
+        require(results == list(required.values()), 'CONTEXT_INDEX_REQUIRED_SECTIONS_MISSING')
+        state['context_packets'][node_id] = binding
+        return {'context_id': context_id, 'packet': self.packet(state, node_id), 'scope': state['scope'],
+                'facts': facts, 'required_sections': results, 'coverage': 'PACKET_PREPARED'}
+
+    def check_context_application(self, state, node_id, proposal):
+        binding = state['context_packets'].get(node_id)
+        require(binding is not None and proposal.get('context_id') == digest(binding), 'CONTEXT_PACKET_REQUIRED')
+        require(all(binding.get(k) == v for k, v in self.context_identity(state, node_id).items()),
+                'CONTEXT_PACKET_STALE')
+        for skill, section in binding['sections'].items():
+            require(state['sources'][skill]['git_blob'] == section['git_blob'], 'CONTEXT_SOURCE_CHANGED')
+        require(proposal['verification'] == 'OBSERVED', 'CONTEXT_OBSERVED_EVIDENCE_REQUIRED')
+        captures = set()
+        for ev in proposal['evidence']:
+            raw = Path(self.artifact_path(state, ev['path'])).read_bytes()
+            if hashlib.sha256(raw).hexdigest() == ev['sha256'] and node_context.is_png(raw):
+                captures.add(ev['path'])
+        require(bool(captures), 'CONTEXT_CAPTURE_REQUIRED')
+        for review in proposal['skill_reviews'] + proposal['criterion_reviews']:
+            skill = review['skill_id'] if 'skill_id' in review else self.rules[review['rule_id']]['skill']
+            require(review.get('section_id') == binding['sections'][skill]['id']
+                    and nonblank(review.get('observation'))
+                    and bool(captures.intersection(review['evidence_refs'])), 'CONTEXT_APPLICATION_REQUIRED:'+skill)
 
     def confirm_structure(self,state,node_id,receipt):
         self.check_open(state,node_id)
@@ -413,12 +527,21 @@ class Router:
         for fid in evaluated['fact_ids']:
             fact=state.get('facts',{}).get(fid)
             if fact and fact.get('state') in ('PRESENT','ABSENT'):self.check_evidence(fact.get('evidence'),state)
+        if self.context_required(state, node_id):
+            self.check_context_application(state, node_id, p)
         return True
 
     def propose(self,state,node_id,proposal):
         self.check_open(state,node_id)
         require(self.structure_confirmed(state,node_id),'STRUCTURE_CONFIRMATION_REQUIRED')
+        if self.context_required(state, node_id):
+            require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
+            require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
         self.validate_proposal(state,node_id,proposal)
+        if self.context_required(state, node_id):
+            self.check_context_action(state, node_id, 'draft')
+            require(state['context_packets'][node_id]['grant'] == state.get('active_grant_id'),
+                    'CONTEXT_PACKET_GRANT_STALE')
         self.bind_evidence_paths(state, proposal['evidence'])
         if node_id in state['records']:
             state['history'].append({'event':'proposal_replaced','node_id':node_id,'record':copy.deepcopy(state['records'][node_id]),'at':now()})
@@ -486,7 +609,7 @@ class Router:
     def scope_hash(self,state):
         return digest({k:state.get(k) for k in ('project_id','scope','medium','mode')})
 
-    def context_hash(self,state,node_id):
+    def context_facts(self,state,node_id):
         n=self.node(node_id)
         needed={p['fact'] for r in self.contracts.get('relations',[]) if n['definition_id'] in r.get('applies_to',[]) or node_id in r.get('applies_to',[]) for p in r['when']}
         needed.update(p['fact'] for r in self.check_requirements(node_id) for p in r['when'])
@@ -494,7 +617,10 @@ class Router:
         for fid,f in state.get('facts',{}).items():
             if fid in needed or '*' in f.get('applies_to',[]) or node_id in f.get('applies_to',[]) or n['definition_id'] in f.get('applies_to',[]):
                 facts[fid]={k:v for k,v in f.items() if k not in ('comment','observed_at')}
-        return digest({'scope':self.scope_hash(state),'facts':facts})
+        return facts
+
+    def context_hash(self,state,node_id):
+        return digest({'scope':self.scope_hash(state),'facts':self.context_facts(state,node_id)})
 
     def binding(self,state,node_id,authority):
         return {'structure':self.structure_hash(node_id),'policy':policy_hash(self.node(node_id),self.rules,self.contracts),
@@ -914,6 +1040,28 @@ def load_state(path, allow_legacy=False):
     return s
 
 
+def context_command(path, command, *, node_id=None, query=None, proposal=None, expected_revision=None):
+    path = Path(path)
+    require(not path.resolve().is_relative_to(SKILL_DIR.parent.parent.resolve()), 'STATE_MUST_BE_OUTSIDE_PLUGIN')
+    router = Router()
+    state = load_state(path)
+    router.check_state(state)
+    revision = state['revision']
+    if command == 'next':
+        return router.context_next(state)
+    if command == 'propose':
+        require(router.context_required(state, node_id), 'CONTEXT_NODE_OUTSIDE_PILOT')
+        require(expected_revision == revision, 'STATE_REVISION_CONFLICT')
+        proposal_hash = router.propose(state, node_id, proposal)
+        return {'proposal_hash': proposal_hash, 'state': 'AWAITING_HUMAN',
+                'revision': save_state(path, state, revision)}
+    previous = state.get('context_packets', {}).get(node_id)
+    result = router.open_context(state, node_id, path.with_name(path.name+'.context.sqlite3'), query=query)
+    if query is None and previous != state['context_packets'][node_id]:
+        revision = save_state(path, state, revision)
+    return {**result, 'revision': revision}
+
+
 def save_state(path,state,expected_revision):
     p=Path(path);p.parent.mkdir(parents=True,exist_ok=True)
     require(not p.is_symlink(),'STATE_SYMLINK_FORBIDDEN')
@@ -954,6 +1102,7 @@ def main(argv=None):
     p.add_argument('--scope', required=True)
     p.add_argument('--mode', choices=['design', 'audit'], default='design')
     p.add_argument('--medium', default='web')
+    p.add_argument('--context-pilot', action='store_true', help='Require a source and capture packet for the G5 audit node.')
     command('status', 'Show the ledger revision, open decisions and outstanding checks.')
     command('verify-package', 'Verify the tree baseline and report inventory and node counts.')
     command('phase-template', 'Print the default phase map and its target hash.')
@@ -999,6 +1148,12 @@ def main(argv=None):
     p.add_argument('--bundle', type=Path, required=True)
     p = command('node', 'Show the decision packet for a node.')
     p.add_argument('node_id')
+    command('context-next', 'Show pending nodes in the current project and phase.')
+    p = command('context-open', 'Prepare the required source sections for the G5 pilot node.')
+    p.add_argument('node_id')
+    p = command('context-search', 'Search optional source sections in the G5 pilot node.')
+    p.add_argument('node_id')
+    p.add_argument('--query', required=True)
     p = command('source', 'Register the bytes and provenance of a skill source.')
     for flag in ('--skill', '--file', '--commit', '--git-blob', '--source-ref'):
         p.add_argument(flag, required=True)
@@ -1022,7 +1177,12 @@ def main(argv=None):
     p.add_argument('--file', type=Path, required=True)
     p = command('export', 'Write a new portable bundle with the ledger and its evidence.')
     p.add_argument('--output', type=Path, required=True)
-    a=parser.parse_args(argv);router=Router()
+    a=parser.parse_args(argv)
+    if a.cmd.startswith('context-'):
+        require(a.state is not None, 'STATE_PATH_REQUIRED')
+        return context_command(a.state, a.cmd.removeprefix('context-'),
+                               node_id=getattr(a, 'node_id', None), query=getattr(a, 'query', None))
+    router=Router()
     if a.cmd=='verify-package':return {'baseline_verified':router.verify_baseline(),'inventory_count':len(router.inventory),'expanded_nodes':len(router.nodes)}
     if a.cmd=='phase-template':return {'phase_map':router.default_phase_map(),'target_hash':digest(router.default_phase_map()),'kind':'phase_map'}
     if a.cmd=='structure-manifest':
@@ -1035,7 +1195,7 @@ def main(argv=None):
     require(a.state is not None,'STATE_PATH_REQUIRED')
     require(not a.state.resolve().is_relative_to(SKILL_DIR.parent.parent.resolve()),'STATE_MUST_BE_OUTSIDE_PLUGIN')
     if a.cmd=='init':
-        state=router.new_state(a.project_id,a.medium,a.mode,a.scope)
+        state=router.new_state(a.project_id,a.medium,a.mode,a.scope,context_pilot=a.context_pilot)
         save_state(a.state,state,None);return router.status(state)
     if a.cmd=='resume':
         from migration import inspect_portable_bundle

@@ -61,6 +61,22 @@ python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json so
 
 Los apoyos requeridos por un criterio también se consultan y registran como evidencia. Metadatos desconocidos permanecen UNKNOWN; sólo se permite REFERENCE_ONLY. Actualizar un pin canónico requiere otra versión del baseline, no editar un contrato suplementario.
 
+### Piloto G5 de contexto por nodo
+
+Crea un expediente nuevo de auditoría web con `init --mode audit --context-pilot`. Configura la fase y registra un mandato asistido que cubra las acciones `analyze` y `draft`. El piloto aplica a la decisión `E05__LAY01`. Para un encargo acotado, el mapa de fase puede incluir esa decisión y sus resultados `E05__LAY01_1`, `E05__LAY01_2` y `E05__LAY01_3` en la familia `visual`. Los ancestros conservan sus comprobaciones habituales.
+
+```sh
+design-skills-router --state /proyecto/ledger.json context-next
+design-skills-router --state /proyecto/ledger.json context-open E05__LAY01
+design-skills-router --state /proyecto/ledger.json context-search E05__LAY01 --query jerarquia
+```
+
+Registra las dos fuentes del nodo con `source`. `context-open` devuelve sus secciones obligatorias del cuerpo, el contexto vigente y un `context_id`. El índice `ledger.json.context.sqlite3` se crea junto al expediente y requiere SQLite con FTS5. Es reconstruible desde las fuentes registradas. La revisión y la identidad del paquete se conservan en el expediente portable.
+
+Para `propose`, incluye `context_id`, `verification: OBSERVED` y una evidencia PNG con su SHA-256. Cada entrada de `skill_reviews` y `criterion_reviews` añade `section_id` y `observation`, vincula la captura en `evidence_refs` y conserva su justificación. Una sección ausente, un paquete de otro contexto o una captura con datos incompletos impiden presentar la decisión. La evidencia se vuelve a comprobar al ratificarla. El runner valida la estructura del PNG, el hash y el vínculo con la sección. La procedencia de la captura y la pertinencia del juicio se revisan con la persona.
+
+Con la CLI instalada con el extra `[mcp]`, ejecuta `design-skills-router --state /proyecto/ledger.json mcp` como servidor local stdio. Las herramientas `next_node`, `open_node`, `search_context` y `submit_evidence` usan ese expediente. `submit_evidence` requiere `expected_revision` y rutas absolutas bajo `/proyecto/evidence/`. Presenta una propuesta pendiente de aprobación. El host conserva su propia observación de qué contenido incorporó al contexto del modelo.
+
 ## Propuesta y decisión
 
 Objeto de propuesta:
