@@ -31,6 +31,7 @@ class InstalledMcpParityTests(unittest.TestCase):
         self.addCleanup(case.doCleanups)
         node = context_fixture.NODE
         proposal = case.prepare_case()
+        original_contracts = copy.deepcopy(case.router.contracts)
         case.pin_test_sources()
         case.grant(['analyze'])
 
@@ -41,20 +42,32 @@ class InstalledMcpParityTests(unittest.TestCase):
             case.runtime.save_state(ledger, case.state, None)
 
         # Copy the installed package. Replace only the reviewed source pins in
-        # the copy, using the existing synthetic fixture. Never edit the wheel
+        # the copy, using the existing synthetic fixture. Never edit the
         # installation or the canonical tree.
         installed = Path(design_skills_router.__file__).resolve().parent
         package = work / 'installed-copy' / installed.name
         shutil.copytree(installed, package)
         contracts = package / '_portable/skills/design-tree/references/contracts.json'
-        contracts.write_text(json.dumps(case.router.contracts), encoding='utf-8')
+        installed_contracts = json.loads(contracts.read_text(encoding='utf-8'))
+        self.assertEqual(installed_contracts, original_contracts,
+                         'Installed contracts differ from the checkout before fixture adaptation')
+        for skill in case.runtime.node_context.SKILL_SECTIONS:
+            installed_contracts['source_reviews'][skill]['git_blob'] = (
+                case.router.contracts['source_reviews'][skill]['git_blob']
+            )
+        self.assertEqual(installed_contracts, case.router.contracts)
+        contracts.write_text(json.dumps(installed_contracts), encoding='utf-8')
         launch = [
             '-B', '-c',
             f'import sys; sys.path.insert(0, {str(package.parent)!r}); '
             'from design_skills_router.cli import app; app()',
         ]
 
+        def ledger_bytes():
+            return [p.read_bytes() for p in (cli_ledger, mcp_ledger)]
+
         def cli(*args, error=None):
+            before_rejection = ledger_bytes() if error is not None else None
             result = subprocess.run(
                 [sys.executable, *launch, '--state', str(cli_ledger), *args],
                 cwd=work, capture_output=True, encoding='utf-8', timeout=30,
@@ -63,6 +76,7 @@ class InstalledMcpParityTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertEqual(result.stdout, '')
                 self.assertIn(error, json.loads(result.stderr)['error'])
+                self.assertEqual(ledger_bytes(), before_rejection)
                 return
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(result.stderr, '')
@@ -82,10 +96,12 @@ class InstalledMcpParityTests(unittest.TestCase):
         async def exercise():
             async with stdio_client(server) as (read, write), ClientSession(read, write) as client:
                 async def call(name, error=None, **args):
+                    before_rejection = ledger_bytes() if error is not None else None
                     result = await asyncio.wait_for(client.call_tool(name, args), timeout=30)
                     if error is not None:
                         self.assertTrue(result.isError, result.content)
                         self.assertIn(error, result.content[0].text)
+                        self.assertEqual(ledger_bytes(), before_rejection)
                         return
                     self.assertFalse(result.isError, result.content)
                     return result.structuredContent
@@ -127,11 +143,17 @@ class InstalledMcpParityTests(unittest.TestCase):
 
                 query = 'jerarquía'
                 search = cli('context-search', node, '--query', query)
+                self.assertEqual(len(search['matches']), 2)
+                self.assertTrue(all(row['title'] == 'Example' for row in search['matches']))
                 self.assertEqual(search, await call('search_context', node_id=node, query=query))
-                for ledger in (cli_ledger, mcp_ledger):
-                    ledger.with_name(ledger.name + '.context.sqlite3').unlink()
+                indexes = [p.with_name(p.name + '.context.sqlite3') for p in (cli_ledger, mcp_ledger)]
+                for index in indexes:
+                    index.unlink()
+                    self.assertFalse(index.exists())
                 self.assertEqual(cli('context-search', node, '--query', query), search)
+                self.assertTrue(indexes[0].is_file())
                 self.assertEqual(await call('search_context', node_id=node, query=query), search)
+                self.assertTrue(indexes[1].is_file())
                 self.assertEqual([p.read_bytes() for p in (cli_ledger, mcp_ledger)], before)
 
                 case.ledger = work / 'fixture.json'
@@ -142,7 +164,8 @@ class InstalledMcpParityTests(unittest.TestCase):
                            proposal=proposal, error=denied)
                 self.assertEqual([p.read_bytes() for p in (cli_ledger, mcp_ledger)], before)
 
-                # Install the same new mandate in both independent ledgers.
+                # Install the same new mandate only after verifying parity.
+                self.assertEqual(cli_ledger.read_bytes(), mcp_ledger.read_bytes())
                 case.state = case.runtime.load_state(cli_ledger)
                 case.grant(['analyze', 'draft'])
                 for ledger in (cli_ledger, mcp_ledger):
@@ -160,6 +183,8 @@ class InstalledMcpParityTests(unittest.TestCase):
                            proposal=incomplete, error=missing)
 
                 # These are deliberate MCP-specific boundary restrictions.
+                await call('submit_evidence', node_id='LAY01', expected_revision=revision,
+                           proposal=proposal, error='CONTEXT_NODE_OUTSIDE_PILOT')
                 await call('submit_evidence', node_id=node, expected_revision=revision - 1,
                            proposal=proposal, error='STATE_REVISION_CONFLICT')
                 outside = copy.deepcopy(proposal)
@@ -175,9 +200,18 @@ class InstalledMcpParityTests(unittest.TestCase):
                 self.assertEqual(cli_result['state'], 'AWAITING_HUMAN')
                 self.assertEqual(cli_result['revision'], revision + 1)
                 self.assertEqual(cli('context-next'), await call('next_node'))
+                final_states = []
                 for ledger in (cli_ledger, mcp_ledger):
-                    record = case.runtime.load_state(ledger)['records'][node]
+                    state = case.runtime.load_state(ledger)
+                    record = state['records'][node]
                     self.assertEqual(record['status'], 'AWAITING_HUMAN')
                     self.assertEqual(record['authority']['decided_by'], 'human')
+                    # Only the timestamps generated by the two independent submissions differ.
+                    record.pop('submitted_at')
+                    event = state['history'][-1]
+                    self.assertEqual((event['event'], event['node_id']), ('proposal', node))
+                    event.pop('at')
+                    final_states.append(state)
+                self.assertEqual(*final_states)
 
         asyncio.run(exercise())
