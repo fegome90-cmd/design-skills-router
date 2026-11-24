@@ -19,7 +19,7 @@ def server_for(state_path):
 
     @server.tool()
     def open_node(node_id: str) -> dict[str, object]:
-        """Return the current node's required, pinned source body and project context."""
+        """Return pinned sections, project context, and the permissions to analyze and draft."""
         return context_command(state_path, 'open', node_id=node_id)
 
     @server.tool()
@@ -29,7 +29,7 @@ def server_for(state_path):
 
     @server.tool()
     def submit_evidence(node_id: str, expected_revision: int, proposal: dict[str, object]) -> dict[str, object]:
-        """Submit a G5 decision with its context ID and local evidence for human review."""
+        """Submit a G5 draft with its context ID and local evidence for human confirmation."""
         evidence = proposal.get('evidence')
         require(isinstance(evidence, list) and bool(evidence), 'EVIDENCE_REQUIRED')
         require(not evidence_root.is_symlink(), 'MCP_EVIDENCE_ROOT_SYMLINK')

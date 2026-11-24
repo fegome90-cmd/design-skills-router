@@ -194,7 +194,7 @@ class Router:
         project_status = state['records'].get(node_id, {}).get('status', 'PENDING')
         if self.decision_awaiting_human(state, node_id):
             project_status = 'AWAITING_HUMAN'
-        return {'node_id':node_id, 'definition_id':n['definition_id'], 'title':n['title'],
+        packet = {'node_id':node_id, 'definition_id':n['definition_id'], 'title':n['title'],
                 'kind':n['kind'], 'active':node_id in self.active(state),
                 'structure_hash':self.structure_hash(node_id),
                 'structure_status':state['structures'].get(node_id,{}).get('status','PENDING'),
@@ -215,6 +215,18 @@ class Router:
                 'policy_hash':policy_hash(n,self.rules,self.contracts),'context_hash':self.context_hash(state,node_id),
                 'relationships':evaluate_contracts(n,{'facts':state.get('facts',{}),'operation':'reference'},self.contracts),
                 'notice':'Inspecting a packet is not consulting its external sources or approving anything.'}
+        if self.context_required(state, node_id):
+            packet['assistance']['action'] = 'delegate_decision'
+            permissions = {}
+            for action in ('analyze', 'draft'):
+                permission = assistance_action(state, n, action)
+                permissions[action] = {'allowed': permission['allowed'], 'stop_reason': permission['stop_reason']}
+            permissions['confirm'] = {'required': True, 'actor': 'human', 'after': 'submit_evidence'}
+            packet['permissions'] = permissions
+            packet['notice'] += (' Use permissions.analyze and permissions.draft to check the active grant.'
+                                 ' Assistance reports decision delegation.'
+                                 ' A human must confirm after the proposal is submitted.')
+        return packet
 
     def blocked(self,node_id):
         n=self.node(node_id)

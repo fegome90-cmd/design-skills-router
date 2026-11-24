@@ -3,7 +3,9 @@ import asyncio
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
+import shutil
 import sqlite3
 import struct
 import sys
@@ -91,7 +93,8 @@ class NodeContextTests(unittest.TestCase):
             self.router.register_source(self.state, skill, path, source['commit'], blob, source['source_ref'])
 
     def attach_application(self, proposal, packet):
-        capture = self.fixture.work / 'mobile.png'
+        capture = self.ledger.parent / 'evidence' / 'mobile.png'
+        capture.parent.mkdir(exist_ok=True)
         capture.write_bytes(png())
         proposal['context_id'] = packet['context_id']
         proposal['evidence'] = [{'path': str(capture), 'sha256': hashlib.sha256(capture.read_bytes()).hexdigest(),
@@ -130,6 +133,9 @@ class NodeContextTests(unittest.TestCase):
 
     def test_phase_routes_before_authorizing_context(self):
         self.assertEqual(self.router.context_next(self.state)['pending_nodes'], ['Q00'])
+        root_packet = self.router.packet(self.state, 'Q00')
+        self.assertNotIn('permissions', root_packet)
+        self.assertNotIn('action', root_packet['assistance'])
         with self.assertRaisesRegex(self.runtime.GateError, 'NODE_NOT_ACTIVE'):
             self.router.open_context(self.state, NODE, self.index)
         self.prepare_case()
@@ -350,26 +356,85 @@ class NodeContextTests(unittest.TestCase):
             self.router.validate_proposal(self.state, NODE, proposal)
 
     @unittest.skipUnless(importlib.util.find_spec('mcp'), 'Install the optional MCP SDK for stdio checks')
-    def test_stdio_returns_current_phase_and_reports_wrong_node(self):
+    def test_stdio_reports_g5_permissions_and_enforces_submission_gates(self):
         from mcp import ClientSession, StdioServerParameters
         from mcp.client.stdio import stdio_client
 
-        self.prepare_case()
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        self.grant(['analyze'])
         self.runtime.save_state(self.ledger, self.state, None)
+        skill_dir = self.fixture.work / 'portable' / 'skills' / 'design-tree'
+        shutil.copytree(fixtures.SCRIPTS.parent, skill_dir)
+        (skill_dir / 'references' / 'contracts.json').write_text(json.dumps(self.router.contracts), encoding='utf-8')
         server = StdioServerParameters(command=sys.executable,
-                                       args=['-B', str(fixtures.SCRIPTS / 'mcp_server.py'), '--state', str(self.ledger)])
+                                       args=['-B', str(skill_dir / 'scripts' / 'mcp_server.py'), '--state', str(self.ledger)])
 
         async def run():
             async with stdio_client(server) as (read, write), ClientSession(read, write) as client:
+                async def call(tool, **arguments):
+                    result = await client.call_tool(tool, arguments)
+                    self.assertFalse(result.isError, result.content)
+                    return result.structuredContent
+
+                async def blocked(tool, reason, **arguments):
+                    result = await client.call_tool(tool, arguments)
+                    self.assertTrue(result.isError, result.content)
+                    self.assertIn(reason, result.content[0].text)
+
                 await client.initialize()
                 tools = await client.list_tools()
                 self.assertEqual({tool.name for tool in tools.tools},
                                  {'next_node', 'open_node', 'search_context', 'submit_evidence'})
-                result = await client.call_tool('next_node', {})
-                self.assertFalse(result.isError)
-                self.assertEqual(result.structuredContent['active_phase'], PHASE)
-                result = await client.call_tool('open_node', {'node_id': 'LAY01'})
-                self.assertTrue(result.isError)
-                self.assertIn('OUTSIDE_PILOT', result.content[0].text)
+                self.assertEqual((await call('next_node'))['active_phase'], PHASE)
+                await blocked('open_node', 'CONTEXT_NODE_OUTSIDE_PILOT', node_id='LAY01')
+
+                packet = await call('open_node', node_id=NODE)
+                assistance = packet['packet']['assistance']
+                self.assertEqual(assistance.get('action'), 'delegate_decision')
+                self.assertFalse(assistance['allowed'])
+                self.assertEqual(assistance['stop_reason'], 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED')
+                allowed = {'allowed': True, 'stop_reason': None}
+                confirmation = {'required': True, 'actor': 'human', 'after': 'submit_evidence'}
+                self.assertEqual(packet['packet']['permissions'], {
+                    'analyze': allowed,
+                    'draft': {'allowed': False, 'stop_reason': 'ACTION_NOT_DELEGATED'},
+                    'confirm': confirmation,
+                })
+                self.attach_application(proposal, packet)
+                revision = packet['revision']
+                ledger_before = self.ledger.read_bytes()
+                await blocked('submit_evidence', 'CONTEXT_ACTION_FORBIDDEN:ACTION_NOT_DELEGATED', node_id=NODE,
+                              expected_revision=revision, proposal=proposal)
+                self.assertEqual(self.ledger.read_bytes(), ledger_before)
+
+                self.state = self.runtime.load_state(self.ledger)
+                self.grant(['analyze', 'draft'])
+                self.runtime.save_state(self.ledger, self.state, revision)
+                packet = await call('open_node', node_id=NODE)
+                self.assertEqual(packet['packet']['permissions'], {
+                    'analyze': allowed, 'draft': allowed, 'confirm': confirmation,
+                })
+                self.attach_application(proposal, packet)
+                incomplete = copy.deepcopy(proposal)
+                incomplete['criterion_reviews'][0]['section_ids'].pop()
+                revision = packet['revision']
+                ledger_before = self.ledger.read_bytes()
+                await blocked('submit_evidence', 'STATE_REVISION_CONFLICT', node_id=NODE,
+                              expected_revision=revision - 1, proposal=incomplete)
+                await blocked('submit_evidence', 'CONTEXT_APPLICATION_REQUIRED:layout', node_id=NODE,
+                              expected_revision=revision, proposal=incomplete)
+                self.assertEqual(self.ledger.read_bytes(), ledger_before)
+                submitted = await call('submit_evidence', node_id=NODE,
+                                       expected_revision=revision, proposal=proposal)
+                self.assertEqual(submitted['state'], 'AWAITING_HUMAN')
+                self.assertIn(NODE, (await call('next_node'))['awaiting_human'])
+                record = self.runtime.load_state(self.ledger)['records'][NODE]
+                self.assertEqual(record['status'], 'AWAITING_HUMAN')
+                self.assertEqual(record['authority']['decided_by'], 'human')
+                self.assertNotIn('permissions', record['context_packet'])
+                self.assertNotIn('assistance', record['context_packet'])
+                await blocked('submit_evidence', 'CONTEXT_NODE_AWAITING_HUMAN', node_id=NODE,
+                              expected_revision=submitted['revision'], proposal=incomplete)
 
         asyncio.run(run())
