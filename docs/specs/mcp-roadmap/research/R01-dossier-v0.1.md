@@ -80,3 +80,21 @@ Preferencia provisional: A como primer incremento comprobable. Si B demuestra re
 5. Ejecutar pruebas G5, CLI instalada, suite plugin y doctor según baseline actual. Revisión independiente EGM con evidencias reales y decisión GO/ADAPT/NO_GO. Si A cumple y B no demuestra valor, cerrar sin registry nuevo. Si B aporta valor, pedir autorización de implementación y congelar plan separado. No ejecutar R02 por inercia.
 
 Resultado de esta sesión: investigación estática y ADR provisional. Paridad ejecutada, tests upstream, prototipo comparativo, juicio independiente y decisión final: NOT_RUN. En la sesión original de investigación no se realizaron cambios en GitHub. La incorporación posterior de este documento al PR borrador no modifica esos resultados.
+
+## Decisión operativa posterior al dossier
+
+El operador decidió el 24-11-2026 que los experimentos A/B no sean requisito para esta fase de desarrollo. Seleccionamos A: handlers explícitos, runner existente y prueba de paridad. B queda como opción futura, no como trabajo pendiente de R01. Se conserva el texto histórico del estudio; la versión vigente del contrato es el spec R01.
+
+La prueba checkout-level packages/cli/tests/test_mcp_parity.py usa un wheel instalado, una copia temporal de sus módulos y pins sintéticos, dos expedientes equivalentes y un cliente MCP stdio real. No altera el runtime. El 24-11-2026 se ejecutó en macOS, Python 3.12.16 y MCP 1.30.0:
+
+| Control | Resultado observado |
+|---|---|
+| Build wheel/sdist | PASS |
+| Prueba de paridad F01 | 1/1 PASS |
+| Suite plugin | 209/209 PASS |
+| Suite CLI con MCP | 12/12 PASS |
+| CLI base sin MCP | 11 PASS, 1 omitida por extra ausente |
+| Recursos portables | 20/20 idénticos entre wheel y sdist |
+| Doctor y verify-package | Exit 0; baseline_verified=true |
+
+No se ejecutó A/B ni se probó el código externo en runtime. Revisión independiente EGM y CI del PR: pendientes. Las cifras corresponden a las pruebas ejecutadas localmente sobre el runtime sin cambios y la nueva prueba; no implican que se haya fusionado el PR ni que el juicio visual del agente mejore.
