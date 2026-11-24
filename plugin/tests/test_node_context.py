@@ -154,6 +154,38 @@ class NodeContextTests(unittest.TestCase):
         reopened = self.router.open_context(self.state, NODE, self.index)
         self.assertEqual(reopened, packet)
 
+    def test_packet_remains_auditable_after_the_phase_is_reopened(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+        proposal_hash = self.router.propose(self.state, NODE, proposal)
+        self.router.confirm_decision(self.state, NODE, self.fixture.receipt(proposal_hash, 'project'))
+        reason = 'Repeat the audit for a different viewport.'
+        target = self.runtime.digest({'phase_id': PHASE, 'gate_packet_hash': None, 'reason': reason})
+        self.router.reopen_phase(self.state, PHASE, reason, self.fixture.receipt(target, 'reopen'))
+        self.grant()
+        reopened = self.router.open_context(self.state, NODE, self.index)
+        self.assertNotEqual(reopened['context_id'], packet['context_id'])
+        self.runtime.save_state(self.ledger, self.state, None)
+        resumed = self.runtime.load_state(self.ledger)
+        retired = next(event['record'] for event in resumed['history']
+                       if event['event'] == 'decision_retired_by_phase' and event['node_id'] == NODE)
+        self.assertEqual(self.runtime.digest(retired['context_packet']), packet['context_id'])
+
+    def test_g5_requires_human_confirmation_under_a_guided_grant(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+        proposal_hash = self.router.propose(self.state, NODE, proposal)
+        with self.assertRaisesRegex(self.runtime.GateError, 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED'):
+            self.router.delegate_decision(self.state, NODE)
+        self.assertFalse(packet['packet']['assistance']['allowed'])
+        self.assertNotIn(f'{NODE}_2', self.router.frontier(self.state))
+        self.router.confirm_decision(self.state, NODE, self.fixture.receipt(proposal_hash, 'project'))
+        self.assertIn(f'{NODE}_2', self.router.frontier(self.state))
+
     def test_phase_authorization_applies_to_analysis_and_drafting(self):
         proposal = self.prepare_case()
         self.pin_test_sources()

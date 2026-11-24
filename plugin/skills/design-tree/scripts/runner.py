@@ -208,7 +208,7 @@ class Router:
                            'source_receipt':state['sources'].get(i)} for i in self.skills_for(node_id)],
                 'criteria':[self.rules[r] for r in n.get('rule_ids',[])],
                 'candidate_contract':n.get('adoption_contract'),
-                'phase_id':self.phase_for(state,node_id),'assistance':assistance_action(state,n,'delegate'),
+                'phase_id':self.phase_for(state,node_id),'assistance':self.decision_delegation(state,node_id),
                 'policy_hash':policy_hash(n,self.rules,self.contracts),'context_hash':self.context_hash(state,node_id),
                 'relationships':evaluate_contracts(n,{'facts':state.get('facts',{}),'operation':'reference'},self.contracts),
                 'notice':'Inspecting a packet is not consulting its external sources or approving anything.'}
@@ -276,6 +276,12 @@ class Router:
 
     def context_required(self, state, node_id):
         return state.get('context_profile') == node_context.PROFILE and node_id == node_context.NODE
+
+    def decision_delegation(self, state, node_id):
+        gate = assistance_action(state, self.node(node_id), 'delegate')
+        if self.context_required(state, node_id):
+            return {**gate, 'allowed': False, 'stop_reason': 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED'}
+        return gate
 
     def context_identity(self, state, node_id):
         pins = self.contracts['source_reviews']
@@ -356,8 +362,7 @@ class Router:
                 'section_ids': {'skills': {skill: row['id'] for skill, row in skill_rows.items()},
                                 'criteria': {rule_id: list(rows) for rule_id, rows in binding['criteria_sections'].items()}}}
 
-    def check_context_application(self, state, node_id, proposal):
-        binding = state['context_packets'].get(node_id)
+    def check_context_application(self, state, node_id, proposal, binding):
         require(binding is not None and proposal.get('context_id') == digest(binding), 'CONTEXT_PACKET_REQUIRED')
         require(all(binding.get(k) == v for k, v in self.context_identity(state, node_id).items()),
                 'CONTEXT_PACKET_STALE')
@@ -476,7 +481,7 @@ class Router:
                 if isinstance(chosen,str) and chosen.endswith('ENV02_2'):return True
         return False
 
-    def validate_proposal(self,state,node_id,p):
+    def validate_proposal(self,state,node_id,p,*,context_packet=None):
         require(isinstance(p,dict) and nonblank(p.get('summary')),'DECISION_SUMMARY_REQUIRED')
         n=self.node(node_id)
         choices=[c['node']['id'] for c in n['children']]
@@ -557,28 +562,29 @@ class Router:
             fact=state.get('facts',{}).get(fid)
             if fact and fact.get('state') in ('PRESENT','ABSENT'):self.check_evidence(fact.get('evidence'),state)
         if self.context_required(state, node_id):
-            self.check_context_application(state, node_id, p)
+            packet = state['context_packets'].get(node_id) if context_packet is None else context_packet
+            self.check_context_application(state, node_id, p, packet)
         return True
 
     def propose(self,state,node_id,proposal):
         self.check_open(state,node_id)
         require(self.structure_confirmed(state,node_id),'STRUCTURE_CONFIRMATION_REQUIRED')
+        packet = None
         if self.context_required(state, node_id):
             require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
             require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
             packet = state['context_packets'].get(node_id)
             require(packet is None or 'criteria_sections' in packet, 'CONTEXT_PACKET_REOPEN_REQUIRED')
         self.validate_proposal(state,node_id,proposal)
-        if self.context_required(state, node_id):
+        if packet is not None:
             self.check_context_action(state, node_id, 'draft')
-            require(state['context_packets'][node_id]['grant'] == state.get('active_grant_id'),
-                    'CONTEXT_PACKET_GRANT_STALE')
+            require(packet['grant'] == state.get('active_grant_id'), 'CONTEXT_PACKET_GRANT_STALE')
         self.bind_evidence_paths(state, proposal['evidence'])
         if node_id in state['records']:
             state['history'].append({'event':'proposal_replaced','node_id':node_id,'record':copy.deepcopy(state['records'][node_id]),'at':now()})
             self.invalidate(state,node_id,'Proposal revision')
         authority={'decided_by':'human','grant_id':None,'grant_hash':None}
-        if assistance_action(state,self.node(node_id),'delegate')['allowed']:
+        if self.decision_delegation(state,node_id)['allowed']:
             g=state['grants'][state['active_grant_id']]
             authority={'decided_by':'agent_delegated','grant_id':g['id'],'grant_hash':g['authorization_hash']}
         p=copy.deepcopy(proposal)
@@ -587,6 +593,8 @@ class Router:
         state['records'][node_id]={'status':'AWAITING_HUMAN','proposal':p,'proposal_hash':h,
             'source_hashes':{sid:state['sources'][sid]['sha256'] for sid in self.skills_for(node_id)},
             'binding':binding,'authority':authority,'submitted_at':now()}
+        if packet is not None:
+            state['records'][node_id]['context_packet'] = copy.deepcopy(packet)
         if self.node(node_id).get('candidate_key'):
             state['candidates'][self.node(node_id)['candidate_key']]=copy.deepcopy(p['candidate'])
         state['history'].append({'event':'proposal','node_id':node_id,'hash':h,'at':now()})
@@ -596,7 +604,7 @@ class Router:
         self.check_open(state,node_id)
         rec=state['records'].get(node_id,{})
         require(rec.get('status') in ('AWAITING_HUMAN','DECIDED_DELEGATED'),'PROPOSAL_REQUIRED')
-        self.validate_proposal(state,node_id,rec['proposal'])
+        self.validate_proposal(state,node_id,rec['proposal'],context_packet=rec.get('context_packet'))
         self.check_gate(state,node_id,rec['proposal'])
         require(self.record_data_valid(state,node_id),'PROPOSAL_STALE')
         r=human_receipt(receipt,rec['proposal_hash'],'project')
@@ -662,7 +670,7 @@ class Router:
     def record_data_valid(self,state,node_id):
         try:
             rec=state['records'][node_id];require(self.structure_confirmed(state,node_id),'STRUCTURE_CHANGED')
-            self.validate_proposal(state,node_id,rec['proposal'])
+            self.validate_proposal(state,node_id,rec['proposal'],context_packet=rec.get('context_packet'))
             n=self.node(node_id)
             needed={p['fact'] for r in self.contracts.get('relations',[]) if n['definition_id'] in r.get('applies_to',[]) or node_id in r.get('applies_to',[]) for p in r['when']}
             needed.update(p['fact'] for r in self.check_requirements(node_id) for p in r['when'])
@@ -823,7 +831,7 @@ class Router:
 
     def delegate_decision(self,state,node_id):
         self.check_open(state,node_id)
-        gate=assistance_action(state,self.node(node_id),'delegate')
+        gate=self.decision_delegation(state,node_id)
         require(gate['allowed'],gate['stop_reason'] or 'DELEGATION_FORBIDDEN')
         rec=state['records'].get(node_id,{})
         require(rec.get('status')=='AWAITING_HUMAN' and rec.get('authority',{}).get('decided_by')=='agent_delegated','DELEGATED_PROPOSAL_REQUIRED')
