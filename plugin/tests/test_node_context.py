@@ -3,6 +3,7 @@ import asyncio
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import shutil
@@ -10,6 +11,7 @@ import sqlite3
 import struct
 import sys
 import unittest
+from unittest.mock import patch
 import zlib
 
 import test_runner as fixtures
@@ -26,15 +28,17 @@ LAYOUT_TITLES = (
 )
 
 
-def png(image_data=None, *, depth=8, color=2):
+def png(image_data=None, *, depth=8, color=2, chunks=None):
     def chunk(kind, body):
         return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body))
 
-    if image_data is None:
-        image_data = zlib.compress(b'\0\xff\xff\xff')
+    if chunks is None:
+        if image_data is None:
+            image_data = zlib.compress(b'\0\xff\xff\xff')
+        chunks = [(b'IDAT', image_data)]
     return (b'\x89PNG\r\n\x1a\n'
             + chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, depth, color, 0, 0, 0))
-            + chunk(b'IDAT', image_data) + chunk(b'IEND', b''))
+            + b''.join(chunk(kind, body) for kind, body in chunks) + chunk(b'IEND', b''))
 
 
 class NodeContextTests(unittest.TestCase):
@@ -289,6 +293,53 @@ class NodeContextTests(unittest.TestCase):
         self.assertEqual(self.router.open_context(self.state, NODE, self.index, query='jerarquia'), hits)
         self.assertEqual(self.router.open_context(self.state, NODE, self.index), packet)
 
+    def test_open_rebuilds_same_count_index_with_incorrect_required_rows(self):
+        self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        section = packet['required_sections'][0]
+        changes = {
+            'missing-id': ('id', 'other section'),
+            'changed-payload': ('payload', json.dumps({**section, 'body': 'Different fixture text.'})),
+            'malformed-payload': ('payload', '{'),
+        }
+        for problem, (column, value) in changes.items():
+            with self.subTest(problem=problem):
+                index = self.index.with_name(f'{problem}.sqlite3')
+                shutil.copyfile(self.index, index)
+                with sqlite3.connect(index) as db:
+                    db.execute(f'UPDATE sections SET {column} = ? WHERE id = ?', (value, section['id']))
+                self.assertEqual(self.router.open_context(self.state, NODE, index), packet)
+
+    def test_gate_validates_png_chunk_types_and_idat_order(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        capture = self.attach_application(proposal, packet)
+        compressed = zlib.compress(b'\0\xff\xff\xff')
+        first, last = (b'IDAT', compressed[:4]), (b'IDAT', compressed[4:])
+        empty = (b'IDAT', b'')
+        ancillary = (b'vpAg', b'fixture metadata')
+        invalid_images = {
+            'unknown critical chunk': [(b'VpAg', b''), first, last],
+            'interrupted data chunks': [first, ancillary, last],
+            'interrupted after empty data chunk': [empty, ancillary, first, last],
+            'interrupted before empty data chunk': [first, last, ancillary, empty],
+        }
+        for description, chunks in invalid_images.items():
+            with self.subTest(description=description):
+                raw = png(chunks=chunks)
+                capture.write_bytes(raw)
+                proposal['evidence'][0]['sha256'] = hashlib.sha256(raw).hexdigest()
+                with self.assertRaisesRegex(self.runtime.GateError, 'CAPTURE_REQUIRED'):
+                    self.router.propose(copy.deepcopy(self.state), NODE, proposal)
+
+        raw = png(chunks=[ancillary, empty, first, empty, last, empty, ancillary])
+        capture.write_bytes(raw)
+        proposal['evidence'][0]['sha256'] = hashlib.sha256(raw).hexdigest()
+        self.router.propose(self.state, NODE, proposal)
+        self.assertEqual(self.state['records'][NODE]['status'], 'AWAITING_HUMAN')
+
     def test_gate_rejects_png_with_invalid_row_data(self):
         proposal = self.prepare_case()
         self.pin_test_sources()
@@ -355,6 +406,85 @@ class NodeContextTests(unittest.TestCase):
         with self.assertRaisesRegex(self.runtime.GateError, 'PACKET_STALE'):
             self.router.validate_proposal(self.state, NODE, proposal)
 
+    def test_stale_pending_proposal_requires_explicit_invalidation(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        capture = self.attach_application(proposal, packet)
+        original_hash = self.router.propose(self.state, NODE, proposal)
+        capture.unlink()
+
+        before = copy.deepcopy(self.state)
+        next_step = self.router.context_next(self.state)
+        self.assertNotIn(NODE, next_step['awaiting_human'])
+        self.assertNotIn(NODE, next_step['context_nodes'])
+        self.assertEqual(next_step['stale_nodes'], [NODE])
+        self.assertEqual(self.router.packet(self.state, NODE)['project_status'], 'STALE')
+        with self.assertRaisesRegex(self.runtime.GateError, 'CONTEXT_PROPOSAL_STALE_USE_INVALIDATE'):
+            self.router.open_context(self.state, NODE, self.index)
+        with self.assertRaisesRegex(self.runtime.GateError, 'CONTEXT_PROPOSAL_STALE_USE_INVALIDATE'):
+            self.router.propose(self.state, NODE, proposal)
+        with self.assertRaisesRegex(self.runtime.GateError, 'EVIDENCE_CHANGED_OR_MISSING'):
+            self.router.confirm_decision(self.state, NODE, self.fixture.receipt(original_hash, 'project'))
+        self.assertEqual(self.state, before)
+
+        self.router.invalidate(self.state, NODE, 'Capture was removed')
+        self.assertIn(NODE, self.router.context_next(self.state)['context_nodes'])
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+        proposal['summary'] += ' Captured again.'
+        replacement_hash = self.router.propose(self.state, NODE, proposal)
+        self.assertNotEqual(original_hash, replacement_hash)
+        self.assertIn(NODE, self.router.context_next(self.state)['awaiting_human'])
+        retired = next(event['record'] for event in self.state['history']
+                       if event['event'] == 'proposal_replaced' and event['node_id'] == NODE)
+        self.assertEqual(retired['proposal_hash'], original_hash)
+        self.assertEqual(self.runtime.digest(retired['context_packet']), packet['context_id'])
+
+    def test_proposal_revalidates_only_applicable_known_facts(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        facts = {}
+        for fact_id, status, node_id in [('present', 'PRESENT', NODE), ('absent', 'ABSENT', NODE),
+                                         ('unknown', 'UNKNOWN', NODE), ('unrelated', 'PRESENT', 'ENV02')]:
+            path = self.ledger.parent / (fact_id + '.txt')
+            raw = fact_id.encode()
+            path.write_bytes(raw)
+            facts[fact_id] = (path, raw)
+            evidence = [{'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(), 'note': 'Fixture fact'}]
+            self.router.set_fact(self.state, fact_id, {'state': status, 'scope': 'project', 'subject': fact_id,
+                                                      'revision': 1, 'applies_to': [node_id], 'value': True,
+                                                      'evidence': evidence})
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+
+        for fact_id in ('present', 'absent'):
+            with self.subTest(fact=fact_id):
+                path, raw = facts[fact_id]
+                path.write_bytes(b'changed')
+                try:
+                    with self.assertRaisesRegex(self.runtime.GateError, 'EVIDENCE_CHANGED_OR_MISSING'):
+                        self.router.propose(copy.deepcopy(self.state), NODE, proposal)
+                finally:
+                    path.write_bytes(raw)
+        for fact_id in ('unknown', 'unrelated'):
+            facts[fact_id][0].unlink()
+        proposal_hash = self.router.propose(self.state, NODE, proposal)
+        self.router.confirm_decision(self.state, NODE, self.fixture.receipt(proposal_hash, 'project'))
+        self.assertTrue(self.router.record_current(self.state, NODE))
+        facts['present'][0].unlink()
+        self.assertFalse(self.router.record_current(self.state, NODE))
+
+    def test_proposal_hash_and_png_validation_use_one_file_read(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        capture = self.attach_application(proposal, packet)
+
+        with patch.object(io, 'open', wraps=io.open) as opened:
+            self.router.propose(self.state, NODE, proposal)
+        self.assertEqual(sum(call.args[0] == capture for call in opened.call_args_list), 1)
+
     @unittest.skipUnless(importlib.util.find_spec('mcp'), 'Install the optional MCP SDK for stdio checks')
     def test_stdio_reports_g5_permissions_and_enforces_submission_gates(self):
         from mcp import ClientSession, StdioServerParameters
@@ -372,18 +502,24 @@ class NodeContextTests(unittest.TestCase):
 
         async def run():
             async with stdio_client(server) as (read, write), ClientSession(read, write) as client:
+                async def protocol_step(label, response):
+                    try:
+                        return await asyncio.wait_for(response, timeout=15)
+                    except asyncio.TimeoutError:
+                        self.fail(f'Timed out waiting for MCP {label}')
+
                 async def call(tool, **arguments):
-                    result = await client.call_tool(tool, arguments)
+                    result = await protocol_step(tool, client.call_tool(tool, arguments))
                     self.assertFalse(result.isError, result.content)
                     return result.structuredContent
 
                 async def blocked(tool, reason, **arguments):
-                    result = await client.call_tool(tool, arguments)
+                    result = await protocol_step(tool, client.call_tool(tool, arguments))
                     self.assertTrue(result.isError, result.content)
                     self.assertIn(reason, result.content[0].text)
 
-                await client.initialize()
-                tools = await client.list_tools()
+                await protocol_step('initialize', client.initialize())
+                tools = await protocol_step('list_tools', client.list_tools())
                 self.assertEqual({tool.name for tool in tools.tools},
                                  {'next_node', 'open_node', 'search_context', 'submit_evidence'})
                 self.assertEqual((await call('next_node'))['active_phase'], PHASE)

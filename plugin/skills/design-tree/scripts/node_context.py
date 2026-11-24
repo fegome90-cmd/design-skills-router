@@ -23,11 +23,15 @@ def is_png(data):
         return False
     cursor = 8
     image_data = []
+    idat_finished = False
     palette = False
     while cursor + 12 <= len(data):
         size, kind = struct.unpack_from('>I4s', data, cursor)
         end = cursor + 8 + size
         if end + 4 > len(data) or zlib.crc32(data[cursor + 4:end]) != struct.unpack_from('>I', data, end)[0]:
+            return False
+        # The first byte's lowercase bit marks an ancillary chunk.
+        if not (kind[0] & 0x20) and kind not in (b'IHDR', b'PLTE', b'IDAT', b'IEND'):
             return False
         if cursor == 8:
             if kind != b'IHDR' or size != 13:
@@ -55,10 +59,12 @@ def is_png(data):
             if palette or image_data or color in (0, 4) or size % 3 or not 1 <= size // 3 <= palette_limit:
                 return False
             palette = True
-        if kind == b'IDAT' and size:
-            if color == 3 and not palette:
+        if kind == b'IDAT':
+            if idat_finished or (color == 3 and not palette):
                 return False
             image_data.append(data[cursor + 8:end])
+        elif image_data:
+            idat_finished = True
         if kind == b'IEND':
             if size or not image_data or end + 4 != len(data):
                 return False
@@ -113,31 +119,39 @@ def sections(skill_id, text):
 
 
 def read_index(path, context_id, rows, required_ids, query=None):
-    """Refresh an outdated snapshot, then look up required IDs or search optional sections."""
+    """Verify the required rows against pinned sources, then return them or search optional sections."""
     if path.is_symlink():
         raise ValueError('CONTEXT_INDEX_SYMLINK')
+    required = [row for row in rows if row['id'] in required_ids]
+    expected = [(row['id'], json.dumps(row, ensure_ascii=False)) for row in required]
+    slots = ','.join('?' for _ in required_ids)
     with closing(sqlite3.connect(path)) as db, db:
         db.execute('BEGIN IMMEDIATE')
         db.execute('CREATE TABLE IF NOT EXISTS snapshot (slot INTEGER PRIMARY KEY, id TEXT NOT NULL)')
         db.execute('''CREATE VIRTUAL TABLE IF NOT EXISTS sections USING fts5(
             id UNINDEXED, payload UNINDEXED, title, body, tokenize='unicode61 remove_diacritics 2')''')
+
+        def required_matches():
+            result = db.execute(f'SELECT id, payload FROM sections WHERE id IN ({slots}) ORDER BY rowid', required_ids)
+            return result.fetchall() == expected
+
         previous = db.execute('SELECT id FROM snapshot WHERE slot = 1').fetchone()
         count = db.execute('SELECT count(*) FROM sections').fetchone()[0]
-        if previous != (context_id,) or count != len(rows):
+        if previous != (context_id,) or count != len(rows) or not required_matches():
             db.execute('DELETE FROM sections')
             db.executemany('INSERT INTO sections VALUES (?, ?, ?, ?)',
                            ((r['id'], json.dumps(r, ensure_ascii=False), r['title'], r['body']) for r in rows))
             db.execute('INSERT OR REPLACE INTO snapshot VALUES (1, ?)', (context_id,))
-        slots = ','.join('?' for _ in required_ids)
+            if not required_matches():
+                raise ValueError('CONTEXT_INDEX_DRIFT')
         if query is None:
-            result = db.execute(f'SELECT payload FROM sections WHERE id IN ({slots}) ORDER BY rowid', required_ids)
-        else:
-            terms = re.findall(r'[^\W_]+', query[:256], re.UNICODE)[:12]
-            if not terms:
-                return []
-            match = ' OR '.join(f'"{term}"' for term in terms)
-            result = db.execute(f'SELECT payload FROM sections WHERE sections MATCH ? AND id NOT IN ({slots}) '
-                                'ORDER BY bm25(sections), rowid LIMIT 5', (match, *required_ids))
+            return required
+        terms = re.findall(r'[^\W_]+', query[:256], re.UNICODE)[:12]
+        if not terms:
+            return []
+        match = ' OR '.join(f'"{term}"' for term in terms)
+        result = db.execute(f'SELECT payload FROM sections WHERE sections MATCH ? AND id NOT IN ({slots}) '
+                            'ORDER BY bm25(sections), rowid LIMIT 5', (match, *required_ids))
         retrieved = [json.loads(row[0]) for row in result]
         originals = {row['id']: row for row in rows}
         if any(not isinstance(row, dict) or originals.get(row.get('id')) != row for row in retrieved):
