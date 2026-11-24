@@ -57,7 +57,7 @@ class InstalledMcpParityTests(unittest.TestCase):
         def cli(*args, error=None):
             result = subprocess.run(
                 [sys.executable, *launch, '--state', str(cli_ledger), *args],
-                cwd=work, capture_output=True, text=True, timeout=30,
+                cwd=work, capture_output=True, encoding='utf-8', timeout=30,
             )
             if error is not None:
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
