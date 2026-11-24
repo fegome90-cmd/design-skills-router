@@ -191,11 +191,14 @@ class Router:
     def packet(self,state,node_id):
         self.check_state(state)
         n=self.node(node_id)
+        project_status = state['records'].get(node_id, {}).get('status', 'PENDING')
+        if self.decision_awaiting_human(state, node_id):
+            project_status = 'AWAITING_HUMAN'
         return {'node_id':node_id, 'definition_id':n['definition_id'], 'title':n['title'],
                 'kind':n['kind'], 'active':node_id in self.active(state),
                 'structure_hash':self.structure_hash(node_id),
                 'structure_status':state['structures'].get(node_id,{}).get('status','PENDING'),
-                'project_status':state['records'].get(node_id,{}).get('status','PENDING'),
+                'project_status':project_status,
                 'criterion':n.get('criterion',''), 'output':n.get('output',''),
                 'requires':n.get('requires',[]), 'context_mode':n.get('context_mode'),
                 'write_policy':n.get('write_policy'), 'candidate_key':n.get('candidate_key'),
@@ -264,7 +267,7 @@ class Router:
                 self.check_open(state, node_id)
             except GateError:
                 continue
-            if state['records'].get(node_id, {}).get('status') == 'AWAITING_HUMAN':
+            if self.decision_awaiting_human(state, node_id):
                 awaiting.append(node_id)
             else:
                 pending.append(node_id)
@@ -277,11 +280,22 @@ class Router:
     def context_required(self, state, node_id):
         return state.get('context_profile') == node_context.PROFILE and node_id == node_context.NODE
 
+    def decision_awaiting_human(self, state, node_id):
+        status = state['records'].get(node_id, {}).get('status')
+        return status == 'AWAITING_HUMAN' or (status == 'DECIDED_DELEGATED' and self.context_required(state, node_id))
+
     def decision_delegation(self, state, node_id):
         gate = assistance_action(state, self.node(node_id), 'delegate')
         if self.context_required(state, node_id):
-            return {**gate, 'allowed': False, 'stop_reason': 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED'}
+            return {**gate, 'allowed': False, 'basis': 'none', 'required_gate': 'node',
+                    'stop_reason': 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED'}
         return gate
+
+    def retain_record_context(self, state, node_id):
+        record = state['records'].get(node_id)
+        packet = state.get('context_packets', {}).get(node_id)
+        if record and packet and 'context_packet' not in record and record['proposal'].get('context_id') == digest(packet):
+            record['context_packet'] = copy.deepcopy(packet)
 
     def context_identity(self, state, node_id):
         pins = self.contracts['source_reviews']
@@ -323,7 +337,7 @@ class Router:
         require(self.context_required(state, node_id), 'CONTEXT_NODE_OUTSIDE_PILOT')
         self.check_open(state, node_id)
         require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
-        require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
+        require(not self.decision_awaiting_human(state, node_id), 'CONTEXT_NODE_AWAITING_HUMAN')
         self.check_context_action(state, node_id, 'analyze')
         identity = self.context_identity(state, node_id)
         grant = state.get('active_grant_id')
@@ -356,6 +370,7 @@ class Router:
         if query is not None:
             return {'context_id': context_id, 'matches': results}
         require(results == required_rows, 'CONTEXT_INDEX_REQUIRED_SECTIONS_MISSING')
+        self.retain_record_context(state, node_id)
         state['context_packets'][node_id] = binding
         return {'context_id': context_id, 'packet': self.packet(state, node_id), 'scope': state['scope'],
                 'facts': facts, 'required_sections': results, 'coverage': 'PACKET_PREPARED',
@@ -572,7 +587,7 @@ class Router:
         packet = None
         if self.context_required(state, node_id):
             require(not self.record_current(state, node_id), 'CONTEXT_NODE_ALREADY_DECIDED')
-            require(state['records'].get(node_id, {}).get('status') != 'AWAITING_HUMAN', 'CONTEXT_NODE_AWAITING_HUMAN')
+            require(not self.decision_awaiting_human(state, node_id), 'CONTEXT_NODE_AWAITING_HUMAN')
             packet = state['context_packets'].get(node_id)
             require(packet is None or 'criteria_sections' in packet, 'CONTEXT_PACKET_REOPEN_REQUIRED')
         self.validate_proposal(state,node_id,proposal)
@@ -608,6 +623,7 @@ class Router:
         self.check_gate(state,node_id,rec['proposal'])
         require(self.record_data_valid(state,node_id),'PROPOSAL_STALE')
         r=human_receipt(receipt,rec['proposal_hash'],'project')
+        self.retain_record_context(state, node_id)
         rec['status']='APPROVED';rec['receipt']=r
         rec['authority']['acceptance_ref']=r['message_ref']
         state['history'].append({'event':'decision_confirmed','node_id':node_id,'receipt':r})
@@ -623,6 +639,7 @@ class Router:
             if rec['status']=='APPROVED':
                 human_receipt(rec.get('receipt'),rec['proposal_hash'],'project')
             elif rec['status']=='DECIDED_DELEGATED':
+                require(not self.context_required(state, node_id), 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED')
                 gid=rec['authority'].get('grant_id');g=state['grants'].get(gid,{})
                 pid=self.phase_for(state,node_id)
                 require(gid==state.get('active_grant_id') and g.get('status')=='ACTIVE','DELEGATION_REVOKED')
@@ -936,6 +953,7 @@ class Router:
             for nid in current['node_instance_ids']:
                 rec=state['records'].get(nid)
                 if rec:
+                    self.retain_record_context(state, nid)
                     state['history'].append({'event':'decision_retired_by_phase','node_id':nid,'record':copy.deepcopy(rec),'at':now()})
                     rec['status']='STALE'
             for key in ('packet','acceptance'):current.pop(key,None)

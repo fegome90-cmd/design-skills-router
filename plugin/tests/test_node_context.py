@@ -105,6 +105,29 @@ class NodeContextTests(unittest.TestCase):
                 review['section_ids'] = list(section_ids['criteria'][review['rule_id']])
         return capture
 
+    def prepare_legacy_record(self, *, delegated=False):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        self.attach_application(proposal, packet)
+        self.router.propose(self.state, NODE, proposal)
+        record = self.state['records'][NODE]
+        record.pop('context_packet', None)
+        old_packet = self.state['context_packets'][NODE]
+        old_packet.pop('criteria_sections')
+        record['proposal']['context_id'] = self.runtime.digest(old_packet)
+        criterion = record['proposal']['criterion_reviews'][0]
+        criterion.pop('section_ids')
+        criterion['section_id'] = old_packet['sections'][LAYOUT_SKILL]['id']
+        grant = self.state['grants'][self.state['active_grant_id']]
+        record['authority'] = {'decided_by': 'agent_delegated', 'grant_id': grant['id'],
+                               'grant_hash': grant['authorization_hash']}
+        record['binding'] = self.router.binding(self.state, NODE, record['authority'])
+        record['proposal_hash'] = self.runtime.digest({'binding': record['binding'], 'proposal': record['proposal']})
+        if delegated:
+            record['status'] = 'DECIDED_DELEGATED'
+        return record
+
     def test_phase_routes_before_authorizing_context(self):
         self.assertEqual(self.router.context_next(self.state)['pending_nodes'], ['Q00'])
         with self.assertRaisesRegex(self.runtime.GateError, 'NODE_NOT_ACTIVE'):
@@ -183,9 +206,36 @@ class NodeContextTests(unittest.TestCase):
         with self.assertRaisesRegex(self.runtime.GateError, 'CONTEXT_HUMAN_CONFIRMATION_REQUIRED'):
             self.router.delegate_decision(self.state, NODE)
         self.assertFalse(packet['packet']['assistance']['allowed'])
+        self.assertEqual(packet['packet']['assistance']['required_gate'], 'node')
         self.assertNotIn(f'{NODE}_2', self.router.frontier(self.state))
         self.router.confirm_decision(self.state, NODE, self.fixture.receipt(proposal_hash, 'project'))
         self.assertIn(f'{NODE}_2', self.router.frontier(self.state))
+
+    def test_legacy_provisional_decision_waits_for_human_confirmation(self):
+        original = self.prepare_legacy_record(delegated=True)
+        self.runtime.save_state(self.ledger, self.state, None)
+        state = self.runtime.load_state(self.ledger)
+        self.assertIn(NODE, self.router.context_next(state)['awaiting_human'])
+        self.assertEqual(self.router.packet(state, NODE)['project_status'], 'AWAITING_HUMAN')
+        self.assertNotIn(f'{NODE}_2', self.router.frontier(state))
+        with self.assertRaisesRegex(self.runtime.GateError, 'CONTEXT_NODE_AWAITING_HUMAN'):
+            self.router.open_context(state, NODE, self.index)
+        self.router.confirm_decision(state, NODE, self.fixture.receipt(original['proposal_hash'], 'project'))
+        self.assertIn(f'{NODE}_2', self.router.frontier(state))
+
+    def test_legacy_approved_record_retains_original_packet_when_reopened(self):
+        original = self.prepare_legacy_record()
+        self.router.confirm_decision(self.state, NODE, self.fixture.receipt(original['proposal_hash'], 'project'))
+        original.pop('context_packet', None)
+        self.assertTrue(self.router.record_current(self.state, NODE))
+        reason = 'Repeat under a new authorization.'
+        target = self.runtime.digest({'phase_id': PHASE, 'gate_packet_hash': None, 'reason': reason})
+        self.router.reopen_phase(self.state, PHASE, reason, self.fixture.receipt(target, 'reopen'))
+        self.grant()
+        self.router.open_context(self.state, NODE, self.index)
+        retired = next(event['record'] for event in self.state['history']
+                       if event['event'] == 'decision_retired_by_phase' and event['node_id'] == NODE)
+        self.assertEqual(self.runtime.digest(retired['context_packet']), original['proposal']['context_id'])
 
     def test_phase_authorization_applies_to_analysis_and_drafting(self):
         proposal = self.prepare_case()
