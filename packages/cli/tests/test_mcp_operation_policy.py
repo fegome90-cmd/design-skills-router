@@ -130,7 +130,9 @@ class InstalledOperationPolicyTests(unittest.TestCase):
                     'open_node': ({'node_id': 'string'}, 'analyze', ['context_packet', 'derived_index']),
                     'search_context': ({'node_id': 'string', 'query': 'string'}, 'analyze', ['derived_index']),
                     'submit_evidence': ({'node_id': 'string', 'expected_revision': 'integer',
-                                         'proposal': 'object'}, 'draft', ['pending_proposal']),
+                                         'proposal': 'object'}, 'draft',
+                                        ['pending_proposal', 'proposal_history', 'dependent_invalidation',
+                                         'candidate_update', 'evidence_path_binding']),
                 }
                 for name, (fields, action, mutation) in expected.items():
                     tool = tools[name]
@@ -140,6 +142,9 @@ class InstalledOperationPolicyTests(unittest.TestCase):
                     self.assertEqual(tool.meta['design-router/action'], action)
                     self.assertEqual(tool.meta['design-router/mutation'], mutation)
                     self.assertIn('ledger:read', tool.meta['design-router/capabilities'])
+                    if name == 'next_node':
+                        self.assertEqual(set(tool.meta['design-router/capabilities']),
+                                         {'ledger:read', 'source:read', 'evidence:read'})
 
                 self.assertEqual(self.cli('context-next'), await self.call(client, 'next_node'))
                 packet = self.cli('context-open', node)
@@ -153,6 +158,10 @@ class InstalledOperationPolicyTests(unittest.TestCase):
                 proposal.write_text(json.dumps(self.proposal), encoding='utf-8')
                 before = self.snapshots(self.cli_state, self.mcp_state)
                 self.cli('propose', node, '--file', str(proposal), policy='submit_evidence',
+                         error='TOOL_DISABLED:submit_evidence')
+                invalid = self.work / 'invalid-proposal.json'
+                invalid.write_text('{', encoding='utf-8')
+                self.cli('propose', node, '--file', str(invalid), policy='submit_evidence',
                          error='TOOL_DISABLED:submit_evidence')
                 self.assertEqual(self.snapshots(self.cli_state, self.mcp_state), before)
                 submitted = self.cli('propose', node, '--file', str(proposal))

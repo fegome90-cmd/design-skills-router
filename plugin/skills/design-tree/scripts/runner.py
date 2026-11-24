@@ -1327,7 +1327,12 @@ def main(argv=None):
         state['history'].append({'event':'resumed','at':now(),'scope':'Paths relocated; no autonomy increase'})
         save_state(a.state,state,None)
         return router.status(state)
-    state=load_state(a.state);router.check_state(state);rev=state['revision'];changed=True
+    state=load_state(a.state)
+    # The legacy propose command also serves human/non-pilot proposals.
+    # Identify the pilot from the ledger, then deny before reading the payload.
+    if a.cmd=='propose' and router.context_required(state, a.node_id):
+        require_operation('submit_evidence')
+    router.check_state(state);rev=state['revision'];changed=True
     payload=json.loads(a.file.read_text(encoding='utf-8')) if getattr(a,'file',None) and a.cmd!='source' else None
     if a.cmd=='status':return router.status(state)
     if a.cmd=='node':return router.packet(state,a.node_id)

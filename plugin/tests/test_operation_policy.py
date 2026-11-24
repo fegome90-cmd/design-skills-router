@@ -39,6 +39,28 @@ class OperationPolicyTests(unittest.TestCase):
                     c.runtime.context_command(c.ledger, 'next')
         self.assertEqual(c.ledger.read_bytes(), before)
 
+    def test_disabled_cli_submission_does_not_read_proposal(self):
+        c = self.case
+        before = c.ledger.read_bytes()
+        missing = c.ledger.parent / 'not-present.json'
+        for policy, error in (('submit_evidence', 'TOOL_DISABLED:submit_evidence'),
+                              ('unknown_operation', 'INVALID_TOOL_POLICY')):
+            with self.subTest(policy=policy), patch.dict(os.environ, {ENV: policy}):
+                with self.assertRaisesRegex(c.runtime.GateError, error):
+                    c.runtime.main(['--state', str(c.ledger), 'propose', fixture.NODE,
+                                    '--file', str(missing)])
+        self.assertEqual(c.ledger.read_bytes(), before)
+        self.assertFalse(missing.exists())
+
+    def test_metadata_accounts_for_reads_and_conditional_writes(self):
+        from tool_catalog import create_tool_descriptors
+        defs = {d.definition.name: d.definition for d in create_tool_descriptors('mcp')}
+        self.assertEqual(set(defs['next_node'].capabilities),
+                         {'ledger:read', 'source:read', 'evidence:read'})
+        self.assertEqual(set(defs['submit_evidence'].execution.mutation),
+                         {'pending_proposal', 'proposal_history', 'dependent_invalidation',
+                          'candidate_update', 'evidence_path_binding'})
+
     def test_unknown_runner_context_command_is_rejected(self):
         c = self.case
         with self.assertRaisesRegex(c.runtime.GateError, 'UNKNOWN_TOOL_COMMAND'):

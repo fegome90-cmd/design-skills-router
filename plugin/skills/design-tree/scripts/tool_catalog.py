@@ -15,7 +15,8 @@ from typing import Literal
 POLICY_ENV = 'DESIGN_ROUTER_DISABLED_TOOLS'
 ToolCapability = Literal['ledger:read', 'ledger:write', 'source:read', 'index:read',
                          'index:write', 'evidence:read']
-Mutation = Literal['context_packet', 'derived_index', 'pending_proposal']
+Mutation = Literal['context_packet', 'derived_index', 'pending_proposal', 'proposal_history',
+                   'dependent_invalidation', 'candidate_update', 'evidence_path_binding']
 Interface = Literal['cli', 'mcp']
 
 
@@ -55,7 +56,7 @@ def define_tool(*, name, description, action, command, handler, capabilities,
 ALL_TOOLS = (
     define_tool(name='next_node', description="Read the runner's current phase, revision and pending nodes.",
                 action='orientation', command='next', handler='Router.context_next',
-                capabilities=('ledger:read',)),
+                capabilities=('ledger:read', 'source:read', 'evidence:read')),
     define_tool(name='open_node', description='Return pinned sections, project context, and the permissions to analyze and draft.',
                 action='analyze', command='open', handler='Router.open_context',
                 capabilities=('ledger:read', 'ledger:write', 'source:read', 'index:read', 'index:write', 'evidence:read'),
@@ -67,7 +68,8 @@ ALL_TOOLS = (
     define_tool(name='submit_evidence', description='Submit a G5 draft with its context ID and local evidence for human confirmation.',
                 action='draft', command='propose', handler='Router.propose',
                 capabilities=('ledger:read', 'ledger:write', 'source:read', 'evidence:read'),
-                mutation=('pending_proposal',)),
+                mutation=('pending_proposal', 'proposal_history', 'dependent_invalidation',
+                          'candidate_update', 'evidence_path_binding')),
 )
 _BY_NAME = {definition.name: definition for definition in ALL_TOOLS}
 _BY_COMMAND = {definition.command: definition for definition in ALL_TOOLS}

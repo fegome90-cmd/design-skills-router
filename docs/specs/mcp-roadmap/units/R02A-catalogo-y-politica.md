@@ -30,7 +30,10 @@ los descriptores se construyen internamente y no se reciben del cliente.
 
 Una sola tabla inmutable de cuatro operaciones. Los efectos derivan de las
 mutaciones declaradas. El runner existente ejecuta los handlers y aplica
-la política antes de consultar o modificar el expediente y el índice.
+la política antes de acceder al expediente y el índice por la ruta
+context_command. La CLI histórica propose también sirve propuestas humanas:
+lee el expediente para identificar G5 y comprueba la política antes de
+validar el expediente o leer el payload, sin mutar nada en caso de rechazo.
 Los métodos directos del runner también comprueban la política; CLI y MCP
 conservan sus contratos públicos. Las comprobaciones de dominio existentes
 no se sustituyen. No se cambian mandatos, recibos ni fases.
@@ -83,7 +86,7 @@ sin debilitar las restricciones de rutas del servidor.
 
 Python 3.12.16, design-skills-router 0.3.1, MCP SDK 1.30.0.
 Se construyeron wheel y sdist; instalación base desde sdist y extra desde
-wheel en entornos nuevos. Plugin 215/215, CLI+MCP 14/14, CLI base 11/11.
+wheel en entornos nuevos. Primera iteración: plugin 215/215, CLI+MCP 14/14, CLI base 11/11.
 Doctor exit 0, cero hallazgos; verify-package baseline true, 82 entradas,
 3660 nodos expandidos. Las cuatro pruebas iniciales de política fallaron
 antes del port; posteriormente se extendieron a seis pruebas verdes.
@@ -104,3 +107,24 @@ TOOL_DISABLED:search_context con exit 2.
 
 El manifiesto de distribución se actualiza solo para los archivos tocados;
 el baseline canónico v0.4 no cambia. CI de R02A no ejecutada: no hay PR.
+
+## Revisión independiente de la primera iteración
+
+Codex gpt-6.2-astra, razonamiento alto, en modo filesystem read-only,
+sobre 916e93f8b8cdedba4e8ac1155625fac30d779372: sin bypass de ejecución
+G5 deshabilitada identificado; tres P2 (orden del guard de propose,
+capacidades de lectura de next_node y efectos de resubmission).
+Se añadieron dos regresiones: antes del fix, el payload ausente produjo
+FileNotFoundError en vez del rechazo esperado y la metadata omitía lecturas.
+Los cambios de seguimiento corrigen los tres hallazgos, sin cambiar gates
+ni el comportamiento humano fuera del piloto. La metadata enumera
+también los efectos condicionales de historial, invalidación, candidatos
+y vinculación de rutas de evidencia. El guard histórico de propose
+necesita leer el expediente para discriminar G5 de propuestas no piloto.
+
+Verificación posterior a los fixes: plugin 217/217; CLI+MCP 14/14;
+CLI base 11/11; doctor exit 0, sin hallazgos; baseline intacto.
+Wheel y sdist reconstruidos e instalados. La prueba instalada incluye
+un JSON deliberadamente inválido bajo submit_evidence deshabilitada,
+que se rechaza por política antes de parsearlo.
+El HEAD de seguimiento requiere revisión independiente/CI antes del PR.
