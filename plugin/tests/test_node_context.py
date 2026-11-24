@@ -4,6 +4,7 @@ import copy
 import hashlib
 import importlib.util
 from pathlib import Path
+import sqlite3
 import struct
 import sys
 import unittest
@@ -23,14 +24,14 @@ LAYOUT_TITLES = (
 )
 
 
-def png(image_data=None):
+def png(image_data=None, *, depth=8, color=2):
     def chunk(kind, body):
         return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body))
 
     if image_data is None:
         image_data = zlib.compress(b'\0\xff\xff\xff')
     return (b'\x89PNG\r\n\x1a\n'
-            + chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
+            + chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, depth, color, 0, 0, 0))
             + chunk(b'IDAT', image_data) + chunk(b'IEND', b''))
 
 
@@ -221,6 +222,33 @@ class NodeContextTests(unittest.TestCase):
         self.assertEqual(self.router.open_context(self.state, NODE, self.index), packet)
         self.assertEqual(len(packet['required_sections']), 5)
         self.assertTrue(all(row['body'].startswith('Observa') for row in packet['required_sections']))
+
+    def test_search_rebuilds_an_incomplete_index_with_the_same_packet(self):
+        self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        hits = self.router.open_context(self.state, NODE, self.index, query='jerarquia')
+        with sqlite3.connect(self.index) as db:
+            db.execute('DROP TABLE sections')
+        self.assertEqual(self.router.open_context(self.state, NODE, self.index, query='jerarquia'), hits)
+        self.assertEqual(self.router.open_context(self.state, NODE, self.index), packet)
+
+    def test_gate_rejects_png_with_invalid_row_data(self):
+        proposal = self.prepare_case()
+        self.pin_test_sources()
+        packet = self.router.open_context(self.state, NODE, self.index)
+        capture = self.attach_application(proposal, packet)
+        invalid_images = {
+            'row filter': png(zlib.compress(b'\x05\xff\xff\xff')),
+            'RGB pixel depth': png(zlib.compress(b'\0\xff'), depth=1),
+            'missing palette': png(zlib.compress(b'\0\0'), color=3),
+        }
+        for description, raw in invalid_images.items():
+            with self.subTest(description=description):
+                capture.write_bytes(raw)
+                proposal['evidence'][0]['sha256'] = hashlib.sha256(raw).hexdigest()
+                with self.assertRaisesRegex(self.runtime.GateError, 'CAPTURE_REQUIRED'):
+                    self.router.propose(copy.deepcopy(self.state), NODE, proposal)
 
     def test_gate_binds_application_to_project_evidence_and_persists_without_index(self):
         proposal = self.prepare_case()

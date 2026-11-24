@@ -18,11 +18,12 @@ SKILL_SECTIONS = {
 
 
 def is_png(data):
-    """Check PNG framing, checksums and the size of the compressed image stream."""
+    """Check PNG framing, checksums and encoded scanlines."""
     if not data.startswith(b'\x89PNG\r\n\x1a\n'):
         return False
     cursor = 8
     image_data = []
+    palette = False
     while cursor + 12 <= len(data):
         size, kind = struct.unpack_from('>I4s', data, cursor)
         end = cursor + 8 + size
@@ -32,21 +33,31 @@ def is_png(data):
             if kind != b'IHDR' or size != 13:
                 return False
             width, height, depth, color, compression, filtering, interlace = struct.unpack_from('>IIBBBBB', data, cursor + 8)
-            bits = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}.get(color, 0) * depth
-            if not (width and height and bits) or compression or filtering or interlace not in (0, 1):
+            depths = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8), 4: (8, 16), 6: (8, 16)}
+            if not (width and height) or depth not in depths.get(color, ()):
                 return False
+            if compression or filtering or interlace not in (0, 1):
+                return False
+            bits = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[color] * depth
             passes = ((0, 0, 1, 1),) if not interlace else (
                 (0, 0, 8, 8), (4, 0, 8, 8), (0, 4, 4, 8), (2, 0, 4, 4),
                 (0, 2, 2, 4), (1, 0, 2, 2), (0, 1, 1, 2),
             )
-            expected = sum(((bits * ((width - x + dx - 1) // dx) + 7) // 8 + 1)
-                           * ((height - y + dy - 1) // dy)
-                           for x, y, dx, dy in passes if width > x and height > y)
+            scanlines = [((bits * ((width - x + dx - 1) // dx) + 7) // 8 + 1, (height - y + dy - 1) // dy)
+                         for x, y, dx, dy in passes if width > x and height > y]
+            expected = sum(stride * count for stride, count in scanlines)
             if expected > 128 * 1024 * 1024:
                 return False
         elif kind == b'IHDR':
             return False
+        if kind == b'PLTE':
+            palette_limit = (1 << depth) if color == 3 else 256
+            if palette or image_data or color in (0, 4) or size % 3 or not 1 <= size // 3 <= palette_limit:
+                return False
+            palette = True
         if kind == b'IDAT' and size:
+            if color == 3 and not palette:
+                return False
             image_data.append(data[cursor + 8:end])
         if kind == b'IEND':
             if size or not image_data or end + 4 != len(data):
@@ -56,7 +67,15 @@ def is_png(data):
                 decoded = stream.decompress(b''.join(image_data), expected + 1)
             except zlib.error:
                 return False
-            return stream.eof and not stream.unused_data and len(decoded) == expected
+            if not stream.eof or stream.unused_data or len(decoded) != expected:
+                return False
+            start = 0
+            for stride, count in scanlines:
+                stop = start + stride * count
+                if any(decoded[offset] > 4 for offset in range(start, stop, stride)):
+                    return False
+                start = stop
+            return True
         cursor = end + 4
     return False
 
@@ -103,7 +122,8 @@ def read_index(path, context_id, rows, required_ids, query=None):
         db.execute('''CREATE VIRTUAL TABLE IF NOT EXISTS sections USING fts5(
             id UNINDEXED, payload UNINDEXED, title, body, tokenize='unicode61 remove_diacritics 2')''')
         previous = db.execute('SELECT id FROM snapshot WHERE slot = 1').fetchone()
-        if previous != (context_id,):
+        count = db.execute('SELECT count(*) FROM sections').fetchone()[0]
+        if previous != (context_id,) or count != len(rows):
             db.execute('DELETE FROM sections')
             db.executemany('INSERT INTO sections VALUES (?, ?, ?, ?)',
                            ((r['id'], json.dumps(r, ensure_ascii=False), r['title'], r['body']) for r in rows))
