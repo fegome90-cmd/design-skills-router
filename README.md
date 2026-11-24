@@ -34,7 +34,7 @@ El [prototipo React](board/desktop-demo/README.md) incluye un espacio de trabajo
 | Rastrear una decisión al código | [Guía de navegación](map/README.md), [generador](map/assemble_map.py), [vista navegable](map/view.py) y [380 nodos con 1.411 enlaces](release/design-router-mapa-fuentes.json). Las rutas del mapa se resuelven bajo `plugin/`. |
 | Mantener el plugin | [Manual](plugin/skills/design-tree/references/MAINTENANCE.md), [manifiesto](plugin/.codex-plugin/plugin.json), [pruebas](plugin/tests/) y [herramienta de release](plugin/scripts/release.py). |
 | Reproducir los hallazgos v1.1 | [Auditoría histórica](history/v1.1/README.md), HTML original y anotado, pruebas negativas, informe y capturas. |
-| Revisar el futuro MCP | [Plan de integración](docs/Plan_MCP_Design_Router.md). El servidor queda como trabajo posterior. |
+| Probar MCP local | [Piloto G5 de contexto por nodo](plugin/skills/design-tree/references/CLI.md#piloto-g5-de-contexto-por-nodo). El [plan de integración](docs/Plan_MCP_Design_Router.md) cubre la ampliación a otros recorridos. |
 | Medir uso global del árbol y las skills | [Telemetría](telemetry/README.md), [auditoría y límites](docs/telemetry/AUDIT.md). El colector es opt-in y no observa ejecuciones sin un host que las reporte. |
 
 ## Cómo leer los inventarios

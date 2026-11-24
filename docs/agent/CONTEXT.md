@@ -12,4 +12,4 @@ Design Skills Router reúne un plugin que guía decisiones de diseño, una pizar
 
 ## Trabajo planificado
 
-`docs/Plan_MCP_Design_Router.md` describe el MCP propuesto, sus contratos preliminares y los casos del piloto. El README sitúa su implementación como trabajo posterior.
+El [piloto G5](../../plugin/skills/design-tree/references/CLI.md#piloto-g5-de-contexto-por-nodo) ofrece un MCP local para una decisión de auditoría web. `docs/Plan_MCP_Design_Router.md` describe la ampliación a otros recorridos.

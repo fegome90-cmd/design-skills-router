@@ -4,6 +4,7 @@
 | --- | --- |
 | Modelo canónico y runtime | `plugin/skills/design-tree/references/tree-v0.4/tree.json` contiene el modelo declarativo. `plugin/skills/design-tree/scripts/runner.py` carga y verifica el baseline, expande el modelo y calcula los nodos activos y sus paquetes. |
 | Contratos suplementarios | `plugin/skills/design-tree/references/contracts.json` declara relaciones condicionadas que `plugin/skills/design-tree/scripts/contracts.py` valida y evalúa. |
+| Contexto G5 | `node_context.py` prepara un índice SQLite reconstruible desde fuentes fijadas. `runner.py` habilita el nodo, exige los pasajes del criterio y guarda el paquete de cada propuesta en el expediente. `mcp_server.py` expone las operaciones del runner por stdio. |
 | Pizarra y simulador | `board/build.py` incrusta las fuentes de las vistas. El simulador usa `board/src/simulador/politica.json`. `tools/build.py` coordina el ensamblado de los HTML y el mapa. |
 | Mapa navegable | `map/assemble_map.py` combina el árbol y las relaciones revisadas, comprueba referencias de archivo y símbolos, y genera el grafo que se incrusta con `map/view.py`. |
 | Investigación y fuentes fijadas | `semantic/PROCEDENCIA.md` documenta los datos editables. `docs/skills.md` registra las revisiones de las skills. El índice de rutas vive en `vendor/index.json` del checkout completo. |

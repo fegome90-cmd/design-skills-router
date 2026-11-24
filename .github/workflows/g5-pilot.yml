@@ -1,0 +1,37 @@
+name: G5 pilot
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/g5-pilot.yml
+      - packages/cli/**
+      - plugin/**
+
+permissions:
+  contents: read
+
+jobs:
+  context-contract:
+    name: G5 context contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: '3.12'
+      - name: Build and install the CLI with MCP
+        shell: bash
+        run: |
+          python -m pip install uv
+          python -B packages/cli/build.py --out-dir "$RUNNER_TEMP/router-dist" --allow-network
+          wheels=("$RUNNER_TEMP"/router-dist/*.whl)
+          python -m pip install "${wheels[0]}[mcp]"
+          python -c 'import mcp'
+      - name: Verify the G5 stdio contract and installed CLI
+        run: |
+          python -B -m unittest discover -s plugin/tests -p test_node_context.py -v
+          python -B -m unittest discover -s packages/cli/tests -v
+          python -B plugin/skills/design-tree/scripts/doctor.py --format text

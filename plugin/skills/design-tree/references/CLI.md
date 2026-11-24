@@ -61,6 +61,40 @@ python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json so
 
 Los apoyos requeridos por un criterio también se consultan y registran como evidencia. Metadatos desconocidos permanecen UNKNOWN; sólo se permite REFERENCE_ONLY. Actualizar un pin canónico requiere otra versión del baseline, no editar un contrato suplementario.
 
+### Piloto G5 de contexto por nodo
+
+Crea un expediente nuevo de auditoría web con `init --mode audit --context-pilot`. Configura la fase y registra un mandato asistido que cubra las acciones `analyze` y `draft`. El piloto aplica a la decisión `E05__LAY01`. Para un encargo acotado, el mapa de fase puede incluir esa decisión y sus resultados `E05__LAY01_1`, `E05__LAY01_2` y `E05__LAY01_3` en la familia `visual`. Los ancestros conservan sus comprobaciones habituales.
+
+```sh
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json context-next
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json context-open E05__LAY01
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json context-search E05__LAY01 --query jerarquia
+```
+
+Registra las dos fuentes del nodo con `source`. `context-open` devuelve las secciones obligatorias del cuerpo, el contexto vigente y un `context_id`. `section_ids.skills` identifica el pasaje principal de cada skill. `section_ids.criteria` identifica todos los pasajes asignados al criterio en `rules.json`. Para `layout`, son cuatro pasajes de `better-layout`. El índice `ledger.json.context.sqlite3` se crea junto al expediente, requiere SQLite con FTS5 y se puede reconstruir desde las fuentes registradas.
+
+En G5, `packet.assistance.action` identifica `delegate_decision` y los demás campos de `assistance` describen ese permiso. `packet.permissions.analyze` y `packet.permissions.draft` indican qué permite el mandato activo. Ambas acciones devuelven `allowed` y `stop_reason`, que es `null` si la acción está autorizada. `packet.permissions.confirm` indica que una persona debe confirmar la propuesta después de presentarla con `submit_evidence` en MCP o `propose` en la CLI. La presentación exige las comprobaciones de estructura, contexto y evidencia del expediente.
+
+Si el índice pierde filas, la siguiente consulta lo regenera desde esas fuentes. Ante `CONTEXT_INDEX_UNAVAILABLE`, conserva el expediente y aparta el índice después de cerrar los procesos del router. Vuelve a ejecutar `context-open` para regenerarlo.
+
+Para `propose`, incluye `context_id`, `verification: OBSERVED` y una evidencia PNG con su SHA-256. Cada entrada de `skill_reviews` cita su `section_id`. Cada entrada de `criterion_reviews` cita la lista completa de `section_ids` de su regla. Ambas registran una `observation`, vinculan la captura en `evidence_refs` y conservan la justificación. Si el paquete preparado es anterior a este contrato, ejecuta `context-open` otra vez antes de presentar una propuesta nueva. Las propuestas ya registradas se comprueban según su paquete original.
+
+Al presentar, el runner vuelve a comprobar la evidencia de los hechos aplicables con estado `PRESENT` o `ABSENT`.
+
+Una sección ausente, un paquete de otro contexto o una captura con datos incompletos impiden presentar la decisión. El expediente guarda en cada propuesta los hashes de su paquete, incluso al reabrir la fase. La decisión de G5 requiere `confirm`, también si un expediente anterior trae una decisión delegada que sigue sin ratificar. Si el expediente anterior conserva el paquete original, el runner lo adjunta al registro al confirmar o reabrir. El runner vuelve a comprobar la evidencia al ratificar, incluidos los datos del PNG, el hash y el vínculo con las secciones. La procedencia de la captura y la pertinencia del juicio se revisan con la persona.
+
+Si `context-next` o `next_node` incluye el nodo en `stale_nodes`, revisa qué fuente, hecho o evidencia cambió. Para reemplazar la propuesta, registra manualmente el motivo con `invalidate`, reúne la evidencia vigente y vuelve a abrir el contexto. Presenta la propuesta corregida con el `context_id` que devuelve `context-open`.
+
+```sh
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json invalidate E05__LAY01 --reason 'Se retiró la captura anterior'
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json context-open E05__LAY01
+python3 -B skills/design-tree/scripts/runner.py --state /proyecto/ledger.json propose E05__LAY01 --file /proyecto/propuesta-corregida.json
+```
+
+Si una fase anterior ya esperaba aceptación con una decisión delegada de G5, usa `phase-reopen` con un recibo humano para volver a preparar la fase. El expediente conserva el paquete anterior como historial.
+
+Con la CLI instalada con el extra `[mcp]`, ejecuta `design-skills-router --state /proyecto/ledger.json mcp` como servidor local stdio. Las herramientas `next_node`, `open_node`, `search_context` y `submit_evidence` usan ese expediente. `submit_evidence` requiere `expected_revision` y rutas absolutas bajo `/proyecto/evidence/`. Una propuesta válida queda en `AWAITING_HUMAN`. El host conserva su propia observación de qué contenido incorporó al contexto del modelo.
+
 ## Propuesta y decisión
 
 Objeto de propuesta:

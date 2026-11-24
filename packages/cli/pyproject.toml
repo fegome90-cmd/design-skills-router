@@ -11,6 +11,9 @@ license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = ["typer>=0.29.1,<0.30", "rich>=15,<16"]
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.29,<2"]
+
 [project.scripts]
 design-skills-router = "design_skills_router.cli:app"
 
@@ -24,7 +27,9 @@ exclude = ["**/__pycache__"]
 "plugin/skills/design-tree/scripts/contracts.py" = "design_skills_router/_portable/skills/design-tree/scripts/contracts.py"
 "plugin/skills/design-tree/scripts/diagnostics.py" = "design_skills_router/_portable/skills/design-tree/scripts/diagnostics.py"
 "plugin/skills/design-tree/scripts/doctor.py" = "design_skills_router/_portable/skills/design-tree/scripts/doctor.py"
+"plugin/skills/design-tree/scripts/mcp_server.py" = "design_skills_router/_portable/skills/design-tree/scripts/mcp_server.py"
 "plugin/skills/design-tree/scripts/migration.py" = "design_skills_router/_portable/skills/design-tree/scripts/migration.py"
+"plugin/skills/design-tree/scripts/node_context.py" = "design_skills_router/_portable/skills/design-tree/scripts/node_context.py"
 "plugin/skills/design-tree/scripts/runner.py" = "design_skills_router/_portable/skills/design-tree/scripts/runner.py"
 "plugin/skills/design-tree/scripts/tree_model.py" = "design_skills_router/_portable/skills/design-tree/scripts/tree_model.py"
 "plugin/skills/design-tree/scripts/verification.py" = "design_skills_router/_portable/skills/design-tree/scripts/verification.py"
@@ -49,7 +54,9 @@ include = [
   "/plugin/skills/design-tree/scripts/contracts.py",
   "/plugin/skills/design-tree/scripts/diagnostics.py",
   "/plugin/skills/design-tree/scripts/doctor.py",
+  "/plugin/skills/design-tree/scripts/mcp_server.py",
   "/plugin/skills/design-tree/scripts/migration.py",
+  "/plugin/skills/design-tree/scripts/node_context.py",
   "/plugin/skills/design-tree/scripts/runner.py",
   "/plugin/skills/design-tree/scripts/tree_model.py",
   "/plugin/skills/design-tree/scripts/verification.py",
