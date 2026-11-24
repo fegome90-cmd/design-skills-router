@@ -33,5 +33,6 @@ jobs:
       - name: Verify the G5 stdio contract and installed CLI
         run: |
           python -B -m unittest discover -s plugin/tests -p test_node_context.py -v
+          python -B -m unittest discover -s plugin/tests -p test_operation_policy.py -v
           python -B -m unittest discover -s packages/cli/tests -v
           python -B plugin/skills/design-tree/scripts/doctor.py --format text

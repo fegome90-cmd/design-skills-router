@@ -26,6 +26,7 @@ PLUGIN_FILES = (
     Path("plugin/skills/design-tree/scripts/migration.py"),
     Path("plugin/skills/design-tree/scripts/node_context.py"),
     Path("plugin/skills/design-tree/scripts/runner.py"),
+    Path("plugin/skills/design-tree/scripts/tool_catalog.py"),
     Path("plugin/skills/design-tree/scripts/tree_model.py"),
     Path("plugin/skills/design-tree/scripts/verification.py"),
     Path("plugin/skills/design-tree/references/baseline-lock.json"),

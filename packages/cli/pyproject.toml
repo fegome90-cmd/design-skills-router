@@ -31,6 +31,7 @@ exclude = ["**/__pycache__"]
 "plugin/skills/design-tree/scripts/migration.py" = "design_skills_router/_portable/skills/design-tree/scripts/migration.py"
 "plugin/skills/design-tree/scripts/node_context.py" = "design_skills_router/_portable/skills/design-tree/scripts/node_context.py"
 "plugin/skills/design-tree/scripts/runner.py" = "design_skills_router/_portable/skills/design-tree/scripts/runner.py"
+"plugin/skills/design-tree/scripts/tool_catalog.py" = "design_skills_router/_portable/skills/design-tree/scripts/tool_catalog.py"
 "plugin/skills/design-tree/scripts/tree_model.py" = "design_skills_router/_portable/skills/design-tree/scripts/tree_model.py"
 "plugin/skills/design-tree/scripts/verification.py" = "design_skills_router/_portable/skills/design-tree/scripts/verification.py"
 "plugin/skills/design-tree/references/baseline-lock.json" = "design_skills_router/_portable/skills/design-tree/references/baseline-lock.json"
@@ -58,6 +59,7 @@ include = [
   "/plugin/skills/design-tree/scripts/migration.py",
   "/plugin/skills/design-tree/scripts/node_context.py",
   "/plugin/skills/design-tree/scripts/runner.py",
+  "/plugin/skills/design-tree/scripts/tool_catalog.py",
   "/plugin/skills/design-tree/scripts/tree_model.py",
   "/plugin/skills/design-tree/scripts/verification.py",
   "/plugin/skills/design-tree/references/baseline-lock.json",
