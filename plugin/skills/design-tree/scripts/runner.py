@@ -31,9 +31,17 @@ from contracts import evaluate_contracts, validate_contracts, policy_hash
 from verification import validate_results, evaluate_results
 from assistance import validate_assistance, assistance_action
 import node_context
+from tool_catalog import operation_for_command, require_enabled
 
 class GateError(ValueError):
     """An explicit gate failure; no requested mutation has been committed."""
+
+
+def require_operation(name):
+    try:
+        return require_enabled(name)
+    except ValueError as error:
+        raise GateError(str(error)) from error
 
 
 def digest(value):
@@ -289,6 +297,7 @@ class Router:
             require(self.complete(state,dep), 'PREREQUISITE_PENDING:'+dep)
 
     def context_next(self, state):
+        require_operation('next_node')
         self.check_state(state)
         pending = []
         awaiting = []
@@ -377,10 +386,11 @@ class Router:
         return sections, required
 
     def open_context(self, state, node_id, index_path, *, query=None):
+        operation = require_operation('open_node' if query is None else 'search_context')
         require(self.context_required(state, node_id), 'CONTEXT_NODE_OUTSIDE_PILOT')
         self.check_open(state, node_id)
         self.check_context_proposal_slot(state, node_id)
-        self.check_context_action(state, node_id, 'analyze')
+        self.check_context_action(state, node_id, operation.action)
         identity = self.context_identity(state, node_id)
         grant = state.get('active_grant_id')
         require(identity['phase_id'] and grant, 'CONTEXT_ACTIVE_PHASE_REQUIRED')
@@ -634,6 +644,7 @@ class Router:
         return True
 
     def propose(self,state,node_id,proposal):
+        operation = require_operation('submit_evidence') if self.context_required(state, node_id) else None
         self.check_open(state,node_id)
         require(self.structure_confirmed(state,node_id),'STRUCTURE_CONFIRMATION_REQUIRED')
         packet = None
@@ -643,7 +654,7 @@ class Router:
             require(packet is None or 'criteria_sections' in packet, 'CONTEXT_PACKET_REOPEN_REQUIRED')
         self.validate_proposal(state,node_id,proposal)
         if packet is not None:
-            self.check_context_action(state, node_id, 'draft')
+            self.check_context_action(state, node_id, operation.action)
             require(packet['grant'] == state.get('active_grant_id'), 'CONTEXT_PACKET_GRANT_STALE')
         self.bind_evidence_paths(state, proposal['evidence'])
         if node_id in state['records']:
@@ -1145,6 +1156,12 @@ def load_state(path, allow_legacy=False):
 
 
 def context_command(path, command, *, node_id=None, query=None, proposal=None, expected_revision=None):
+    try:
+        definition = operation_for_command(command)
+    except ValueError as error:
+        raise GateError(str(error)) from error
+    require_operation(definition.name)
+    require((command == 'search') == (query is not None), 'CONTEXT_QUERY_COMMAND_MISMATCH')
     path = Path(path)
     require(not path.resolve().is_relative_to(SKILL_DIR.parent.parent.resolve()), 'STATE_MUST_BE_OUTSIDE_PLUGIN')
     router = Router()
@@ -1310,7 +1327,12 @@ def main(argv=None):
         state['history'].append({'event':'resumed','at':now(),'scope':'Paths relocated; no autonomy increase'})
         save_state(a.state,state,None)
         return router.status(state)
-    state=load_state(a.state);router.check_state(state);rev=state['revision'];changed=True
+    state=load_state(a.state)
+    # The legacy propose command also serves human/non-pilot proposals.
+    # Identify the pilot from the ledger, then deny before reading the payload.
+    if a.cmd=='propose' and router.context_required(state, a.node_id):
+        require_operation('submit_evidence')
+    router.check_state(state);rev=state['revision'];changed=True
     payload=json.loads(a.file.read_text(encoding='utf-8')) if getattr(a,'file',None) and a.cmd!='source' else None
     if a.cmd=='status':return router.status(state)
     if a.cmd=='node':return router.packet(state,a.node_id)

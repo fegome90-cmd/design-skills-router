@@ -10,7 +10,7 @@ Esta tabla es una fuente de definiciones para `scripts/check-docs.py`, que compr
 |---|---|---|
 | [R01](units/R01-registro-compartido-de-tools.md) | Integrada (PR #7) | Contrato compartido de tools: paridad entre la CLI instalada y el MCP stdio. Investigación en el [dossier R01](research/R01-dossier-v0.1.md). |
 | R02 | Planificada, sin contrato | "R02 definirá permisos y control por llamada" ([dossier R01](research/R01-dossier-v0.1.md#adr-r01-provisional)). "El siguiente PR será R02, seguido por R03" ([contrato R01](units/R01-registro-compartido-de-tools.md#secuencia-de-trabajo)). |
-| R02A | Planificada, sin contrato | "Actualizar R02A. Integrar sus commits sobre la nueva base y aplicar los controles" ([plan de calidad](../calidad/plan-ci-calidad.md#orden-de-integración)). |
+| [R02A](units/R02A-catalogo-y-politica.md) | Integrada (PR #11) | Catálogo declarativo de operaciones y política por operación sobre el registro compartido. |
 | R02B | Planificada, sin contrato | "Retomar R02B y R02C" ([plan de calidad](../calidad/plan-ci-calidad.md#orden-de-integración)). |
 | R02C | Planificada, sin contrato | "Retomar R02B y R02C" ([plan de calidad](../calidad/plan-ci-calidad.md#orden-de-integración)). |
 | R03 | Planificada, sin contrato | "El siguiente PR será R02, seguido por R03" ([contrato R01](units/R01-registro-compartido-de-tools.md#secuencia-de-trabajo)). El dossier usa una incorporación simulada de R03 como caso de estudio ([dossier R01](research/R01-dossier-v0.1.md#g2-experimentos-pendientes-no-ejecutados)). |

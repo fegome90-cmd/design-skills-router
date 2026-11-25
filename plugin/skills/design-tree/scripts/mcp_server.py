@@ -3,33 +3,47 @@ import argparse
 from pathlib import Path
 
 from runner import context_command, require
+from tool_catalog import apply_tool_policy, create_tool_descriptors, read_tool_policy
 
 
 def server_for(state_path):
     from mcp.server.fastmcp import FastMCP
+    from mcp.types import ToolAnnotations
 
     state_path = Path(state_path).absolute()
     evidence_root = state_path.resolve().parent / 'evidence'
     server = FastMCP('Design Skills Router')
+    descriptors = {item.definition.name: item for item in
+                   apply_tool_policy(create_tool_descriptors('mcp'), read_tool_policy())}
 
-    @server.tool()
+    def register(handler):
+        descriptor = descriptors[handler.__name__]
+        definition = descriptor.definition
+        if descriptor.enabled:
+            server.add_tool(
+                handler, name=definition.name, description=definition.description,
+                annotations=ToolAnnotations(readOnlyHint=definition.effect == 'read',
+                                            destructiveHint=definition.effect == 'write'),
+                meta={'design-router/capabilities': list(definition.capabilities),
+                      'design-router/action': definition.action,
+                      'design-router/mutation': list(definition.execution.mutation)},
+            )
+        return handler
+
+    @register
     def next_node() -> dict[str, object]:
-        """Read the runner's current phase, revision and pending nodes."""
         return context_command(state_path, 'next')
 
-    @server.tool()
+    @register
     def open_node(node_id: str) -> dict[str, object]:
-        """Return pinned sections, project context, and the permissions to analyze and draft."""
         return context_command(state_path, 'open', node_id=node_id)
 
-    @server.tool()
+    @register
     def search_context(node_id: str, query: str) -> dict[str, object]:
-        """Find optional source sections within the current pilot node."""
         return context_command(state_path, 'search', node_id=node_id, query=query)
 
-    @server.tool()
+    @register
     def submit_evidence(node_id: str, expected_revision: int, proposal: dict[str, object]) -> dict[str, object]:
-        """Submit a G5 draft with its context ID and local evidence for human confirmation."""
         evidence = proposal.get('evidence')
         require(isinstance(evidence, list) and bool(evidence), 'EVIDENCE_REQUIRED')
         require(not evidence_root.is_symlink(), 'MCP_EVIDENCE_ROOT_SYMLINK')
@@ -55,4 +69,6 @@ if __name__ == '__main__':
         if error.name != 'mcp':
             raise
         parser.exit(2, 'Install design-skills-router[mcp] to start the MCP server.\n')
+    except ValueError as error:
+        parser.exit(2, str(error) + '\n')
     server.run(transport='stdio')
