@@ -148,6 +148,27 @@ class CheckDocsTests(unittest.TestCase):
             'docs/a.md': '#\n', 'docs/b.md': '#\n',
         }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'ab'])
 
+    def test_incomplete_reference_does_not_hide_html_link(self):
+        self.assertClean({
+            'AGENTS.md': '[x]:\n<a href="docs/a.md">A</a>\n',
+            'docs/a.md': '#\n',
+        })
+
+    def test_multiline_reference_cannot_interrupt_paragraph_or_have_trailing_junk(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'AGENTS.md': 'Véase [x].\n[x]:\n  docs/a.md\n\n'
+                         '[y]\n\n[y]:\n  docs/b.md texto\n',
+            'docs/a.md': '#\n', 'docs/b.md': '#\n',
+        }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'ab'])
+
+    def test_multiline_reference_after_heading_with_title(self):
+        self.assertClean({
+            'AGENTS.md': '[x] [y]\n\n# Heading\n[x]:\n  docs/a.md "title"\n'
+                         '\nSection\n-------\n[y]:\n  <docs/b.md> (title)\n',
+            'docs/a.md': '#\n', 'docs/b.md': '#\n',
+        })
+
     def test_comment_marker_inside_inline_code_is_not_a_comment(self):
         self.assertClean({'docs/agent/CONTEXT.md': 'Usa `<!--` para comentar. [Roadmap](../specs/mcp-roadmap/README.md)\n'})
 

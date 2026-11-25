@@ -70,6 +70,8 @@ INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
 LINK_TEXT = re.compile(r'(?<!\\)(?:\\\\)*!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
 REFERENCE_DEF_START = re.compile(r'^ {0,3}\[([^\]]+)\]:[ \t]*$')
+REFERENCE_DEF_TAIL = re.compile(r"""(?:[ \t]+(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\((?:\\.|[^()\\])*\)))?[ \t]*""")
+REFERENCE_BLOCK_END = re.compile(r'^ {0,3}(?:#{1,6}(?:[ \t]|$)|(?:=+|-+)[ \t]*$)')
 REFERENCE_USE = re.compile(r'(?<!\\)(?:\\\\)*\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
 # Match start tags, including quoted attributes, but not escaped opening brackets.
 HTML_TAG = re.compile(r"""(?<!\\)(?:\\\\)*(?P<tag><[A-Za-z][A-Za-z0-9-]*(?=[\s/>])(?:[^<>"']|"[^"]*"|'[^']*')*>)""")
@@ -218,13 +220,21 @@ def link_targets(text: str):
             skip_next = False
             continue
         match = REFERENCE_DEF.match(line)
-        if not match and REFERENCE_DEF_START.match(line) and index + 1 < len(lines):
+        # A multiline definition cannot interrupt prose. A heading ends
+        # the preceding block even without a blank line.
+        at_boundary = not paragraph or REFERENCE_BLOCK_END.match(paragraph[-1][1])
+        if not match and at_boundary and REFERENCE_DEF_START.match(line) and index + 1 < len(lines):
             next_number, next_line = lines[index + 1]
             if (next_number == number + 1 and next_line.strip()
                     and not REFERENCE_DEF.match(next_line)
                     and not REFERENCE_DEF_START.match(next_line)):
-                match = REFERENCE_DEF.match(line + '\n' + next_line)
-                skip_next = match is not None
+                combined = line + '\n' + next_line
+                candidate = REFERENCE_DEF.match(combined)
+                # Consume the next line only for a complete destination
+                # with an optional title, never for a prefix of prose/HTML.
+                if candidate and REFERENCE_DEF_TAIL.fullmatch(combined[candidate.end():]):
+                    match = candidate
+                    skip_next = True
         if match:
             target = match.group(2) if match.group(2) is not None else match.group(3)
             definitions.setdefault(label_key(match.group(1)), (number, unescape(target)))
