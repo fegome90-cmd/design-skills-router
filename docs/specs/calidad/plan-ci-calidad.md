@@ -99,7 +99,7 @@ Queda fuera de este PR `release/design-router-mapa-fuentes.json`, que ya está d
   - un `"id"` de `board/src/*/datos.json`;
   - el nombre de archivo de una unidad del roadmap (`docs/specs/**/units/<ID>-*.md`);
   - una tabla de definiciones declarada de forma explícita en el script.
-  
+
   Una mención en la primera columna de cualquier otra tabla no cuenta como definición.
 - Ignora los bloques de código y lee los archivos con `utf-8-sig`.
 - Pruebas: documento huérfano, ciclo de huérfanos, ID no definido, ID definido en cada fuente reconocida, ID que solo aparece en una tabla no reconocida y bloque de código ignorado.
