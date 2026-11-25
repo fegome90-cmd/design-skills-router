@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+from html.parser import HTMLParser
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -68,8 +69,10 @@ FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
 LINK_TEXT = re.compile(r'(?<!\\)(?:\\\\)*!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
+REFERENCE_DEF_START = re.compile(r'^ {0,3}\[([^\]]+)\]:[ \t]*$')
 REFERENCE_USE = re.compile(r'(?<!\\)(?:\\\\)*\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
-HTML_LINK = re.compile(r'\b(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
+# Match start tags, including quoted attributes, but not escaped opening brackets.
+HTML_TAG = re.compile(r"""(?<!\\)(?:\\\\)*(?P<tag><[A-Za-z][A-Za-z0-9-]*(?=[\s/>])(?:[^<>"']|"[^"]*"|'[^']*')*>)""")
 HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 SCHEME = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')
 UNIT_FILE = re.compile(r'^docs/specs/(?:.+/)?units/([RF]\d{2}[A-Z]?)-[^/]*\.md$')
@@ -176,6 +179,18 @@ def destination(line: str, start: int) -> str | None:
     return unescape(target) or None
 
 
+class HTMLLinks(HTMLParser):
+    """Collect href and src only from actual HTML start tags."""
+
+    def __init__(self):
+        super().__init__()
+        self.links: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        self.links.extend(value for name, value in attrs
+                          if name in ('href', 'src') and value)
+
+
 def link_targets(text: str):
     """Yield (line number, target) for inline, used reference and HTML links in prose."""
     lines = []
@@ -197,8 +212,19 @@ def link_targets(text: str):
     definitions: dict[str, tuple[int, str]] = {}
     used: set[str] = set()
     paragraph: list[tuple[int, str]] = []
-    for number, line in [*lines, (0, '')]:
+    skip_next = False
+    for index, (number, line) in enumerate([*lines, (0, '')]):
+        if skip_next:
+            skip_next = False
+            continue
         match = REFERENCE_DEF.match(line)
+        if not match and REFERENCE_DEF_START.match(line) and index + 1 < len(lines):
+            next_number, next_line = lines[index + 1]
+            if (next_number == number + 1 and next_line.strip()
+                    and not REFERENCE_DEF.match(next_line)
+                    and not REFERENCE_DEF_START.match(next_line)):
+                match = REFERENCE_DEF.match(line + '\n' + next_line)
+                skip_next = match is not None
         if match:
             target = match.group(2) if match.group(2) is not None else match.group(3)
             definitions.setdefault(label_key(match.group(1)), (number, unescape(target)))
@@ -216,8 +242,12 @@ def link_targets(text: str):
                     yield line_of(found.start()), target
             for found in REFERENCE_USE.finditer(text):
                 used.add(label_key(found.group(2) or found.group(1)))
-            for found in HTML_LINK.finditer(text):
-                yield line_of(found.start()), found.group(1)
+            for found in HTML_TAG.finditer(text):
+                html = HTMLLinks()
+                html.feed(found.group('tag'))
+                html.close()
+                for target in html.links:
+                    yield line_of(found.start('tag')), target
             paragraph = []
     for label, (number, target) in definitions.items():
         if label in used:

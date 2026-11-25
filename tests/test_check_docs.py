@@ -120,6 +120,34 @@ class CheckDocsTests(unittest.TestCase):
                           'docs/b.md': '#\n'},
                          ['docs/b.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
 
+    def test_only_html_tag_attributes_create_html_links(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'AGENTS.md': (
+                'Ejemplo: href="docs/a.md" src="docs/b.md"\n'
+                '<a data-href="docs/c.md" href="docs/d.md">D</a>\n'
+                '<img src="docs/e.md" alt="E">\n'
+                '<a\n href="docs/f.md">F</a>\n'
+            ),
+            **{f'docs/{n}.md': '#\n' for n in 'abcdef'},
+        }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'abc'])
+
+    def test_reference_definition_destination_may_be_on_next_line(self):
+        self.assertClean({
+            'AGENTS.md': '[Guía][ref] y [atajo].\n\n'
+                         '[ref]:\n  docs/a.md\n'
+                         '[atajo]:\n  <docs/mi plan.md> "título"\n',
+            'docs/a.md': '#\n', 'docs/mi plan.md': '#\n',
+        })
+
+    def test_unused_and_blank_separated_reference_definitions_do_not_reach(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'AGENTS.md': '[separada]\n\n[sin uso]:\n  docs/a.md\n'
+                         '[separada]:\n\n  docs/b.md\n',
+            'docs/a.md': '#\n', 'docs/b.md': '#\n',
+        }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'ab'])
+
     def test_comment_marker_inside_inline_code_is_not_a_comment(self):
         self.assertClean({'docs/agent/CONTEXT.md': 'Usa `<!--` para comentar. [Roadmap](../specs/mcp-roadmap/README.md)\n'})
 
