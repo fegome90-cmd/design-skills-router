@@ -19,6 +19,8 @@ REASON = 'Passes non-ASCII argv, which an ASCII filesystem encoding cannot repre
 EXCLUDED = {
     'test_installed_cli.InstalledCliTests.test_json_streams_preserve_unicode_with_redirected_cp1252_output': REASON,
     'test_installed_cli.InstalledCliTests.test_pretty_status_escapes_values_unrepresentable_in_console_encoding': REASON,
+    'test_mcp_operation_policy.InstalledOperationPolicyTests.test_search_denied_without_index_or_ledger_mutation': REASON,
+    'test_mcp_operation_policy.InstalledOperationPolicyTests.test_unrestricted_catalog_metadata_and_four_operations': REASON,
     'test_mcp_parity.InstalledMcpParityTests.test_g5_contract_through_installed_cli_and_stdio': REASON,
 }
 
