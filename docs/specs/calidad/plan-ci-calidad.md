@@ -88,7 +88,7 @@ Queda fuera de este PR `release/design-router-mapa-fuentes.json`, que ya está d
 ## PR B · Calidad documental
 
 ### Enlaces y anclas
-- Workflow `docs.yml` con `lycheeverse/lychee-action` fijada por SHA, en modo offline con fragmentos, y con el mismo endurecimiento que el resto.
+- Workflow `docs.yml` con lychee fijado por versión y SHA256 del asset oficial para el runner, en modo offline con fragmentos, y con el mismo endurecimiento que el resto. Las acciones de GitHub utilizadas siguen fijadas por SHA.
 - Excluye `vendor/`, `release/` y `node_modules/`.
 
 ### Documentos alcanzables e IDs
@@ -104,6 +104,10 @@ Queda fuera de este PR `release/design-router-mapa-fuentes.json`, que ya está d
 - Ignora los bloques de código y lee los archivos con `utf-8-sig`.
 - Pruebas: documento huérfano, ciclo de huérfanos, ID no definido, ID definido en cada fuente reconocida, ID que solo aparece en una tabla no reconocida y bloque de código ignorado.
 - Enlazar `docs/adr/0001-baseline-de-plataforma.md` desde una guía de `docs/agent/`.
+
+Notas de implementación (25-11-2026):
+- Sobre `f4e4479`, la documentación citaba 8 IDs sin definición reconocida: R02, R02A, R02B, R02C, R03, R04, R09 y R10, con 20 menciones en total. Son unidades planificadas sin contrato. La tabla declarada es la de [`docs/specs/mcp-roadmap/README.md`](../mcp-roadmap/README.md). Cada fila cita literalmente el documento que menciona la unidad y no le atribuye alcance. Los `id` `R01` y `F00` de `board/src/*/datos.json` son nodos de la pizarra, no unidades; el plan los admite igualmente como fuente.
+- `lycheeverse/lychee-action` v2.9.0 descarga el binario sin verificar su checksum. Se sustituye solo ese instalador y wrapper por la CLI oficial `v0.24.2`: se fija el SHA256 del asset Linux x86_64, publicado en su [release oficial](https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.2), y se verifica antes de extraer. Se conservan el modo offline, fragmentos, archivos ocultos, exclusiones, salida no nula ante error y rechazo de cero enlaces. No se añade otro gestor de dependencias.
 
 ### Reglas de revisión
 - En el `AGENTS.md` raíz, una sección `## Code Review Rules` con subtítulos `###`. Cada regla describe el daño, porque Codex en GitHub solo marca P0 y P1:

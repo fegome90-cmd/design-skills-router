@@ -12,6 +12,6 @@ Design Skills Router reúne un plugin que guía decisiones de diseño, una pizar
 
 ## Trabajo planificado
 
-El [piloto G5](../../plugin/skills/design-tree/references/CLI.md#piloto-g5-de-contexto-por-nodo) ofrece un MCP local para una decisión de auditoría web. El [plan MCP](../Plan_MCP_Design_Router.md) describe la ampliación a otros recorridos. El [contrato R01](../specs/mcp-roadmap/units/R01-registro-compartido-de-tools.md) fija la paridad CLI/MCP y el [dossier R01](../specs/mcp-roadmap/research/R01-dossier-v0.1.md) registra la investigación y la decisión.
+El [piloto G5](../../plugin/skills/design-tree/references/CLI.md#piloto-g5-de-contexto-por-nodo) ofrece un MCP local para una decisión de auditoría web. El [plan MCP](../Plan_MCP_Design_Router.md) describe la ampliación a otros recorridos. El [índice del roadmap MCP](../specs/mcp-roadmap/README.md) lista las unidades integradas y planificadas. El [contrato R01](../specs/mcp-roadmap/units/R01-registro-compartido-de-tools.md) fija la paridad CLI/MCP y el [dossier R01](../specs/mcp-roadmap/research/R01-dossier-v0.1.md) registra la investigación y la decisión.
 
 El [plan de calidad en CI](../specs/calidad/plan-ci-calidad.md) convierte los defectos hallados en R01 en controles automáticos: codificación explícita en Python, documentación verificable y reglas para los revisores.

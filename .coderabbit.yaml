@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Review guidance only. The general review rules live in AGENTS.md
+# ("## Code Review Rules"); these instructions add what is specific to each path.
+reviews:
+  path_instructions:
+    - path: "**/tests/**"
+      instructions: |
+        Las pruebas usan unittest y la biblioteca estándar. Comprueba que:
+        - cada prueba trabaje sobre directorios o expedientes temporales y nunca sobre
+          el ledger, el árbol canónico tree-v0.4 o los archivos versionados del
+          repositorio;
+        - una prueba que lanza un servidor o un proceso Python con un entorno propio
+          reenvíe PYTHONWARNINGS y PYTHONWARNDEFAULTENCODING cuando quiera cubrir ese
+          proceso con el control de codificación de CI;
+        - un cambio no debilite una prueba existente (aserciones eliminadas, skip
+          nuevos, exclusiones sin motivo) para conseguir CI en verde.
+    - path: "docs/**"
+      instructions: |
+        La documentación está en español y se enlaza con rutas relativas.
+        - Cada documento nuevo de docs/ debe ser alcanzable desde README.md,
+          AGENTS.md o docs/agent/*.md; scripts/check-docs.py lo comprueba.
+        - Un ID de roadmap nuevo (R o F seguido de dos dígitos y una letra opcional)
+          debe aparecer en la tabla de docs/specs/mcp-roadmap/README.md o tener su
+          archivo en docs/specs/**/units/. Una mención en otra tabla no lo define.
+  pre_merge_checks:
+    custom_checks:
+      - name: "Spec frente a código"
+        mode: warning
+        instructions: |
+          Revisa solo los archivos de docs/specs/ que el PR añade o modifica.
+          Pasa si cada ruta de archivo, comando, nombre de prueba, código de error
+          o paso de workflow que esas líneas citan existe en el árbol del PR y hace
+          lo que el texto afirma.
+          Falla si alguna línea nueva o modificada cita una ruta, comando, prueba,
+          código de error o paso de workflow que no existe en el árbol del PR, o
+          cuyo comportamiento visible en el código contradice la afirmación.
+          Indica cada fallo con el archivo y la línea del spec y del código.

@@ -1,0 +1,66 @@
+name: Docs quality
+
+# Documentation links, anchors, reachability and roadmap IDs.
+# Plan: docs/specs/calidad/plan-ci-calidad.md (PR B).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Documentation links and references
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: '3.12'
+
+      # Offline: only local files and anchors. External URLs are not fetched, so
+      # an unreachable site never fails the check and no link is changed for it.
+      # vendor/ and node_modules/ hold third-party copies; release/ holds generated
+      # and frozen artefacts that are not edited by hand. --hidden adds .github/.
+      # The pinned lychee-action v2.9.0 downloads an unchecked archive.
+      # Pin the upstream release asset digest (also published in its .sha256 file).
+      # https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.2
+      - name: Install verified lychee CLI
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location --retry 2 \
+            https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz -o lychee.tar.gz
+          echo '1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  lychee.tar.gz' | sha256sum --check --strict
+          mkdir -p lychee-bin
+          tar -xzf lychee.tar.gz -C lychee-bin --strip-components=1 lychee-x86_64-unknown-linux-gnu/lychee
+
+      - name: Links and anchors (lychee, offline)
+        shell: bash
+        run: |
+          status=0
+          "$RUNNER_TEMP/lychee-bin/lychee" --offline --include-fragments --no-progress --hidden \
+            --exclude-path '(^|/)(\.git|vendor|release|node_modules)/' \
+            --format markdown --mode task --output "$RUNNER_TEMP/lychee-report.md" './**/*.md' || status=$?
+          cat "$RUNNER_TEMP/lychee-report.md"
+          # Preserve the action's failIfEmpty guard.
+          if grep -Eq 'Total[[:space:]]+\|[[:space:]]+0[[:space:]]*\|' "$RUNNER_TEMP/lychee-report.md"; then
+            echo 'No links were found. Check the documentation glob.'
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Reachability and roadmap IDs
+        env:
+          PYTHONWARNDEFAULTENCODING: '1'
+          PYTHONWARNINGS: error::EncodingWarning
+        run: |
+          python -B scripts/check-docs.py --summary
+          python -B -m unittest tests/test_check_docs.py -v
