@@ -28,7 +28,7 @@ jobs:
       # Offline: only local files and anchors. External URLs are not fetched, so
       # an unreachable site never fails the check and no link is changed for it.
       # vendor/ and node_modules/ hold third-party copies; release/ holds generated
-      # and frozen artefacts that are not edited by hand.
+      # and frozen artefacts that are not edited by hand. --hidden adds .github/.
       - name: Links and anchors (lychee, offline)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
@@ -39,7 +39,8 @@ jobs:
             --offline
             --include-fragments
             --no-progress
-            --exclude-path '(^|/)(vendor|release|node_modules)/'
+            --hidden
+            --exclude-path '(^|/)(\.git|vendor|release|node_modules)/'
             './**/*.md'
 
       - name: Reachability and roadmap IDs

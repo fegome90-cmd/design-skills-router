@@ -22,8 +22,6 @@ reviews:
         - Un ID de roadmap nuevo (R o F seguido de dos dígitos y una letra opcional)
           debe aparecer en la tabla de docs/specs/mcp-roadmap/README.md o tener su
           archivo en docs/specs/**/units/. Una mención en otra tabla no lo define.
-        - Si un spec cambia un contrato, comprueba que el código, la prueba o el
-          workflow citados en el mismo PR digan lo mismo.
   pre_merge_checks:
     custom_checks:
       - name: "Spec frente a código"
