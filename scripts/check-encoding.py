@@ -11,8 +11,9 @@ that open or decode text without an explicit ``encoding`` argument, or with
 * ``tempfile.TemporaryFile``, ``NamedTemporaryFile`` and
   ``SpooledTemporaryFile`` in text mode (their default mode is binary);
 * ``fileinput.input`` and ``fileinput.FileInput`` in text mode, unless the
-  ``openhook`` is ``hook_encoded(enc)`` or ``hook_compressed(encoding=enc)``
-  (fileinput passes its own ``encoding`` to any other hook);
+  ``openhook`` is ``hook_encoded(enc)``. Any other hook, such as
+  ``hook_compressed``, receives fileinput's own ``encoding``, which is
+  checked as usual;
 * ``subprocess.run``, ``Popen``, ``call``, ``check_call`` and
   ``check_output`` with ``text``, ``universal_newlines`` or ``errors``
   enabled (any of them puts the pipes in text mode).
@@ -33,7 +34,12 @@ Known limits, covered at run time by ``EncodingWarning`` in CI: a local
 function that shadows ``open``, arguments passed through ``**kwargs``,
 ``os.popen`` and ``subprocess.getoutput`` (no ``encoding`` parameter on
 Python 3.10), dynamic lookups such as ``getattr(io, 'open')``, and imports inside a
-function, which apply from that point to the end of the function.
+function, which apply from that point to the end of the function. An
+import in a class body is seen in that body but not in its methods. The
+methods' defaults and decorators are also checked without it, and lambdas,
+comprehensions and nested classes in the body with it; Python resolves
+these two cases the other way round, which matters only when a class-body
+import shadows ``open``.
 
 By default the check reads the Python files tracked by Git, minus the
 frozen paths listed in ``EXCLUDED``. Exit status: 0 when clean, 1 when a
@@ -229,19 +235,14 @@ class Visitor(ast.NodeVisitor):
         self.check_encoding(node, name, encoding_index)
 
     def hook_sets_encoding(self, hook: ast.expr | None) -> bool:
-        """``hook_encoded(enc)`` or ``hook_compressed(encoding=enc)`` with a real encoding.
+        """``hook_encoded(enc)`` with a real encoding.
 
-        Any other hook gets fileinput's own ``encoding``, which is checked as usual.
+        Any other hook, including ``hook_compressed``, gets fileinput's own
+        ``encoding``, which is checked as usual.
         """
-        if not isinstance(hook, ast.Call):
+        if not isinstance(hook, ast.Call) or self.qualified(hook.func) != 'fileinput.hook_encoded':
             return False
-        name = self.qualified(hook.func)
-        if name == 'fileinput.hook_encoded':
-            value = keyword(hook, 'encoding') or (hook.args[0] if hook.args else None)
-        elif name == 'fileinput.hook_compressed':
-            value = keyword(hook, 'encoding')
-        else:
-            return False
+        value = keyword(hook, 'encoding') or (hook.args[0] if hook.args else None)
         return value is not None and not is_none(value)
 
     def check_encoding(self, node: ast.Call, name: str, index: int | None) -> None:

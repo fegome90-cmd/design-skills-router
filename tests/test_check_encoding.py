@@ -205,7 +205,7 @@ class CheckEncodingTests(unittest.TestCase):
             Path.open(Path('a'), 'r', -1, 'utf-8')
             Path.write_text(Path('a'), 'x', 'utf-8')
             Path.open(Path('a'), 'rb')
-            fileinput.input(['a'], openhook=fileinput.hook_compressed(encoding='utf-8'))
+            fileinput.input(['a'], openhook=fileinput.hook_encoded('utf-8'))
             fileinput.input(['a'], openhook=fileinput.hook_compressed, encoding='utf-8')
             fileinput.input(['a'], openhook=custom_hook, encoding='utf-8')
             ''', [])
