@@ -66,9 +66,9 @@ DEFINITION_TABLES = {
 
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
-LINK_TEXT = re.compile(r'(?<!\\)!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
+LINK_TEXT = re.compile(r'(?<!\\)(?:\\\\)*!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
-REFERENCE_USE = re.compile(r'(?<!\\)\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
+REFERENCE_USE = re.compile(r'(?<!\\)(?:\\\\)*\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
 HTML_LINK = re.compile(r'\b(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
 HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 SCHEME = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')

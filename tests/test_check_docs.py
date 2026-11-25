@@ -275,13 +275,24 @@ class CheckDocsTests(unittest.TestCase):
                 [Roadmap](../specs/mcp-roadmap/README.md)
                 [escapado](../a\\(1\\).md) [guía][Plan  MCP] [vacío][self]
                 [corchetes](../b\\[1\\].md) [ref corchetes][c]
+                \\\\[barra doble](../d.md) \\\\[ref doble][e]
 
                 [plan mcp]: ../plan.md
                 [self]: <>
                 [c]: ../c\\[2\\].md
+                [e]: ../e.md
                 '''),
             'docs/a(1).md': '#\n', 'docs/plan.md': '#\n', 'docs/b[1].md': '#\n', 'docs/c[2].md': '#\n',
+            'docs/d.md': '#\n', 'docs/e.md': '#\n',
         })
+
+    def test_an_odd_run_of_backslashes_escapes_the_bracket(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                                     '\\\\\\[x](../x.md) \\[y] fin\n\n[y]: ../y.md\n',
+            'docs/x.md': '#\n', 'docs/y.md': '#\n',
+        }, [f'docs/x.md:1: ORPHAN: {orphan}', f'docs/y.md:1: ORPHAN: {orphan}'])
 
     def test_an_unclosed_inline_link_is_not_a_link(self):
         orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
