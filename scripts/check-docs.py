@@ -66,9 +66,9 @@ DEFINITION_TABLES = {
 
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
-LINK_TEXT = re.compile(r'!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
+LINK_TEXT = re.compile(r'(?<!\\)!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
-REFERENCE_USE = re.compile(r'\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
+REFERENCE_USE = re.compile(r'(?<!\\)\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
 HTML_LINK = re.compile(r'\b(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
 HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 SCHEME = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')
@@ -193,7 +193,6 @@ def link_targets(text: str):
         line = HTML_COMMENT.sub(lambda m: ' ' * len(m.group(0)), line)
         if '<!--' in line:
             line, in_comment = line[:line.index('<!--')], True
-        line = line.replace('\\[', '  ').replace('\\]', '  ')
         lines.append((number, line))
     definitions: dict[str, tuple[int, str]] = {}
     used: set[str] = set()

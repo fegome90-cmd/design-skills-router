@@ -274,11 +274,13 @@ class CheckDocsTests(unittest.TestCase):
             'docs/agent/CONTEXT.md': textwrap.dedent('''\
                 [Roadmap](../specs/mcp-roadmap/README.md)
                 [escapado](../a\\(1\\).md) [guía][Plan  MCP] [vacío][self]
+                [corchetes](../b\\[1\\].md) [ref corchetes][c]
 
                 [plan mcp]: ../plan.md
                 [self]: <>
+                [c]: ../c\\[2\\].md
                 '''),
-            'docs/a(1).md': '#\n', 'docs/plan.md': '#\n',
+            'docs/a(1).md': '#\n', 'docs/plan.md': '#\n', 'docs/b[1].md': '#\n', 'docs/c[2].md': '#\n',
         })
 
     def test_an_unclosed_inline_link_is_not_a_link(self):
