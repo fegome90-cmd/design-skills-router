@@ -105,6 +105,9 @@ class CheckDocsTests(unittest.TestCase):
             **{f'docs/{n}.md': '#\n' for n in 'abcd'},
         }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'abcd'])
 
+    def test_comment_marker_inside_inline_code_is_not_a_comment(self):
+        self.assertClean({'docs/agent/CONTEXT.md': 'Usa `<!--` para comentar. [Roadmap](../specs/mcp-roadmap/README.md)\n'})
+
     def test_only_files_directly_in_docs_agent_are_entry_points(self):
         self.assertFinds({
             'plugin/docs/agent/X.md': '[h](../../../docs/h.md)\n',

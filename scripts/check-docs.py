@@ -147,6 +147,7 @@ def link_targets(text: str):
     lines = []
     in_comment = False
     for number, line in prose_lines(text):
+        line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)  # before comments: `<!--` is code
         if in_comment:
             end = line.find('-->')
             if end == -1:
@@ -155,7 +156,6 @@ def link_targets(text: str):
         line = HTML_COMMENT.sub(lambda m: ' ' * len(m.group(0)), line)
         if '<!--' in line:
             line, in_comment = line[:line.index('<!--')], True
-        line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)
         line = line.replace('\\[', '  ').replace('\\]', '  ')
         lines.append((number, line))
     definitions: dict[str, tuple[int, str]] = {}
