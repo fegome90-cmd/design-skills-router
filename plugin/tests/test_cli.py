@@ -20,7 +20,7 @@ class CliTests(unittest.TestCase):
     def cli(self, *args, cwd=None):
         return subprocess.run(
             [sys.executable, "-B", RUNNER, "--state", self.state, *args],
-            capture_output=True, text=True, cwd=cwd,
+            capture_output=True, text=True, cwd=cwd, encoding="utf-8",
         )
 
     def initialize(self):
@@ -36,7 +36,7 @@ class CliTests(unittest.TestCase):
         self.initialize()
         before = self.state.read_bytes()
         proposal = self.state.with_name("proposal.json")
-        proposal.write_text("null")
+        proposal.write_text("null",encoding="utf-8")
         self.assert_blocked(self.cli("inventory", "--file", proposal), "INVENTORY_COVERAGE_REQUIRED")
         self.assertEqual(self.state.read_bytes(), before)
 
@@ -44,9 +44,9 @@ class CliTests(unittest.TestCase):
         for value in (None, [], "", 0, False):
             with self.subTest(value=value):
                 original = json.dumps(value)
-                self.state.write_text(original)
+                self.state.write_text(original,encoding="utf-8")
                 self.assert_blocked(self.cli("status"), "STATE_OBJECT_REQUIRED")
-                self.assertEqual(self.state.read_text(), original)
+                self.assertEqual(self.state.read_text(encoding="utf-8"), original)
 
     def test_inventory_lists_catalog_and_records_valid_proposal(self):
         self.initialize()
@@ -55,19 +55,19 @@ class CliTests(unittest.TestCase):
         self.assertEqual(listing.returncode, 0, listing.stderr)
         self.assertEqual(self.state.read_bytes(), before)
         evidence = self.state.with_name("scope.txt")
-        evidence.write_text("Synthetic review scope.")
+        evidence.write_text("Synthetic review scope.",encoding="utf-8")
         rows = [
             {"skill_id": skill["id"], "disposition": "DEFERRED",
              "reason": "Outside current scope", "evidence_refs": [str(evidence)]}
             for skill in json.loads(listing.stdout)["skills"]
         ]
         proposal = self.state.with_name("proposal.json")
-        proposal.write_text(json.dumps(rows))
+        proposal.write_text(json.dumps(rows),encoding="utf-8")
         result = self.cli("inventory", "--file", proposal)
         self.assertEqual(result.returncode, 0, result.stderr)
         reply = json.loads(result.stdout)
         self.assertEqual(reply["state"], "AWAITING_HUMAN")
-        ledger = json.loads(self.state.read_text())
+        ledger = json.loads(self.state.read_text(encoding="utf-8"))
         self.assertEqual(ledger["revision"], 1)
         self.assertEqual(ledger["inventory_proposal"]["hash"], reply["inventory_hash"])
         self.assertEqual(ledger["inventory_proposal"]["rows"], rows)
@@ -84,15 +84,15 @@ class CliTests(unittest.TestCase):
         origin = self.state.parent / "origin"
         origin.mkdir()
         note = origin / "note.txt"
-        note.write_text("Original evidence")
+        note.write_text("Original evidence",encoding="utf-8")
         evidence_hash = hashlib.sha256(note.read_bytes()).hexdigest()
         fact = {"state": "PRESENT", "value": "known", "scope": "project",
                 "subject": "screen", "revision": 1, "applies_to": ["Q00"],
                 "evidence": [{"path": "note.txt", "sha256": evidence_hash, "note": "scope"}]}
-        (origin / "fact.json").write_text(json.dumps(fact))
+        (origin / "fact.json").write_text(json.dumps(fact),encoding="utf-8")
         registered = self.cli("fact", "scope", "--file", "fact.json", cwd=origin)
         self.assertEqual(registered.returncode, 0, registered.stderr)
-        (self.state.parent / "note.txt").write_text("Different evidence")
+        (self.state.parent / "note.txt").write_text("Different evidence",encoding="utf-8")
         bundle = self.state.parent / "bundle"
         exported = self.cli("export", "--output", bundle, cwd=self.state.parent)
         self.assertEqual(exported.returncode, 0, exported.stderr)
@@ -103,12 +103,12 @@ class CliTests(unittest.TestCase):
         bundle.mkdir()
         ledger = bundle / "ledger.json"
         for value in (None, [], "text", 0, False):
-            ledger.write_text(json.dumps(value))
+            ledger.write_text(json.dumps(value),encoding="utf-8")
             for args in (("resume",), ("upgrade-state", "--dry-run")):
                 with self.subTest(value=value, command=args[0]):
                     self.assert_blocked(self.cli(*args, "--bundle", bundle), "STATE_OBJECT_REQUIRED")
                     self.assertFalse(self.state.exists())
-                    self.assertEqual(json.loads(ledger.read_text()), value)
+                    self.assertEqual(json.loads(ledger.read_text(encoding="utf-8")), value)
 
     def test_root_help_describes_each_command(self):
         help_result = self.cli("--help")
@@ -126,7 +126,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("receipt", help_result.stdout)
         payload = self.state.with_name("configure.json")
         for value in ({}, {"phase_map": {}}, {"receipt": {}}, []):
-            payload.write_text(json.dumps(value))
+            payload.write_text(json.dumps(value),encoding="utf-8")
             result = self.cli("configure", "--file", payload)
             self.assert_blocked(result, "CONFIGURE_OBJECT_REQUIRED: expected phase_map and receipt")
             self.assertEqual(self.state.read_bytes(), before)

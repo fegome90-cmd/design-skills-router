@@ -20,12 +20,12 @@ from tree_model import expand_model, flatten
 
 
 def read(path):
-    return json.loads(path.read_text())
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 @cache
 def content(path):
-    return (SRC/path).read_text()
+    return (SRC/path).read_text(encoding='utf-8')
 
 
 @cache
@@ -196,8 +196,8 @@ for e in edges:
     assert a in nodes and b in nodes,(a,b)
     if a!=b:unique[a,b,e['kind'],e['condition']]={'from':a,'to':b,'kind':e['kind'],'condition':e['condition']}
 graph={'plugin':{'name':'design-skills-router','version':'0.3.1','release':'pluginrel_6af336537e808191831d72799b60bf4b','tree_version':'0.4'},'root':'Q00','nodes':list(nodes.values()),'edges':list(unique.values())}
-(DEST/'design-router-mapa-fuentes.json').write_text(json.dumps(graph,ensure_ascii=False,indent=2)+'\n')
-board=(DEST/'design-router-pizarra-v1.2.html').read_text()
+(DEST/'design-router-mapa-fuentes.json').write_text(json.dumps(graph,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+board=(DEST/'design-router-pizarra-v1.2.html').read_text(encoding='utf-8')
 board=board.replace('Design Skills Router · Selección mínima v1.2','Design Skills Router · Mapa del plugin v1.3')
-(DEST/'design-router-pizarra-v1.3.html').write_text(render(board,graph))
+(DEST/'design-router-pizarra-v1.3.html').write_text(render(board,graph),encoding='utf-8')
 print(len(nodes),'nodes',len(unique),'edges',sum(n['group']=='Archivos del plugin' for n in nodes.values()),'files')

@@ -60,14 +60,14 @@ class EndToEndTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, "-B", str(RUNNER), "--state", str(self.state),
              "init", "--project-id", "telemetry-e2e", "--scope", "synthetic"],
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def observe(self, *args, env=None):
         return subprocess.run(
             [sys.executable, "-B", str(OBSERVE), "--", *args],
-            capture_output=True, text=True, env=env or self.env,
+            capture_output=True, text=True, env=env or self.env, encoding="utf-8",
         )
 
     def test_real_node_and_status_are_counted_without_candidate_skills(self):
@@ -86,7 +86,7 @@ class EndToEndTests(unittest.TestCase):
     @unittest.skipUnless(os.name == "posix", "console launcher fixture uses a POSIX shebang")
     def test_console_launcher_on_path_records_a_real_node(self):
         launcher = self.base / "design-skills-router"
-        launcher.write_text("#!/bin/sh\nexec " + shlex.join([sys.executable, "-B", str(RUNNER)]) + ' "$@"\n')
+        launcher.write_text("#!/bin/sh\nexec " + shlex.join([sys.executable, "-B", str(RUNNER)]) + ' "$@"\n', encoding="utf-8")
         launcher.chmod(0o755)
         env = {**self.env, "PATH": str(self.base) + os.pathsep + self.env.get("PATH", "")}
         result = subprocess.run(

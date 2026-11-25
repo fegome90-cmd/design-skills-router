@@ -46,11 +46,11 @@ class ObserveTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.base = Path(directory.name)
         self.runner = self.base / "fake_runner.py"
-        self.runner.write_text(FAKE_RUNNER)
+        self.runner.write_text(FAKE_RUNNER,encoding="utf-8")
         self.runner.chmod(0o755)
 
     def run_main(self, args):
-        with tempfile.TemporaryFile("w+") as stdout, tempfile.TemporaryFile("w+") as stderr:
+        with tempfile.TemporaryFile("w+",encoding="utf-8") as stdout, tempfile.TemporaryFile("w+",encoding="utf-8") as stderr:
             with patch.object(sys, "stdout", stdout), patch.object(sys, "stderr", stderr):
                 code = observe.main(args)
             stdout.seek(0)
@@ -88,7 +88,7 @@ class ObserveTests(unittest.TestCase):
             "summary": "SECRET-SENTINEL",
             "selected": "F00",
             "evidence": [{"path": "/private/secret", "note": "SECRET-SENTINEL"}],
-        }))
+        }), encoding="utf-8")
         with patch.dict(os.environ, {"FAKE_OUTPUT": json.dumps({"proposal_hash": "abc"})}):
             code, _, _ = self.run_observe(["--state", "x", "propose", "Q00", "--file", str(proposal)], client)
         self.assertEqual(code, 0)
@@ -111,7 +111,7 @@ class ObserveTests(unittest.TestCase):
         # positional_after must still resolve the node id (not the option).
         client = FakeClient()
         proposal = self.base / "proposal.json"
-        proposal.write_text(json.dumps({"summary": "s", "selected": "F00"}))
+        proposal.write_text(json.dumps({"summary": "s", "selected": "F00"}), encoding="utf-8")
         with patch.dict(os.environ, {"FAKE_OUTPUT": json.dumps({"proposal_hash": "abc"})}):
             code, _, _ = self.run_observe(
                 ["--state", "x", "propose", "Q00", f"--file={proposal}"], client)
@@ -184,7 +184,7 @@ class ObserveTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "posix", "POSIX wait status exposes signal termination")
     def test_child_signal_is_visible_to_the_parent_and_shell(self):
-        self.runner.write_text("import os, sys\nos.kill(os.getpid(), int(sys.argv[1]))\n")
+        self.runner.write_text("import os, sys\nos.kill(os.getpid(), int(sys.argv[1]))\n", encoding="utf-8")
         env = {k: v for k, v in os.environ.items() if not k.startswith("DESIGN_ROUTER_TELEMETRY")}
         for sig in (signal.SIGTERM, signal.SIGKILL):
             with self.subTest(signal=sig):
@@ -200,10 +200,10 @@ class ObserveTests(unittest.TestCase):
         suffix = b'"}'
         self.runner.write_text(
             f"import sys\nsys.stdout.buffer.write({prefix!r} + b'x' * {size-len(prefix)-len(suffix)} + {suffix!r})\n"
-            f"sys.stderr.buffer.write(bytes([255]) * {size})\n"
+            f"sys.stderr.buffer.write(bytes([255]) * {size})\n", encoding="utf-8"
         )
         for command in ("status", "node"):
-            with self.subTest(command=command), tempfile.TemporaryFile("w+") as stdout, tempfile.TemporaryFile("w+") as stderr:
+            with self.subTest(command=command), tempfile.TemporaryFile("w+",encoding="utf-8") as stdout, tempfile.TemporaryFile("w+",encoding="utf-8") as stderr:
                 client = FakeClient()
                 with patch.object(sys, "stdout", stdout), patch.object(sys, "stderr", stderr), \
                         patch.object(observe, "client_from_env", return_value=client):
@@ -239,7 +239,7 @@ class ObserveTests(unittest.TestCase):
 
     def test_propose_abbreviated_file_option_resolves_payload_and_node(self):
         proposal = self.base / "proposal.json"
-        proposal.write_text(json.dumps({"summary": "s", "selected": "F00"}))
+        proposal.write_text(json.dumps({"summary": "s", "selected": "F00"}), encoding="utf-8")
         for args in (
             ["--st", "x", "propose", "--fi", str(proposal), "Q00"],
             ["--state", "x", "propose", f"--fi={proposal}", "Q00"],
@@ -254,8 +254,8 @@ class ObserveTests(unittest.TestCase):
     def test_repeated_file_options_use_last_wins_matching_argparse(self):
         first = self.base / "first.json"
         second = self.base / "second.json"
-        first.write_text(json.dumps({"summary": "first", "selected": "F00"}))
-        second.write_text(json.dumps({"summary": "second", "selected": "F01"}))
+        first.write_text(json.dumps({"summary": "first", "selected": "F00"}), encoding="utf-8")
+        second.write_text(json.dumps({"summary": "second", "selected": "F01"}), encoding="utf-8")
         for args in (
             ["--state", "x", "propose", f"--file={first}", f"--fi={second}", "Q00"],
             ["--state", "x", "propose", "--file", str(first), "--fi", str(second), "Q00"],

@@ -19,10 +19,10 @@ class ReleaseRoundtripTests(unittest.TestCase):
         spec.loader.exec_module(mod)
         with tempfile.TemporaryDirectory() as td:
             td = Path(td)
-            manifest = json.loads((ROOT/'plugin.json').read_text())
+            manifest = json.loads((ROOT/'plugin.json').read_text(encoding='utf-8'))
             nums = tuple(int(n) for n in manifest['version'].split('.'))
             next_version = f'{nums[0]}.{nums[1]}.{nums[2]+1}'
-            old_hashes = json.loads((ROOT/'PACKAGE-HASHES.json').read_text())
+            old_hashes = json.loads((ROOT/'PACKAGE-HASHES.json').read_text(encoding='utf-8'))
             retained = {name:{'sha256':h} for name,h in old_hashes.items()
                         if name.startswith('assets/') and not (ROOT/name).is_file()}
             archive = td/'candidate.zip'
@@ -39,10 +39,10 @@ class ReleaseRoundtripTests(unittest.TestCase):
                     else:
                         self.assertEqual(hashlib.sha256(z.read(names[name])).hexdigest(),h,name)
             package = td/'unpacked'/'design-skills-router'
-            self.assertEqual(json.loads((package/'plugin.json').read_text())['version'],next_version)
+            self.assertEqual(json.loads((package/'plugin.json').read_text(encoding='utf-8'))['version'],next_version)
             proc = subprocess.run([sys.executable,'-B','-m','unittest','discover','-s','tests',
                                    '-p','test_release.py','-q'],cwd=package,
                                   env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'},
-                                  text=True,capture_output=True,timeout=120)
+                                  text=True,capture_output=True,timeout=120, encoding='utf-8')
             self.assertEqual(proc.returncode,0,proc.stdout+'\n'+proc.stderr)
             self.assertIn('OK',proc.stderr)

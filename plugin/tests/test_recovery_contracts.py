@@ -15,7 +15,7 @@ class RecoveryContractTests(unittest.TestCase):
   with self.assertRaisesRegex(self.h.r.GateError,'AUDIT'):self.r.propose(self.s,'P01',p)
  def test_resource_requires_specific_evidence_file(self):
   sid=self.r.skills_for('Q00')[0]
-  resource=self.h.work/'reference.md';resource.write_text('Required reference content')
+  resource=self.h.work/'reference.md';resource.write_text('Required reference content',encoding='utf-8')
   self.r.contracts['resources']=[{'id':'ref1','sha256':hashlib.sha256(resource.read_bytes()).hexdigest()}]
   self.r.contracts['relations'].append({'id':'resource1','from_skill':sid,'target':{'kind':'resource','id':'ref1'},'type':'uses_resource','required':True,'scope':'reference','applies_to':['Q00'],'when':[],'source':{'url':'https://example.test/source','commit':'a'*40,'section':'fixture'},'provenance':'router_policy','evidence_status':'SOURCE_REVIEWED'})
   p=self.h.proposal('Q00','F00');p['relation_reviews']=[{'relation_id':'resource1','status':'SATISFIED','reason':'fixture','evidence_refs':[str(self.h.ev)]}]
@@ -41,8 +41,8 @@ class RecoveryContractTests(unittest.TestCase):
   self.assertTrue(validate_contracts(c,self.r.nodes,self.r.inventory))
  def test_doctor_non_object_manifest_is_diagnostic(self):
   p=self.h.work/'copy';shutil.copytree(ROOT,p,ignore=shutil.ignore_patterns('.git','__pycache__'))
-  (p/'plugin.json').write_text('[]')
-  run=subprocess.run([sys.executable,'-B',str(ROOT/'skills/design-tree/scripts/doctor.py'),'--package-root',str(p),'--format','json'],capture_output=True,text=True)
+  (p/'plugin.json').write_text('[]',encoding='utf-8')
+  run=subprocess.run([sys.executable,'-B',str(ROOT/'skills/design-tree/scripts/doctor.py'),'--package-root',str(p),'--format','json'],capture_output=True,text=True,encoding='utf-8')
   self.assertEqual(run.returncode,2,run.stderr);r=json.loads(run.stdout)
   self.assertTrue(any(x['code']=='INVALID_JSON_TYPE' for x in r['findings']))
  def test_reopen_cli_reports_actual_stale_state(self):
@@ -50,7 +50,7 @@ class RecoveryContractTests(unittest.TestCase):
   phase=self.s['phases']['foundations'];phase.update(status='AWAITING_HUMAN',gate_packet_hash='a'*64,packet={'synthetic':'old'})
   state=self.h.work/'ledger.json';self.h.r.save_state(state,self.s,None)
   receipt=self.h.receipt(self.h.r.digest({'phase_id':'foundations','gate_packet_hash':'a'*64,'reason':'revise'}),'reopen')
-  rp=self.h.work/'receipt.json';rp.write_text(json.dumps(receipt))
-  proc=subprocess.run([sys.executable,'-B',str(Path(self.h.r.__file__)),'--state',str(state),'phase-reopen','foundations','--reason','revise','--file',str(rp)],capture_output=True,text=True)
+  rp=self.h.work/'receipt.json';rp.write_text(json.dumps(receipt),encoding='utf-8')
+  proc=subprocess.run([sys.executable,'-B',str(Path(self.h.r.__file__)),'--state',str(state),'phase-reopen','foundations','--reason','revise','--file',str(rp)],capture_output=True,text=True,encoding='utf-8')
   self.assertEqual(proc.returncode,0,proc.stderr);data=json.loads(proc.stdout);saved=self.h.r.load_state(state)
   self.assertEqual(data['status'],saved['phases']['foundations']['status']);self.assertEqual(data['status'],'STALE')

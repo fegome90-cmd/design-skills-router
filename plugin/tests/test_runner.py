@@ -104,7 +104,7 @@ class RunnerTests(unittest.TestCase):
         sk=self.router.packet(self.state,'Q00')['skills'][0]
         with self.assertRaisesRegex(self.r.GateError,'BLOB'):self.router.register_source(self.state,sk['id'],str(self.ev),sk['commit'],'0'*40,'ref')
     def test_evidence_changes_before_confirmation_block(self):
-        self.approve_structure('Q00');h=self.router.propose(self.state,'Q00',self.proposal('Q00','F00'));self.ev.write_text('changed')
+        self.approve_structure('Q00');h=self.router.propose(self.state,'Q00',self.proposal('Q00','F00'));self.ev.write_text('changed',encoding='utf-8')
         with self.assertRaisesRegex(self.r.GateError,'EVIDENCE'):self.router.confirm_decision(self.state,'Q00',self.receipt(h,'project'))
     def test_invalidate_root_revokes_downstream(self):
         self.new_branch();self.router.invalidate(self.state,'Q00','Changed scope')
@@ -141,7 +141,7 @@ class RunnerTests(unittest.TestCase):
     def test_state_roundtrip_and_integrity(self):
         f=self.work/'state.json';self.r.save_state(f,self.state,expected_revision=None)
         saved=self.r.load_state(f);self.assertEqual(saved['project_id'],'pilot')
-        text=json.loads(f.read_text());text['project_id']='tampered';f.write_text(json.dumps(text))
+        text=json.loads(f.read_text(encoding='utf-8'));text['project_id']='tampered';f.write_text(json.dumps(text),encoding='utf-8')
         with self.assertRaisesRegex(self.r.GateError,'INTEGRITY'):self.r.load_state(f)
     def test_state_stale_writer_rejected(self):
         f=self.work/'state.json';self.r.save_state(f,self.state,expected_revision=None);s=self.r.load_state(f)

@@ -11,16 +11,16 @@ class ReleaseTests(unittest.TestCase):
   self.assertTrue(self.script.is_file(),'release preparer not implemented')
   spec=importlib.util.spec_from_file_location('release_prepare',self.script);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
  def next_version(self):
-  major,minor,patch=map(int,json.loads((self.root/"plugin.json").read_text())["version"].split("."));return f"{major}.{minor}.{patch+1}"
+  major,minor,patch=map(int,json.loads((self.root/"plugin.json").read_text(encoding='utf-8'))["version"].split("."));return f"{major}.{minor}.{patch+1}"
  def retained(self):
-  lock=json.loads((self.root/'PACKAGE-HASHES.json').read_text());return {k:{'sha256':v} for k,v in lock.items() if k.startswith('assets/') and not (self.root/k).exists()}
+  lock=json.loads((self.root/'PACKAGE-HASHES.json').read_text(encoding='utf-8'));return {k:{'sha256':v} for k,v in lock.items() if k.startswith('assets/') and not (self.root/k).exists()}
  def snapshot(self):return {p.relative_to(self.root).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in self.root.rglob('*') if p.is_file()}
  def test_same_inputs_same_zip_and_preserved_source(self):
   m=self.mod();before=self.snapshot();a=self.base/'a.zip';b=self.base/'b.zip'
   m.prepare_release(self.root,self.next_version(),a,self.retained());m.prepare_release(self.root,self.next_version(),b,self.retained())
   self.assertEqual(a.read_bytes(),b.read_bytes());self.assertEqual(before,self.snapshot())
   with zipfile.ZipFile(a) as z:
-   manifest=json.loads(z.read('design-skills-router/plugin.json'));old=json.loads((self.root/'plugin.json').read_text())
+   manifest=json.loads(z.read('design-skills-router/plugin.json'));old=json.loads((self.root/'plugin.json').read_text(encoding='utf-8'))
    self.assertEqual(manifest['extensions'],old['extensions']);self.assertEqual(manifest['version'],self.next_version())
    lock=json.loads(z.read('design-skills-router/PACKAGE-HASHES.json'))
    for name in self.retained():self.assertIn(name,lock);self.assertNotIn('design-skills-router/'+name,z.namelist())
@@ -34,21 +34,21 @@ class ReleaseTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'RETAINED_ASSET_REQUIRED'):
    self.mod().prepare_release(self.root,self.next_version(),self.base/'out.zip',retained)
  def test_baseline_drift_not_rehashed(self):
-  (self.root/'skills/design-tree/references/tree-v0.4/tree.json').write_text('{}')
+  (self.root/'skills/design-tree/references/tree-v0.4/tree.json').write_text('{}',encoding='utf-8')
   with self.assertRaisesRegex(ValueError,'BASELINE'):self.mod().prepare_release(self.root,self.next_version(),self.base/'out.zip',self.retained())
  def test_destination_exists_rejected(self):
   out=self.base/'a.zip';out.write_bytes(b'original')
   with self.assertRaisesRegex(ValueError,'DESTINATION'):self.mod().prepare_release(self.root,self.next_version(),out,self.retained())
   self.assertEqual(out.read_bytes(),b'original')
  def test_secret_and_symlink_rejected(self):
-  m=self.mod();(self.root/'.env').write_text('SECRET=test')
+  m=self.mod();(self.root/'.env').write_text('SECRET=test',encoding='utf-8')
   with self.assertRaisesRegex(ValueError,'UNSAFE'):m.prepare_release(self.root,self.next_version(),self.base/'out.zip',self.retained())
  def test_symlink_is_rejected_independently(self):
   (self.root/'docs'/'not-a-real-document').symlink_to(self.root/'README.md')
   with self.assertRaisesRegex(ValueError,'UNSAFE_SYMLINK'):
    self.mod().prepare_release(self.root,self.next_version(),self.base/'out.zip',self.retained())
  def test_equal_version_rejected(self):
-  version=json.loads((self.root/'plugin.json').read_text())['version']
+  version=json.loads((self.root/'plugin.json').read_text(encoding='utf-8'))['version']
   with self.assertRaisesRegex(ValueError,'VERSION_MUST_INCREASE'):
    self.mod().prepare_release(self.root,version,self.base/'out.zip',self.retained())
  def test_version_downgrade_rejected(self):
@@ -57,7 +57,7 @@ class ReleaseTests(unittest.TestCase):
   m=self.mod();out=self.base/'normalized.zip';m.prepare_release(self.root,self.next_version(),out,self.retained())
   with zipfile.ZipFile(out) as z:
    portable=json.loads(z.read('design-skills-router/plugin.json'))
-   observed=json.loads((self.root/'.codex-plugin/plugin.json').read_text())
+   observed=json.loads((self.root/'.codex-plugin/plugin.json').read_text(encoding='utf-8'))
    observed['interface']=portable['extensions']['com.openai']['interface'];observed['version']=self.next_version()
    # Exact observed backend order/escaping, not semantic equality only.
    expected=(json.dumps(observed,ensure_ascii=True,indent=2)+'\n').encode()

@@ -65,7 +65,7 @@ class UpgradeAcceptance(unittest.TestCase):
  def test_evidence_tampering_after_accept_invalidates_phase(self):
   answer=self.prepare(self.check('PASS'))
   self.r.accept_phase(self.s,'probe',self.h.receipt(answer['gate_packet_hash'],'phase'))
-  self.h.ev.write_text('after acceptance, altered evidence')
+  self.h.ev.write_text('after acceptance, altered evidence', encoding='utf-8')
   self.assertFalse(self.r.phase_current(self.s,'probe'))
  def test_required_check_cannot_use_unrelated_skill_source(self):
   self.prepare(self.check('PASS'))

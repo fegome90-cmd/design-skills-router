@@ -8,7 +8,7 @@ class PortabilityTests(unittest.TestCase):
   self.t=tempfile.TemporaryDirectory();self.addCleanup(self.t.cleanup);self.base=Path(self.t.name)
   self.r=runner.Router();self.s=self.r.new_state('portable','web','design','Synthetic portability test')
   self.state=self.base/'original'/'state.json';self.state.parent.mkdir()
-  self.e=self.state.parent/'evidence.txt';self.e.write_text('fixture')
+  self.e=self.state.parent/'evidence.txt';self.e.write_text('fixture',encoding='utf-8')
   self.sid='fegome90-cmd/my-skills/design-process-orchestrator'
   data=self.e.read_bytes();blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
   self.r.register_source(self.s,self.sid,str(self.e),self.r.inventory[self.sid]['candidate_commit'],blob,'fixture:source')
@@ -27,7 +27,7 @@ class PortabilityTests(unittest.TestCase):
   self.r.confirm_inventory(self.s,receipt(inventory,'inventory'))
   runner.save_state(self.state,self.s,None)
  def cli(self,*args):
-  return subprocess.run([sys.executable,str(Path(runner.__file__)),*map(str,args)],capture_output=True,text=True)
+  return subprocess.run([sys.executable,str(Path(runner.__file__)),*map(str,args)],capture_output=True,text=True,encoding='utf-8')
  def test_export_is_loadable_integrity_protected_state(self):
   out=self.base/'export';res=self.cli('--state',self.state,'export','--output',out)
   self.assertEqual(res.returncode,0,res.stderr)
@@ -42,7 +42,7 @@ class PortabilityTests(unittest.TestCase):
   self.assertTrue(self.r.inventory_confirmed(s))
  def test_tampered_export_evidence_rejected_on_resume(self):
   out=self.base/'export';self.cli('--state',self.state,'export','--output',out)
-  next((out/'evidence').iterdir()).write_text('tampered')
+  next((out/'evidence').iterdir()).write_text('tampered',encoding='utf-8')
   res=self.cli('--state',self.base/'new.json','resume','--bundle',out)
   self.assertNotEqual(res.returncode,0);self.assertIn('EVIDENCE',res.stderr)
  def test_resume_refuses_overwrite(self):
