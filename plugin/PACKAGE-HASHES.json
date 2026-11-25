@@ -61,7 +61,7 @@
   "tests/test_host_cases.py": "de0c9731a6c0bc040dfd63d824f30afd59a03880341dcfacc1d17d545d3d0699",
   "tests/test_maintenance.py": "e6806cf4cb5b0aa5e71c58ffe928e953c6c9ca64d38b9e65f570d4d336c3c82c",
   "tests/test_migration.py": "8c1cdc7eaf17a187dcdbf8f298b593e16725f5ed3516b698a1dc5e0ee9aa4d98",
-  "tests/test_node_context.py": "63211d0dafe4eee576ed2610f766e0075ca30797e2b75ffe0d5d881fda5f12b9",
+  "tests/test_node_context.py": "625ab8fe39a264b36e01dcb2b717bcd56ab99f907868e9046ba569872a82a2fa",
   "tests/test_portability.py": "0e3865342ec5b23e75ad392a66abef4aa3e60778053ee6fd6114c1b80e25d6a2",
   "tests/test_r2_protocol.py": "d4ed855ab388055ce6d8c2ba6bd4486df07d1449c774ba4930592dc3770d7027",
   "tests/test_read_boundaries.py": "7f415e84bc47d4f51d16fc7a1c87fc3167a97bf2b4a3d9c3450468acd9555e6b",

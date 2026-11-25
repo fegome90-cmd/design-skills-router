@@ -137,6 +137,40 @@ class CheckEncodingTests(unittest.TestCase):
             fileinput.input(['a'], mode='rb')
             ''', [(7, 'Path.open')])
 
+    def test_reports_review_findings_outside_the_original_list(self):
+        self.assertReports('''\
+            import builtins, codecs, fileinput, io, subprocess
+            builtins.open('a')
+            codecs.open('a')
+            io.TextIOWrapper(buffer)
+            subprocess.run(['x'], capture_output=True, errors='replace')
+            fileinput.input(['a'], openhook=None)
+            ''', [(2, 'open'), (3, 'codecs.open'), (4, 'io.TextIOWrapper'),
+                  (5, 'subprocess.run'), (6, 'fileinput.input')])
+        self.assertReports('''\
+            import codecs, io, subprocess
+            codecs.open('a', 'r', 'utf-8')
+            codecs.open('a', 'rb')
+            io.TextIOWrapper(buffer, 'utf-8')
+            subprocess.run(['x'], errors=None)
+            ''', [])
+
+    def test_resolves_an_import_written_after_its_use(self):
+        self.assertReports('''\
+            def write():
+                return NamedTemporaryFile('w')
+            from tempfile import NamedTemporaryFile
+            ''', [(2, 'tempfile.NamedTemporaryFile')])
+
+    def test_ignore_marker_requires_a_reason(self):
+        self.assertReports('''\
+            import zipfile
+            archive = zipfile.ZipFile('a.zip')
+            archive.open('x')  # check-encoding: ignore[ZipFile.open reads bytes]
+            archive.open('y')  # check-encoding: ignore[]
+            archive.open('z')  # check-encoding: ignore
+            ''', [(4, 'Path.open'), (5, 'Path.open')])
+
     def test_command_line_exit_codes_and_exclusions(self):
         with tempfile.TemporaryDirectory() as temp:
             bad = Path(temp) / 'bad.py'

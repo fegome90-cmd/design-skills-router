@@ -50,6 +50,9 @@ jobs:
           echo "$RUNNER_TEMP/security-bin" >> "$GITHUB_PATH"
 
       # PYTHONWARNINGS also reaches the Python subprocesses that inherit the environment.
+      # The MCP stdio tests forward it explicitly past the SDK's minimal environment.
+      # The installed CLI starts its portable scripts with -E by design; those scripts
+      # are checked at run time through the plugin suite, which runs them directly.
       - name: Test suites with EncodingWarning as an error
         env:
           PYTHONWARNDEFAULTENCODING: '1'
