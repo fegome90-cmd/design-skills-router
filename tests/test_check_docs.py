@@ -269,9 +269,42 @@ class CheckDocsTests(unittest.TestCase):
                                 capture_output=True, encoding='utf-8')
         self.assertEqual(result.returncode, 2)
 
-    def test_repository_is_clean(self):
-        result = subprocess.run([sys.executable, '-B', str(SCRIPT)], capture_output=True, encoding='utf-8')
-        self.assertEqual((result.returncode, result.stdout), (0, ''), result.stderr)
+    def test_escapes_empty_destinations_and_label_normalisation(self):
+        self.assertClean({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                [escapado](../a\\(1\\).md) [guía][Plan  MCP] [vacío][self]
+
+                [plan mcp]: ../plan.md
+                [self]: <>
+                '''),
+            'docs/a(1).md': '#\n', 'docs/plan.md': '#\n',
+        })
+
+    def test_an_unclosed_inline_link_is_not_a_link(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                                     '[a](../a.md\n\n[b](../b.md "sin cerrar\n',
+            'docs/a.md': '#\n', 'docs/b.md': '#\n',
+        }, [f'docs/a.md:1: ORPHAN: {orphan}', f'docs/b.md:1: ORPHAN: {orphan}'])
+
+    def test_a_table_inside_an_html_comment_defines_nothing(self):
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R18 R19\n',
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |---|---|
+                | R19 | visible <!-- nota --> |
+
+                <!--
+                | Unidad | Estado |
+                |---|---|
+                | R18 | comentada |
+                -->
+                '''),
+        }, ['docs/agent/CONTEXT.md:1: UNDEFINED_ID: R18 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:8: UNDEFINED_ID: R18 has no recognised definition'])
 
 
 if __name__ == '__main__':

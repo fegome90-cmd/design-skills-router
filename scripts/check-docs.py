@@ -117,29 +117,62 @@ def markdown_files(root: Path) -> list[str]:
     return sorted(p for p in files if not p.startswith(SKIPPED_DIRS) and (root / p).is_file())
 
 
+ESCAPE = re.compile(r'\\([!-/:-@\[-`{-~])')
+TITLE_END = {'"': '"', "'": "'", '(': ')'}
+
+
+def unescape(value: str) -> str:
+    """Decode CommonMark backslash escapes of ASCII punctuation."""
+    return ESCAPE.sub(r'\1', value)
+
+
+def label_key(label: str) -> str:
+    """Normalise a reference label as CommonMark does: collapse whitespace, case-fold."""
+    return ' '.join(label.split()).casefold()
+
+
 def destination(line: str, start: int) -> str | None:
-    """Parse a CommonMark link destination that starts at ``line[start]``."""
-    while start < len(line) and line[start] in ' \t\n':
-        start += 1
-    if start < len(line) and line[start] == '<':
-        end = line.find('>', start + 1)
-        return line[start + 1:end] if end != -1 else None
-    depth, index = 0, start
-    while index < len(line):
-        char = line[index]
-        if char == '\\' and index + 1 < len(line):
-            index += 2
-            continue
-        if char in ' \t\n':
-            break
-        if char == '(':
-            depth += 1
-        elif char == ')':
-            if depth == 0:
-                break
-            depth -= 1
+    """Parse an inline link's destination after ``](``; None unless the link closes with ``)``."""
+    index = start
+    while index < len(line) and line[index] in ' \t\n':
         index += 1
-    return line[start:index] or None
+    if index < len(line) and line[index] == '<':
+        end = line.find('>', index + 1)
+        if end == -1:
+            return None
+        target, index = line[index + 1:end], end + 1
+    else:
+        depth, begin = 0, index
+        while index < len(line):
+            char = line[index]
+            if char == '\\' and index + 1 < len(line):
+                index += 2
+                continue
+            if char in ' \t\n':
+                break
+            if char == '(':
+                depth += 1
+            elif char == ')':
+                if depth == 0:
+                    break
+                depth -= 1
+            index += 1
+        target = line[begin:index]
+    while index < len(line) and line[index] in ' \t\n':
+        index += 1
+    if index < len(line) and line[index] in TITLE_END:
+        closing = TITLE_END[line[index]]
+        index += 1
+        while index < len(line) and line[index] != closing:
+            index += 2 if line[index] == '\\' else 1
+        if index >= len(line):
+            return None
+        index += 1
+        while index < len(line) and line[index] in ' \t\n':
+            index += 1
+    if index >= len(line) or line[index] != ')':
+        return None
+    return unescape(target) or None
 
 
 def link_targets(text: str):
@@ -167,7 +200,8 @@ def link_targets(text: str):
     for number, line in [*lines, (0, '')]:
         match = REFERENCE_DEF.match(line)
         if match:
-            definitions.setdefault(' '.join(match.group(1).split()).lower(), (number, match.group(2) or match.group(3)))
+            target = match.group(2) if match.group(2) is not None else match.group(3)
+            definitions.setdefault(label_key(match.group(1)), (number, unescape(target)))
         if line.strip() and not match:
             paragraph.append((number, line))
             continue
@@ -181,7 +215,7 @@ def link_targets(text: str):
                 if target:
                     yield line_of(found.start()), target
             for found in REFERENCE_USE.finditer(text):
-                used.add(' '.join((found.group(2) or found.group(1)).split()).lower())
+                used.add(label_key(found.group(2) or found.group(1)))
             for found in HTML_LINK.finditer(text):
                 yield line_of(found.start()), found.group(1)
             paragraph = []
@@ -254,7 +288,22 @@ def json_ids(root: Path) -> set[str]:
 def table_ids(text: str, header: str) -> set[str]:
     """IDs in the first column of the GFM tables whose first header cell is ``header``."""
     found: set[str] = set()
-    rows = [(line.strip(), code) for _, line, code in all_lines(text)]
+    rows: list[tuple[str, bool]] = []
+    in_comment = False  # a table inside an HTML comment is not rendered
+    for _, line, code in all_lines(text):
+        if code:
+            rows.append(('', True))
+            continue
+        if in_comment:
+            end = line.find('-->')
+            if end == -1:
+                rows.append(('', True))
+                continue
+            line, in_comment = line[end + 3:], False
+        line = HTML_COMMENT.sub('', line)
+        if '<!--' in line:
+            line, in_comment = line[:line.index('<!--')], True
+        rows.append((line.strip(), False))
     active = False
     for index, (row, code) in enumerate(rows):
         if code or '|' not in row:
