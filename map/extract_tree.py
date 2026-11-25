@@ -21,7 +21,7 @@ from tree_model import expand_model, flatten
 
 
 def load(file):
-    return json.loads((PLUGIN / file).read_text())
+    return json.loads((PLUGIN / file).read_text(encoding="utf-8"))
 
 
 def key(value):
@@ -196,5 +196,5 @@ def extract():
 if __name__ == "__main__":
     result = extract()
     Path(__file__).with_name("tree_data.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

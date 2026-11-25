@@ -122,11 +122,11 @@ class HttpTests(unittest.TestCase):
         legacy = state / "outbox-0001-a.jsonl"
         record = event("router.invoked", evaluation_id=str(uuid.uuid4()), command="node")
         payload = json.dumps({"schema": contract.SCHEMA, "events": [record]})
-        legacy.write_text(payload)
+        legacy.write_text(payload,encoding="utf-8")
         client = Telemetry(contract.TelemetryConfig(True, self.server.base, state_dir=state))
         self.assertTrue(client.flush())
         self.assertEqual(self.server.server.store.metrics()["totals"]["invocations"], 0)
-        self.assertEqual(legacy.read_text(), payload)
+        self.assertEqual(legacy.read_text(encoding="utf-8"), payload)
 
     def test_batch_roundtrip_and_metrics(self):
         evaluation = str(uuid.uuid4())
@@ -440,7 +440,7 @@ class HttpTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, "-B", "-m", "telemetry.collector",
              "--db", str(self.directory / "cli.sqlite3"), "--host", "0.0.0.0", "--port", "0"],
-            cwd=root, capture_output=True, text=True,
+            cwd=root, capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("NON_LOOPBACK_LISTENER_REQUIRES_TOKEN_OR_EXPLICIT_ANONYMOUS_WRITES", result.stderr)
@@ -450,7 +450,7 @@ class HttpTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, "-B", "-m", "telemetry.collector",
              "--db", str(self.directory / "cli.sqlite3"), "--cors-origin", "not an origin"],
-            cwd=root, capture_output=True, text=True,
+            cwd=root, capture_output=True, text=True, encoding="utf-8",
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("INVALID_CORS_ORIGIN", result.stderr)
@@ -467,7 +467,7 @@ class HttpTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, "-B", "-m", "telemetry.collector",
              "--db", str(self.directory / "cli.sqlite3"), "--max-events-per-minute", "50"],
-            cwd=root, capture_output=True, text=True, timeout=20,
+            cwd=root, capture_output=True, text=True, timeout=20, encoding="utf-8",
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("must be at least 100", result.stderr)

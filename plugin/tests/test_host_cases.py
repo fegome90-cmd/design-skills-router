@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 class HostCaseTests(unittest.TestCase):
     def test_twelve_unique_cases_and_labels(self):
-        pack=json.loads((ROOT/'tests/fixtures/host-routing-cases.json').read_text())
+        pack=json.loads((ROOT/'tests/fixtures/host-routing-cases.json').read_text(encoding='utf-8'))
         self.assertEqual(pack['schema'],'router-host-evaluation-cases/1')
         cases=pack['cases'];self.assertEqual(len(cases),12)
         self.assertEqual([x['id'] for x in cases],[f'H{i:02}' for i in range(1,13)])
@@ -19,7 +19,7 @@ class HostCaseTests(unittest.TestCase):
             self.assertTrue(x['reason'])
     def test_observation_record_requirements(self):
         # These are documentation-level obligations, not a replay of another LLM.
-        manual=(ROOT/'skills/design-tree/references/PILOT.md').read_text()
+        manual=(ROOT/'skills/design-tree/references/PILOT.md').read_text(encoding='utf-8')
         for field in ('release_id','session_ref','observed_at','trace_refs','UNVERIFIED'):
             self.assertIn(field,manual)
 
@@ -27,7 +27,7 @@ class HostCaseTests(unittest.TestCase):
 class AssistedUXFixturesTests(unittest.TestCase):
     """A static contract for future host observations; not a model-behavior test."""
     def test_eight_assisted_ux_scenarios_are_explicit_and_unverified(self):
-        pack=json.loads((ROOT/'tests/fixtures/host-routing-cases.json').read_text())
+        pack=json.loads((ROOT/'tests/fixtures/host-routing-cases.json').read_text(encoding='utf-8'))
         cases=pack['ux_scenarios']
         self.assertEqual([c['id'] for c in cases], [f'UX{i:02}' for i in range(1,9)])
         self.assertEqual([c['expectation'] for c in cases], [
@@ -46,8 +46,8 @@ class AssistedUXFixturesTests(unittest.TestCase):
         self.assertEqual([c['explicit_level'] for c in cases[1:4]],['manual','guided','phase_auto'])
 
     def test_user_facing_instructions_preserve_explicit_authority(self):
-        skill=(ROOT/'skills/design-tree/SKILL.md').read_text()
-        assistance=(ROOT/'skills/design-tree/references/ASSISTANCE.md').read_text()
+        skill=(ROOT/'skills/design-tree/SKILL.md').read_text(encoding='utf-8')
+        assistance=(ROOT/'skills/design-tree/references/ASSISTANCE.md').read_text(encoding='utf-8')
         for required in ('Inicio sin nivel explícito', 'Nivel explícito', 'Mandato vigente',
                          'Reanudación', 'Interrupciones y gates'):
             self.assertIn(required,skill)

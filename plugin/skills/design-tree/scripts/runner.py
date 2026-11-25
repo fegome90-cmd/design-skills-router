@@ -109,9 +109,9 @@ class Router:
     def __init__(self, package_root=None):
         self.skill_dir = Path(package_root)/"skills/design-tree" if package_root else SKILL_DIR
         self.base = self.skill_dir/"references/tree-v0.4"
-        self.tree = json.loads((self.base/'tree.json').read_text())
-        self.rules = json.loads((self.base/'rules.json').read_text())
-        inv = json.loads((self.base/'skill-inventory.json').read_text())
+        self.tree = json.loads((self.base/'tree.json').read_text(encoding='utf-8'))
+        self.rules = json.loads((self.base/'rules.json').read_text(encoding='utf-8'))
+        inv = json.loads((self.base/'skill-inventory.json').read_text(encoding='utf-8'))
         self.inventory = {r['id']: r for r in inv['skills']}
         self.tree_hash = hashlib.sha256((self.base/'tree.json').read_bytes()).hexdigest()
         self.inventory_hash = hashlib.sha256((self.base/'skill-inventory.json').read_bytes()).hexdigest()
@@ -123,12 +123,12 @@ class Router:
             for edge in n['children']:
                 self.parents[edge['node']['id']] = n['id']
         cp=self.skill_dir/'references/contracts.json'
-        self.contracts=json.loads(cp.read_text())
+        self.contracts=json.loads(cp.read_text(encoding='utf-8'))
         require(not validate_contracts(self.contracts,self.nodes,self.inventory),'CONTRACTS_INVALID')
         require(self.contracts.get('baseline',{}).get('tree_hash')==self.tree_hash,'CONTRACT_BASELINE_MISMATCH')
 
     def verify_baseline(self):
-        lock=json.loads((self.skill_dir/'references'/'baseline-lock.json').read_text())
+        lock=json.loads((self.skill_dir/'references'/'baseline-lock.json').read_text(encoding='utf-8'))
         for name, expected in lock.items():
             require(file_hash(self.base/name) == expected, 'BASELINE_FILE_DRIFT:'+name)
         return True
@@ -1136,7 +1136,7 @@ class Router:
 
 def load_state(path, allow_legacy=False):
     p=Path(path);require(p.is_file() and not p.is_symlink(),'STATE_MISSING_OR_SYMLINK')
-    s=json.loads(p.read_text())
+    s=json.loads(p.read_text(encoding='utf-8'))
     require(isinstance(s,dict),'STATE_OBJECT_REQUIRED')
     claimed=s.pop('integrity',None)
     require(claimed==digest(s),'STATE_INTEGRITY_MISMATCH')
@@ -1311,7 +1311,7 @@ def main(argv=None):
         save_state(a.state,state,None)
         return router.status(state)
     state=load_state(a.state);router.check_state(state);rev=state['revision'];changed=True
-    payload=json.loads(a.file.read_text()) if getattr(a,'file',None) and a.cmd!='source' else None
+    payload=json.loads(a.file.read_text(encoding='utf-8')) if getattr(a,'file',None) and a.cmd!='source' else None
     if a.cmd=='status':return router.status(state)
     if a.cmd=='node':return router.packet(state,a.node_id)
     if a.cmd=='source':router.register_source(state,a.skill,a.file,a.commit,a.git_blob,a.source_ref);out={'source_registered':a.skill,'invoked':False}

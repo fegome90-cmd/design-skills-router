@@ -4,6 +4,7 @@ import asyncio
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -23,7 +24,7 @@ import test_node_context as context_fixture
 class InstalledMcpParityTests(unittest.TestCase):
     def test_g5_contract_through_installed_cli_and_stdio(self):
         from mcp import ClientSession, StdioServerParameters
-        from mcp.client.stdio import stdio_client
+        from mcp.client.stdio import get_default_environment, stdio_client
 
         case = context_fixture.NodeContextTests('test_phase_routes_before_authorizing_context')
         case.setUpClass()
@@ -87,10 +88,18 @@ class InstalledMcpParityTests(unittest.TestCase):
             path.write_text(json.dumps(value), encoding='utf-8')
             return str(path)
 
+        # The SDK starts the command with a minimal environment. Forward the
+        # encoding-warning settings to the Typer CLI process. The CLI starts the
+        # portable server with -E, so the server itself is checked at run time
+        # by plugin/tests/test_node_context.py.
+        server_env = {**get_default_environment(),
+                      **{k: os.environ[k] for k in ('PYTHONWARNDEFAULTENCODING', 'PYTHONWARNINGS')
+                         if k in os.environ}}
         server = StdioServerParameters(
             command=sys.executable,
             args=[*launch, '--state', str(mcp_ledger), 'mcp'],
             cwd=str(work),
+            env=server_env,
         )
 
         async def exercise():

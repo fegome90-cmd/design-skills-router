@@ -75,7 +75,7 @@ class EndToEndScenarios(unittest.TestCase):
   self.assertTrue(status['ready_for_human_handoff'],status)
   self.assertEqual(len(gates),4);self.assertEqual(len(self.s['records']),len(route));self.assertFalse(status['permission_to_execute'])
   self.assertTrue(all('receipt' not in r and r['authority']['decided_by']=='agent_delegated' for r in self.s['records'].values()))
-  self.h.ev.write_text('evidence changed');self.assertFalse(self.r.status(self.s)['ready_for_human_handoff'])
+  self.h.ev.write_text('evidence changed',encoding='utf-8');self.assertFalse(self.r.status(self.s)['ready_for_human_handoff'])
  def test_AS18_policy_budget_not_claimed_host_measurement(self):
   from assistance import assistance_action
   nodes=[{'id':'n'+str(i)} for i in range(12)]
@@ -177,7 +177,7 @@ class EndToEndScenarios(unittest.TestCase):
   self.r.accept_phase(self.s,'root',self.h.receipt(root_packet['gate_packet_hash'],'phase'))
   grant=self.r.grant_template(self.s,'type','manual')
   self.r.grant_assistance(self.s,grant,self.h.receipt(self.r.grant_hash(self.s,grant),'delegation'))
-  root_artifact.write_text('changed after phase acceptance')
+  root_artifact.write_text('changed after phase acceptance',encoding='utf-8')
   check_blocked('P02','PHASE_DEPENDENCY_PENDING')
   check_blocked('T01','PHASE_DEPENDENCY_PENDING')
   root_artifact.write_bytes(self.h.ev.read_bytes())
@@ -191,7 +191,7 @@ class EndToEndScenarios(unittest.TestCase):
   payload=self.h.work/'payload.json'
   self.h.r.save_state(ledger,self.s,None)
   def cli(command,node,data):
-   payload.write_text(json.dumps(data))
+   payload.write_text(json.dumps(data),encoding='utf-8')
    return self.h.r.main(['--state',str(ledger),command,node,'--file',str(payload)])
   for node,proposal in proposals.items():
    cli('structure',node,self.h.receipt(self.r.structure_hash(node),'structure'))

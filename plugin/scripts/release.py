@@ -17,16 +17,16 @@ def prepare_release(package_root:Path,version:str,output:Path,retained_assets:di
     root=Path(package_root).resolve();out=Path(output).absolute();retained=retained_assets or {}
     need(not out.exists() and not out.is_symlink(),'DESTINATION_EXISTS')
     need(not out.resolve().is_relative_to(root),'DESTINATION_INSIDE_PACKAGE')
-    manifest=json.loads((root/'plugin.json').read_text());overlay=json.loads((root/'.codex-plugin/plugin.json').read_text())
+    manifest=json.loads((root/'plugin.json').read_text(encoding='utf-8'));overlay=json.loads((root/'.codex-plugin/plugin.json').read_text(encoding='utf-8'))
     need(version_tuple(version)>version_tuple(manifest['version']),'VERSION_MUST_INCREASE')
     need(manifest['name']==overlay['name'],'MANIFEST_IDENTITY_MISMATCH')
     inter=manifest['extensions']['com.openai']['interface']
     need(inter==overlay['interface'],'MANIFEST_PRESENTATION_MISMATCH')
-    base=root/'skills/design-tree/references/tree-v0.4';lock=json.loads((base.parent/'baseline-lock.json').read_text())
+    base=root/'skills/design-tree/references/tree-v0.4';lock=json.loads((base.parent/'baseline-lock.json').read_text(encoding='utf-8'))
     for relative,h in lock.items():
         p=base/relative
         need(p.is_file() and not p.is_symlink() and p.resolve().is_relative_to(base.resolve()) and sha(p.read_bytes())==h,'BASELINE_DRIFT:'+relative)
-    oldhash=json.loads((root/'PACKAGE-HASHES.json').read_text())
+    oldhash=json.loads((root/'PACKAGE-HASHES.json').read_text(encoding='utf-8'))
     for name,record in retained.items():
         need(isinstance(name,str) and name.startswith('assets/') and '..' not in Path(name).parts and isinstance(record,dict),'RETAINED_ASSET_INVALID')
         need(record.get('sha256')==oldhash.get(name) and re.fullmatch('[a-f0-9]{64}',record.get('sha256','')),'RETAINED_ASSET_HASH_MISMATCH')
@@ -80,7 +80,7 @@ def prepare_release(package_root:Path,version:str,output:Path,retained_assets:di
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);sub=p.add_subparsers(dest='command',required=True)
     q=sub.add_parser('prepare');q.add_argument('--version',required=True);q.add_argument('--output',type=Path,required=True);q.add_argument('--package-root',type=Path,default=Path(__file__).resolve().parents[1]);q.add_argument('--retained-assets',type=Path)
-    a=p.parse_args(argv);retained=json.loads(a.retained_assets.read_text()) if a.retained_assets else None
+    a=p.parse_args(argv);retained=json.loads(a.retained_assets.read_text(encoding='utf-8')) if a.retained_assets else None
     return prepare_release(a.package_root,a.version,a.output,retained)
 if __name__=='__main__':
     try:print(json.dumps(main(),ensure_ascii=False,indent=2))

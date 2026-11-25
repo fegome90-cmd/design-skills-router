@@ -42,7 +42,7 @@ class SecurityChecks(unittest.TestCase):
 
     def run_command(self, *command, check=True):
         return subprocess.run(
-            command, cwd=self.repo, env=self.env, capture_output=True, text=True, check=check
+            command, cwd=self.repo, env=self.env, capture_output=True, text=True, check=check, encoding="utf-8"
         )
 
     def git(self, *arguments, check=True):

@@ -13,7 +13,7 @@ class ExperiencePolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.policy = importlib.import_module('assistance')
-        cls.fixture = json.loads((ROOT / 'tests/fixtures/host-routing-cases.json').read_text())
+        cls.fixture = json.loads((ROOT / 'tests/fixtures/host-routing-cases.json').read_text(encoding='utf-8'))
 
     def test_twelve_reversible_nodes_and_one_reserved_node(self):
         spec = self.fixture['policy_budget']
@@ -48,7 +48,7 @@ class ExperiencePolicyTests(unittest.TestCase):
         self.assertEqual(spec['host_result'], 'UNVERIFIED')
 
     def test_scorecard_distinguishes_user_observation_from_host_trace(self):
-        t = (ROOT / 'skills/design-tree/references/PILOT.md').read_text()
+        t = (ROOT / 'skills/design-tree/references/PILOT.md').read_text(encoding='utf-8')
         for required in ('question_count', 'avoidable_questions', 'node_decisions_recorded',
                          'phase_gate_respected', 'USER_OBSERVED', 'TRACE_VERIFIED', 'UNVERIFIED',
                          'observed_at', 'scope', 'trace_refs'):

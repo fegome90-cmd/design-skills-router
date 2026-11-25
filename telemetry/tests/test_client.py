@@ -67,7 +67,7 @@ class ClientTests(unittest.TestCase):
             self.assertFalse(client.flush())
         spool = list(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(spool), 1)
-        payload = json.loads(spool[0].read_text())
+        payload = json.loads(spool[0].read_text(encoding="utf-8"))
         self.assertEqual(len(payload["events"]), 1)
         with patch.object(client, "_post", return_value=POST_OK):
             self.assertTrue(client.flush())
@@ -216,7 +216,7 @@ class ClientTests(unittest.TestCase):
             self.assertFalse(client.flush())
             old_path, = client._outbox_dir().glob("outbox-*.jsonl")
             # A client from before the replay lock has read this generation.
-            acknowledged = json.loads(old_path.read_text())["events"]
+            acknowledged = json.loads(old_path.read_text(encoding="utf-8"))["events"]
             second = client.emit("router.invoked", evaluation_id=str(uuid.uuid4()), command="status")
             self.assertFalse(client.flush())
         # Its successful POST can delete only the pathname it originally read.
@@ -262,7 +262,7 @@ class ClientTests(unittest.TestCase):
         with patch.object(reader, "_deliver_batch", side_effect=retry_after_compaction):
             self.assertFalse(reader.flush_spool())
         replacement, = reader._outbox_dir().glob("outbox-*.jsonl")
-        self.assertEqual(json.loads(replacement.read_text())["events"], [original, appended[0]])
+        self.assertEqual(json.loads(replacement.read_text(encoding="utf-8"))["events"], [original, appended[0]])
 
     @unittest.skipUnless(hasattr(os, "geteuid") and os.geteuid() != 0,
                          "requires POSIX file permissions and an unprivileged user")
@@ -283,7 +283,7 @@ class ClientTests(unittest.TestCase):
                          [events[-1], newest])
         rejected, = directory.glob("rejected-*.jsonl")
         rejected.chmod(0o600)
-        self.assertEqual(json.loads(rejected.read_text())["events"], events[:-1])
+        self.assertEqual(json.loads(rejected.read_text(encoding="utf-8"))["events"], events[:-1])
         self.assertEqual(list(directory.glob("outbox-*.jsonl")), [])
 
     def test_transient_spool_read_failure_keeps_the_batch_pending(self):
@@ -328,7 +328,7 @@ class ClientTests(unittest.TestCase):
                 "tree_version": "0.4", "evaluation_id": str(uuid.uuid4()),
                 "command": command,
             }]
-            path.write_text(json.dumps(payload))
+            path.write_text(json.dumps(payload),encoding="utf-8")
         with patch.object(client, "_post", side_effect=[POST_REJECT, POST_OK]):
             self.assertFalse(client.flush_spool())
         self.assertFalse(first.exists())
@@ -396,7 +396,7 @@ class ClientTests(unittest.TestCase):
             self.assertFalse(client.flush())
         after = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(after, files, "a failed merge must leave the spooled file untouched")
-        self.assertEqual(len(json.loads(after[0].read_text())["events"]), 3)
+        self.assertEqual(len(json.loads(after[0].read_text(encoding="utf-8"))["events"]), 3)
         self.assertEqual(len(client._events), 2,
                          "the new batch must return to the buffer on merge failure")
 
@@ -429,7 +429,7 @@ class ClientTests(unittest.TestCase):
             self.assertFalse(client.flush())
         files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 2)
-        counts = [len(json.loads(path.read_text())["events"]) for path in files]
+        counts = [len(json.loads(path.read_text(encoding="utf-8"))["events"]) for path in files]
         self.assertEqual(counts, [100, 40])
         self.assertTrue(all(count <= contract.MAX_BATCH_EVENTS for count in counts),
                         "a merged file must never exceed one POST batch")
@@ -462,7 +462,7 @@ class ClientTests(unittest.TestCase):
             files = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(len(files), 3)
             self.assertNotIn(oldest, files, "the oldest file is evicted at the cap")
-            total = sum(len(json.loads(path.read_text())["events"]) for path in files)
+            total = sum(len(json.loads(path.read_text(encoding="utf-8"))["events"]) for path in files)
             self.assertEqual(total, 300)
 
     def test_spool_write_failure_at_cap_preserves_existing_files(self):
@@ -615,7 +615,7 @@ class ClientTests(unittest.TestCase):
         directory.mkdir(parents=True)
         # An older client already established the high-water clock, but
         # neither of the new lock files exists yet.
-        (directory / "spool-clock").write_text("1800000000000000000:1")
+        (directory / "spool-clock").write_text("1800000000000000000:1",encoding="utf-8")
         os.chmod(directory.parent, 0o500)
         os.chmod(directory, 0o300)
         self.addCleanup(os.chmod, directory.parent, 0o700)
@@ -644,8 +644,8 @@ class ClientTests(unittest.TestCase):
                 c2.flush()
         files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 2)
-        first = json.loads(files[0].read_text())["events"][0]["command"]
-        second = json.loads(files[1].read_text())["events"][0]["command"]
+        first = json.loads(files[0].read_text(encoding="utf-8"))["events"][0]["command"]
+        second = json.loads(files[1].read_text(encoding="utf-8"))["events"][0]["command"]
         self.assertEqual((first, second), ("node", "status"))
 
     def test_large_retryable_flush_preserves_chunk_1_and_indexed_422_isolates_only_bad_event(self):
@@ -664,7 +664,7 @@ class ClientTests(unittest.TestCase):
                 self.assertFalse(client.flush())
             spooled = sorted(self.state.rglob("outbox-*.jsonl"))
             self.assertEqual(len(spooled), 3)
-            self.assertEqual(json.loads(spooled[0].read_text())["events"][0]["name"], "skill.execution_started")
+            self.assertEqual(json.loads(spooled[0].read_text(encoding="utf-8"))["events"][0]["name"], "skill.execution_started")
             self.assertEqual(len(client._events), contract.MAX_BATCH_EVENTS)
             delivered: list[dict] = []
             with patch.object(client, "_post", side_effect=lambda batch: (delivered.extend(batch), POST_OK)[1]):
@@ -712,7 +712,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual([e["command"] for batch in received for e in batch], ["node", "status"])
         rejected_files = list(self.state.rglob("rejected-*.jsonl"))
         self.assertEqual(len(rejected_files), 1)
-        self.assertEqual(len(json.loads(rejected_files[0].read_text())["events"]), 1)
+        self.assertEqual(len(json.loads(rejected_files[0].read_text(encoding="utf-8"))["events"]), 1)
 
     def test_concurrent_processes_converge_on_single_instance_id(self):
         import subprocess, sys
@@ -725,7 +725,7 @@ class ClientTests(unittest.TestCase):
             "print(client.load_instance_id(cfg))"
         )
         procs = [
-            subprocess.Popen([sys.executable, "-B", "-c", code], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            subprocess.Popen([sys.executable, "-B", "-c", code], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8")
             for _ in range(8)
         ]
         ids = []
@@ -759,7 +759,7 @@ class ClientTests(unittest.TestCase):
                 self.assertFalse(client.flush())
                 after_retries = sorted(self.state.rglob("outbox-*.jsonl"))
                 self.assertEqual(after_retries, first_pass)
-                self.assertEqual(json.loads(after_retries[0].read_text())["events"][0]["name"], "skill.execution_started")
+                self.assertEqual(json.loads(after_retries[0].read_text(encoding="utf-8"))["events"][0]["name"], "skill.execution_started")
                 self.assertEqual(len(client._events), contract.MAX_BATCH_EVENTS)
 
             delivered: list[dict] = []
@@ -799,7 +799,7 @@ class ClientTests(unittest.TestCase):
         os.chmod(directory, 0o700)
         files = sorted(self.state.rglob("outbox-*.jsonl"))
         self.assertEqual(len(files), 2)
-        names = [json.loads(p.read_text())["events"][0]["name"] for p in files]
+        names = [json.loads(p.read_text(encoding="utf-8"))["events"][0]["name"] for p in files]
         self.assertEqual(names, ["skill.execution_started", "skill.execution_completed"])
 
     def test_indexed_422_retains_rejected_diagnostic_when_spool_dir_is_readonly(self):
@@ -857,7 +857,7 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(client._rejected, [])
         rejected_files = list(self.state.rglob("rejected-*.jsonl"))
         self.assertEqual(len(rejected_files), 1)
-        saved = json.loads(rejected_files[0].read_text())["events"]
+        saved = json.loads(rejected_files[0].read_text(encoding="utf-8"))["events"]
         self.assertEqual([e["name"] for e in saved], ["skill.execution_completed"])
 
 if __name__ == "__main__":

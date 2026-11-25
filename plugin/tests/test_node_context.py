@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import sqlite3
@@ -488,7 +489,7 @@ class NodeContextTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec('mcp'), 'Install the optional MCP SDK for stdio checks')
     def test_stdio_reports_g5_permissions_and_enforces_submission_gates(self):
         from mcp import ClientSession, StdioServerParameters
-        from mcp.client.stdio import stdio_client
+        from mcp.client.stdio import get_default_environment, stdio_client
 
         proposal = self.prepare_case()
         self.pin_test_sources()
@@ -497,8 +498,13 @@ class NodeContextTests(unittest.TestCase):
         skill_dir = self.fixture.work / 'portable' / 'skills' / 'design-tree'
         shutil.copytree(fixtures.SCRIPTS.parent, skill_dir)
         (skill_dir / 'references' / 'contracts.json').write_text(json.dumps(self.router.contracts), encoding='utf-8')
+        # Forward the encoding-warning settings past the SDK's minimal environment.
+        server_env = {**get_default_environment(),
+                      **{k: os.environ[k] for k in ('PYTHONWARNDEFAULTENCODING', 'PYTHONWARNINGS')
+                         if k in os.environ}}
         server = StdioServerParameters(command=sys.executable,
-                                       args=['-B', str(skill_dir / 'scripts' / 'mcp_server.py'), '--state', str(self.ledger)])
+                                       args=['-B', str(skill_dir / 'scripts' / 'mcp_server.py'), '--state', str(self.ledger)],
+                                       env=server_env)
 
         async def run():
             async with stdio_client(server) as (read, write), ClientSession(read, write) as client:
