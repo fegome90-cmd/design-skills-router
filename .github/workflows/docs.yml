@@ -29,19 +29,33 @@ jobs:
       # an unreachable site never fails the check and no link is changed for it.
       # vendor/ and node_modules/ hold third-party copies; release/ holds generated
       # and frozen artefacts that are not edited by hand. --hidden adds .github/.
+      # The pinned lychee-action v2.9.0 downloads an unchecked archive.
+      # Pin the upstream release asset digest (also published in its .sha256 file).
+      # https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.2
+      - name: Install verified lychee CLI
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location --retry 2 \
+            https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-x86_64-unknown-linux-gnu.tar.gz -o lychee.tar.gz
+          echo '1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a  lychee.tar.gz' | sha256sum --check --strict
+          mkdir -p lychee-bin
+          tar -xzf lychee.tar.gz -C lychee-bin --strip-components=1 lychee-x86_64-unknown-linux-gnu/lychee
+
       - name: Links and anchors (lychee, offline)
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
-        with:
-          lycheeVersion: v0.24.2
-          fail: true
-          jobSummary: false
-          args: >-
-            --offline
-            --include-fragments
-            --no-progress
-            --hidden
-            --exclude-path '(^|/)(\.git|vendor|release|node_modules)/'
-            './**/*.md'
+        shell: bash
+        run: |
+          status=0
+          "$RUNNER_TEMP/lychee-bin/lychee" --offline --include-fragments --no-progress --hidden \
+            --exclude-path '(^|/)(\.git|vendor|release|node_modules)/' \
+            --format markdown --mode task --output "$RUNNER_TEMP/lychee-report.md" './**/*.md' || status=$?
+          cat "$RUNNER_TEMP/lychee-report.md"
+          # Preserve the action's failIfEmpty guard.
+          if grep -Eq 'Total[[:space:]]+\|[[:space:]]+0[[:space:]]*\|' "$RUNNER_TEMP/lychee-report.md"; then
+            echo 'No links were found. Check the documentation glob.'
+            exit 1
+          fi
+          exit "$status"
 
       - name: Reachability and roadmap IDs
         env:
