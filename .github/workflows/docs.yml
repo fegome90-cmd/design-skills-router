@@ -1,0 +1,51 @@
+name: Docs quality
+
+# Documentation links, anchors, reachability and roadmap IDs.
+# Plan: docs/specs/calidad/plan-ci-calidad.md (PR B).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Documentation links and references
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: '3.12'
+
+      # Offline: only local files and anchors. External URLs are not fetched, so
+      # an unreachable site never fails the check and no link is changed for it.
+      # vendor/ and node_modules/ hold third-party copies; release/ holds generated
+      # and frozen artefacts that are not edited by hand.
+      - name: Links and anchors (lychee, offline)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          fail: true
+          jobSummary: false
+          args: >-
+            --offline
+            --include-fragments
+            --no-progress
+            --exclude-path '(^|/)(vendor|release|node_modules)/'
+            './**/*.md'
+
+      - name: Reachability and roadmap IDs
+        env:
+          PYTHONWARNDEFAULTENCODING: '1'
+          PYTHONWARNINGS: error::EncodingWarning
+        run: |
+          python -B scripts/check-docs.py --summary
+          python -B -m unittest tests/test_check_docs.py -v
