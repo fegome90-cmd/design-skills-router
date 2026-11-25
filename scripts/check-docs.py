@@ -146,7 +146,10 @@ def link_targets(text: str):
     """Yield (line number, target) for inline, used reference and HTML links in prose."""
     lines = []
     in_comment = False
-    for number, line in prose_lines(text):
+    for number, line, code in all_lines(text):
+        if code:  # a fenced block ends the paragraph
+            lines.append((number, ''))
+            continue
         line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)  # before comments: `<!--` is code
         if in_comment:
             end = line.find('-->')

@@ -113,6 +113,9 @@ class CheckDocsTests(unittest.TestCase):
             dos líneas](../b.md "título
             en dos líneas")
             '''), 'docs/b.md': '#\n'})
+        self.assertFinds({'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md)\n[b](\n```\nx\n```\n../b.md)\n',
+                          'docs/b.md': '#\n'},
+                         ['docs/b.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
         self.assertFinds({'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md)\n[b](\n\n../b.md)\n',
                           'docs/b.md': '#\n'},
                          ['docs/b.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
