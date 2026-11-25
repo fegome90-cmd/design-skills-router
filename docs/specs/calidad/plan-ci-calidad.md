@@ -105,6 +105,10 @@ Queda fuera de este PR `release/design-router-mapa-fuentes.json`, que ya está d
 - Pruebas: documento huérfano, ciclo de huérfanos, ID no definido, ID definido en cada fuente reconocida, ID que solo aparece en una tabla no reconocida y bloque de código ignorado.
 - Enlazar `docs/adr/0001-baseline-de-plataforma.md` desde una guía de `docs/agent/`.
 
+Notas de implementación (25-11-2026):
+- Sobre `f4e4479`, la documentación citaba 8 IDs sin definición reconocida: R02, R02A, R02B, R02C, R03, R04, R09 y R10, con 20 menciones en total. Son unidades planificadas sin contrato. La tabla declarada es la de [`docs/specs/mcp-roadmap/README.md`](../mcp-roadmap/README.md). Cada fila cita literalmente el documento que menciona la unidad y no le atribuye alcance. Los `id` `R01` y `F00` de `board/src/*/datos.json` son nodos de la pizarra, no unidades; el plan los admite igualmente como fuente.
+- `lycheeverse/lychee-action` v2.9.0 descarga el binario de lychee sin verificar su checksum. La acción queda fijada por SHA y la versión de lychee por número (`v0.24.2`); el binario descargado no se verifica.
+
 ### Reglas de revisión
 - En el `AGENTS.md` raíz, una sección `## Code Review Rules` con subtítulos `###`. Cada regla describe el daño, porque Codex en GitHub solo marca P0 y P1:
   1. una comparación de equivalencia que también pasaría si ambos resultados estuvieran vacíos;

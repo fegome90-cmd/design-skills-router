@@ -62,3 +62,11 @@ En este checkout, `python3 -B plugin/skills/design-tree/scripts/runner.py verify
 `python3 -B tools/verify_sources.py` se ejecuta en el checkout completo, donde están `vendor/my-skills-manifest.json`, el manifiesto externo y las copias de las fuentes fijadas. Allí comprueba conjuntamente esas copias, el manifiesto del plugin y la huella del HTML v1.3 original.
 
 `python3 -B decision-authoring/build.py --verify-original --check regressions` reproduce el visor histórico y escribe por defecto `decision-authoring/release/index.html`. La evidencia en `evidence/` corresponde al release que registra.
+
+## Integrar en main
+
+Las reglas de integración de `main` (pull request obligatorio, resolución de threads y checks requeridos) se registran en el [ADR 0001](../adr/0001-baseline-de-plataforma.md). Los controles de calidad de CI se describen en el [plan de calidad](../specs/calidad/plan-ci-calidad.md). Antes de abrir un PR que toque documentación, ejecuta la guardia documental desde la raíz:
+
+```sh
+python3 -B scripts/check-docs.py --summary
+```
