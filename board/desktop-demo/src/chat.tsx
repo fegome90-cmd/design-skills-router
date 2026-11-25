@@ -1,9 +1,22 @@
-import { ArrowUp, Check, Copy, MessageSquare, Route, SquarePen } from "lucide-react"
+import {
+  Input,
+  InputClear,
+  InputGroup as SearchInputGroup,
+} from "@ui-sdk/react/input"
+import {
+  ScrollArea,
+  ScrollAreaContent,
+  ScrollAreaScrollbar,
+  ScrollAreaThumb,
+  ScrollAreaViewport,
+} from "@ui-sdk/react/scroll-area"
+import { Textarea } from "@ui-sdk/react/textarea"
+import { Button } from "@ui-sdk/react/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip"
+import { ArrowUp, Check, Copy, MessageSquare, Plus, Route, X } from "lucide-react"
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import { Button } from "@/components/ui/button"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
-import { InputGroup, InputGroupAddon, InputGroupTextarea } from "@/components/ui/input-group"
-import { SidebarGroup, SidebarGroupLabel, SidebarInput, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import type { Conversation, Message } from "@/data"
 
 export function ConversationList({
@@ -28,17 +41,24 @@ export function ConversationList({
   return (
     <>
       <div className="context-tools">
-        <Button className="new-conversation" variant="outline" onClick={onCreate}>
-          <SquarePen data-icon="inline-start" /> Nueva conversación
+        <Button className="new-conversation" onClick={onCreate}>
+          <Plus data-icon="inline-start" aria-hidden="true" /> Nueva conversación
         </Button>
-        <SidebarInput
-          className="context-search"
-          type="search"
-          aria-label="Buscar conversaciones"
-          placeholder="Buscar conversaciones"
-          value={query}
-          onChange={event => onSearch(event.target.value)}
-        />
+        <SearchInputGroup className="context-search-group h-9 rounded-lg border-input bg-card">
+          <Input
+            className="context-search"
+            type="search"
+            aria-label="Buscar conversaciones"
+            placeholder="Buscar conversaciones"
+            value={query}
+            onValueChange={onSearch}
+          />
+          {query && (
+            <InputClear aria-label="Limpiar búsqueda">
+              <X aria-hidden="true" />
+            </InputClear>
+          )}
+        </SearchInputGroup>
       </div>
       <SidebarGroup className="context-group">
         <SidebarGroupLabel className="context-label">Recientes</SidebarGroupLabel>
@@ -52,7 +72,7 @@ export function ConversationList({
                 aria-current={thread.id === selected ? "true" : undefined}
                 onClick={() => onSelect(thread.id)}
               >
-                <MessageSquare />
+                <MessageSquare aria-hidden="true" />
                 <span className="context-row-main">{thread.title}</span>
                 <span className="context-meta">{thread.date}</span>
               </SidebarMenuButton>
@@ -65,15 +85,23 @@ export function ConversationList({
   )
 }
 
-function MessageArticle({ message }: { message: Message }) {
+function MessageArticle({
+  message,
+  onNotify,
+}: {
+  message: Message
+  onNotify?: (message: string) => void
+}) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle")
   const assistant = message.role === "assistant"
+  const copyLabel = copyStatus === "copied" ? "Respuesta copiada" : "Copiar respuesta"
 
   async function copyMessage() {
     const content = [...message.paragraphs, ...(message.points ?? []).map(point => `- ${point}`)]
     try {
       await navigator.clipboard.writeText(content.join("\n\n"))
       setCopyStatus("copied")
+      onNotify?.("Respuesta copiada")
     } catch {
       setCopyStatus("failed")
     }
@@ -90,9 +118,21 @@ function MessageArticle({ message }: { message: Message }) {
         </div>
         {assistant && (
           <div className="message-actions">
-            <Button variant="ghost" size="icon-sm" aria-label="Copiar mensaje" title="Copiar mensaje" onClick={copyMessage}>
-              {copyStatus === "copied" ? <Check /> : <Copy />}
-            </Button>
+            <Tooltip delay={400}>
+              <TooltipTrigger
+                render={
+                  <Button
+                    data-variant="ghost"
+                    data-size="icon-sm"
+                    aria-label={copyLabel}
+                    onClick={copyMessage}
+                  />
+                }
+              >
+                {copyStatus === "copied" ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+              </TooltipTrigger>
+              <TooltipContent side="top">{copyLabel}</TooltipContent>
+            </Tooltip>
             <span role="status">{copyStatus === "copied" ? "Copiado" : copyStatus === "failed" ? "No se pudo copiar" : ""}</span>
           </div>
         )}
@@ -106,11 +146,13 @@ export function ChatView({
   draft,
   onDraft,
   onSend,
+  onNotify,
 }: {
   conversation: Conversation
   draft: string
   onDraft: (value: string) => void
   onSend: (value: string) => void
+  onNotify?: (message: string) => void
 }) {
   const thread = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
@@ -121,13 +163,6 @@ export function ChatView({
     if (region) region.scrollTop = region.scrollHeight
   }, [conversation.id, messageCount])
 
-  useEffect(() => {
-    const element = input.current
-    if (!element) return
-    element.style.height = "auto"
-    element.style.height = `${Math.min(element.scrollHeight, 144)}px`
-  }, [draft])
-
   function submit(event: FormEvent) {
     event.preventDefault()
     if (!draft.trim()) return
@@ -137,48 +172,61 @@ export function ChatView({
 
   return (
     <section className="chat-view" aria-label="Conversación">
-      <div className="thread-scroll" ref={thread}>
-        <div className="reading-column">
-          <header className="thread-header">
-            <p className="eyebrow">{conversation.origin === "local" ? "Conversación local" : "Conversación de ejemplo"}</p>
-            <h1>{conversation.title}</h1>
-          </header>
-          <div className="thread-log" role="log" aria-label="Historial de mensajes">
-            {conversation.messages.map(message => <MessageArticle key={message.id} message={message} />)}
-          </div>
-          {!messageCount && (
-            <Empty className="empty-chat">
-              <EmptyHeader>
-                <EmptyMedia variant="icon"><MessageSquare /></EmptyMedia>
-                <EmptyTitle role="heading" aria-level={2}>Una conversación nueva</EmptyTitle>
-                <EmptyDescription>Escribe abajo para añadir un mensaje al historial local.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-        </div>
-      </div>
+      <ScrollArea className="thread-scroll-root min-h-0 flex-1 border-0 rounded-none" type="hover">
+        <ScrollAreaViewport ref={thread} role="region" aria-label="Mensajes" className="thread-scroll">
+          <ScrollAreaContent className="p-0">
+            <div className="reading-column">
+              <header className="thread-header">
+                <p className="eyebrow">{conversation.origin === "local" ? "Conversación local" : "Conversación de ejemplo"}</p>
+                <h1>{conversation.title}</h1>
+              </header>
+              <div className="thread-log" role="log" aria-label="Historial de mensajes">
+                {conversation.messages.map((message) => (
+                  <MessageArticle key={message.id} message={message} onNotify={onNotify} />
+                ))}
+              </div>
+              {!messageCount && (
+                <Empty className="empty-chat">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon"><MessageSquare aria-hidden="true" /></EmptyMedia>
+                    <EmptyTitle role="heading" aria-level={2}>Una conversación nueva</EmptyTitle>
+                    <EmptyDescription>Escribe abajo para añadir un mensaje al historial local.</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
+            </div>
+          </ScrollAreaContent>
+        </ScrollAreaViewport>
+        <ScrollAreaScrollbar orientation="vertical">
+          <ScrollAreaThumb />
+        </ScrollAreaScrollbar>
+      </ScrollArea>
       <div className="composer-footer">
         <form className="reading-column" onSubmit={submit}>
-          <InputGroup className="composer">
-            <InputGroupTextarea
+          <div className="composer" role="group" aria-label="Nuevo mensaje">
+            <Textarea
               ref={input}
+              className="composer-input"
               value={draft}
+              onValueChange={onDraft}
+              autoResize
+              submitShortcut="enter"
+              onSubmit={value => {
+                if (!value.trim()) return
+                onSend(value.trim())
+                input.current?.focus()
+              }}
               rows={1}
               aria-label="Escribe un mensaje"
               placeholder="Escribe un mensaje…"
-              onChange={event => onDraft(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault()
-                  event.currentTarget.form?.requestSubmit()
-                }
-              }}
             />
-            <InputGroupAddon align="block-end" className="composer-actions">
+            <div className="composer-actions">
               <span>Los mensajes se añaden al hilo local.</span>
-              <Button type="submit" size="icon" aria-label="Enviar mensaje" disabled={!draft.trim()}><ArrowUp /></Button>
-            </InputGroupAddon>
-          </InputGroup>
+              <Button type="submit" data-variant="solid" data-size="icon" aria-label="Enviar mensaje" disabled={!draft.trim()}>
+                <ArrowUp aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
           <p className="demo-note">Demostración sin conexión a un modelo de IA.</p>
         </form>
       </div>

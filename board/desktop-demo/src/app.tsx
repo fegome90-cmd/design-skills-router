@@ -1,20 +1,31 @@
+import { Toast, ToastRegion, ToastTitle, toast } from "@ui-sdk/react/toast"
+import { AgentDrawer } from "@/components/agent-drawer"
+import { CommandPalette, type CommandAction } from "@/components/command-palette"
+import { LibraryView, ProjectsView, SettingsView } from "@/components/section-views"
+import type { OpenNode } from "@/node-flow"
+import { ExportGraphButton, isPlainClick, NodeIndex, PluginMapView } from "@/plugin-map"
+import { nodeHashPrefix, nodeHref, readNodeId } from "@/graph"
+import { Button } from "@ui-sdk/react/button"
 import {
-  BookOpen, ChartNoAxesColumnIncreasing, ChevronRight, Circle, FileText, Folder,
-  FolderKanban, MessageSquare, Moon, PanelLeftClose, PanelLeftOpen, Route, Settings, Sun, X,
+  Resizable, ResizableHandle, ResizablePanel, type ResizableLayoutCommitDetails,
+} from "@ui-sdk/react/resizable"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ui-sdk/react/tooltip"
+import {
+  BookOpen, ChartNoAxesColumnIncreasing, ChevronRight, Circle, File, Folder,
+  MessageSquare, Moon, Network, PanelLeftClose, PanelLeftOpen, Route, Settings, Sun, X,
 } from "lucide-react"
-import { lazy, Suspense, useRef, useState, type ReactNode } from "react"
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel,
   SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarProvider, useSidebar,
 } from "@/components/ui/sidebar"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ChatView, ConversationList } from "@/chat"
-import { ProjectStatus } from "@/components/project-status"
 import { demoConversations, documents, projects, type Conversation, type Message, type Period } from "@/data"
 import { readPreference, readSidebarWidth, sidebarRange, useDestination, useTheme, writePreference, type Destination } from "@/preferences"
 
@@ -23,36 +34,44 @@ const DashboardView = lazy(() => import("@/dashboard"))
 const dashboardAnchors = [
   { id: "resumen", label: "Resumen", icon: ChartNoAxesColumnIncreasing },
   { id: "actividad", label: "Actividad", icon: ChartNoAxesColumnIncreasing },
-  { id: "proyectos-recientes", label: "Proyectos recientes", icon: FolderKanban },
+  { id: "proyectos-recientes", label: "Proyectos recientes", icon: Folder },
 ]
 
 const appSections = {
   chat: { name: "Chat", contextual: "Conversaciones", icon: MessageSquare },
   dashboard: { name: "Dashboard", contextual: "Analítica", icon: ChartNoAxesColumnIncreasing },
-  projects: { name: "Proyectos", contextual: "Proyectos", icon: FolderKanban },
+  projects: { name: "Proyectos", contextual: "Proyectos", icon: Folder },
   library: { name: "Biblioteca", contextual: "Biblioteca", icon: BookOpen },
+  map: { name: "Mapa del plugin", contextual: "Nodos del plugin", icon: Network },
   settings: { name: "Configuración", contextual: "Configuración", icon: Settings },
 } as const satisfies Record<Destination, { name: string; contextual: string; icon: typeof MessageSquare }>
 
-const primarySections = ["chat", "dashboard", "projects", "library"] as const
+const primarySections = ["chat", "dashboard", "projects", "library", "map"] as const
 
 function Rail({ section }: { section: Destination }) {
-  const { isMobile, open, openMobile, toggleSidebar } = useSidebar()
+  const { isMobile, open, openMobile, toggleSidebar, railToggleRef } = useSidebar()
   const panelOpen = isMobile ? openMobile : open
+  const toggleLabel = panelOpen ? "Ocultar panel contextual" : "Mostrar panel contextual"
   const route = (id: Destination) => {
     const { name, icon: Icon } = appSections[id]
     return (
       <SidebarMenuItem key={id}>
-        <SidebarMenuButton
-          className="rail-link"
-          render={<a href={`#${id}`} />}
-          isActive={id === section}
-          aria-current={id === section ? "page" : undefined}
-          aria-label={name}
-          title={name}
-        >
-          <Icon />
-        </SidebarMenuButton>
+        <Tooltip delay={400}>
+          <TooltipTrigger
+            render={
+              <SidebarMenuButton
+                className="rail-link bg-transparent"
+                render={<a href={`#${id}`} />}
+                isActive={id === section}
+                aria-current={id === section ? "page" : undefined}
+                aria-label={name}
+              />
+            }
+          >
+            <Icon aria-hidden="true" />
+          </TooltipTrigger>
+          <TooltipContent side="right">{name}</TooltipContent>
+        </Tooltip>
       </SidebarMenuItem>
     )
   }
@@ -60,7 +79,24 @@ function Rail({ section }: { section: Destination }) {
   return (
     <Sidebar collapsible="none" className="navigation-rail">
       <SidebarHeader className="rail-brand">
-        <div className="brand-mark" role="img" aria-label="Design Skills Router"><Route size={21} /></div>
+        <div className="brand-mark" role="img" aria-label="Design Skills Router">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M3.7 7.5C2.1 4.5 5.1 1.5 8.2 3.1
+                c1.9 1 2.3 4 4.1 4.9 1.7.8 3.2-1.2 5.3-1.8
+                3.2-.9 5.6 2.4 3.9 4.9-1.3 1.9-5 1.3-6.2 3.2
+                -1.1 1.8.3 4.3-1 6.2-1.6 2.5-5.7 1.7-6.4-1.4
+                -.6-2.5 1.3-4.6.6-6.5-.7-1.8-3.5-2.5-4.8-5.1Z"
+            />
+          </svg>
+        </div>
       </SidebarHeader>
       <SidebarContent className="rail-body">
         <nav className="rail-nav" aria-label="Navegación principal">
@@ -68,19 +104,26 @@ function Rail({ section }: { section: Destination }) {
           <SidebarMenu className="rail-secondary">
             {route("settings")}
             <SidebarMenuItem>
-              <Button
-                className="rail-toggle"
-                size="icon"
-                variant="ghost"
-                onClick={toggleSidebar}
-                aria-expanded={panelOpen}
-                aria-controls={panelOpen ? "desktop-context-content" : undefined}
-                aria-haspopup={isMobile ? "dialog" : undefined}
-                aria-label={panelOpen ? "Ocultar panel contextual" : "Mostrar panel contextual"}
-                title={panelOpen ? "Ocultar panel contextual" : "Mostrar panel contextual"}
-              >
-                {panelOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
-              </Button>
+              <Tooltip delay={400}>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      ref={railToggleRef}
+                      data-variant="ghost"
+                      data-size="icon"
+                      className="rail-toggle"
+                      onClick={toggleSidebar}
+                      aria-expanded={panelOpen}
+                      aria-controls={panelOpen ? "desktop-context-content" : undefined}
+                      aria-haspopup={isMobile ? "dialog" : undefined}
+                      aria-label={toggleLabel}
+                    />
+                  }
+                >
+                  {panelOpen ? <PanelLeftClose aria-hidden="true" /> : <PanelLeftOpen aria-hidden="true" />}
+                </TooltipTrigger>
+                <TooltipContent side="right">{toggleLabel}</TooltipContent>
+              </Tooltip>
             </SidebarMenuItem>
           </SidebarMenu>
         </nav>
@@ -100,7 +143,7 @@ function ResourceList({
   items: ReadonlyArray<{ id: string; name: string }>
   selected: string
   onSelect: (id: string) => void
-  icon: typeof FileText
+  icon: typeof File
 }) {
   return (
     <SidebarGroup className="context-group context-resources">
@@ -114,7 +157,7 @@ function ResourceList({
               aria-current={item.id === selected ? "true" : undefined}
               onClick={() => onSelect(item.id)}
             >
-              <Icon /><span className="context-row-main">{item.name}</span>
+              <Icon aria-hidden="true" /><span className="context-row-main">{item.name}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
@@ -130,7 +173,14 @@ function ContextContents({ section, children }: { section: Destination; children
       <SidebarHeader className="context-header">
         <div><p>Design Skills Router</p><h2>{appSections[section].contextual}</h2></div>
         {isMobile && (
-          <Button variant="ghost" size="icon" aria-label="Cerrar panel contextual" onClick={() => setOpenMobile(false)}><X /></Button>
+          <Button
+            data-variant="ghost"
+            data-size="icon"
+            aria-label="Cerrar panel contextual"
+            onClick={() => setOpenMobile(false)}
+          >
+            <X aria-hidden="true" />
+          </Button>
         )}
       </SidebarHeader>
       <SidebarContent className="context-body">{children}</SidebarContent>
@@ -147,52 +197,64 @@ function WorkspaceLayout({
   theme,
   onTheme,
   context,
+  toolbar,
+  sidebarWidth,
+  onSidebarWidthChange,
   children,
 }: {
   section: Destination
   theme: "light" | "dark"
   onTheme: () => void
   context: ReactNode
+  toolbar: ReactNode
+  sidebarWidth: number
+  onSidebarWidthChange: (width: number) => void
   children: ReactNode
 }) {
   const { isMobile, open } = useSidebar()
-  const [sidebarWidth, setSidebarWidth] = useState(readSidebarWidth)
   const panelGroup = useRef<HTMLDivElement>(null)
   const sidebarHandle = useRef<HTMLDivElement>(null)
   const contextualPanel = <ContextContents section={section}>{context}</ContextContents>
+  const themeLabel = theme === "light" ? "Activar tema oscuro" : "Activar tema claro"
+
+  function commitSidebarWidth(layout: number[], details: ResizableLayoutCommitDetails) {
+    if (details.reason !== "drag" && details.reason !== "step-key" && details.reason !== "imperative") return
+    if (!panelGroup.current || layout.length < 2) return
+    const handleWidth = sidebarHandle.current?.offsetWidth ?? 0
+    const panelSpace = panelGroup.current.clientWidth - handleWidth
+    const pixels = Math.round((panelSpace * layout[0]) / 100)
+    const width = Math.min(sidebarRange.maximum, Math.max(sidebarRange.minimum, pixels))
+    onSidebarWidthChange(width)
+  }
 
   return (
     <>
       <Rail section={section} />
       {isMobile && <Sidebar>{contextualPanel}</Sidebar>}
-      <ResizablePanelGroup
+      <Resizable
+        ref={panelGroup}
         className="shell-panels"
         orientation="horizontal"
-        resizeTargetMinimumSize={{ fine: 12, coarse: 24 }}
-        elementRef={panelGroup}
-        onLayoutChanged={(layout, { isUserInteraction }) => {
-          if (!isUserInteraction || !panelGroup.current || !sidebarHandle.current) return
-          const panelSpace = panelGroup.current.clientWidth - sidebarHandle.current.offsetWidth
-          const pixels = Math.round(panelSpace * layout["resizable-context"] / 100)
-          const width = Math.min(sidebarRange.maximum, Math.max(sidebarRange.minimum, pixels))
-          setSidebarWidth(width)
-          writePreference("sidebar-width", String(width))
-        }}
+        onLayoutCommit={commitSidebarWidth}
       >
         {!isMobile && open && (
           <ResizablePanel
             key="context"
             id="resizable-context"
-            defaultSize={sidebarWidth}
-            minSize={sidebarRange.minimum}
-            maxSize={sidebarRange.maximum}
-            groupResizeBehavior="preserve-pixel-size"
+            defaultSize={`${sidebarWidth}px`}
+            minSize={`${sidebarRange.minimum}px`}
+            maxSize={`${sidebarRange.maximum}px`}
           >
             <Sidebar collapsible="none" className="desktop-context">{contextualPanel}</Sidebar>
           </ResizablePanel>
         )}
         {!isMobile && open && (
-          <ResizableHandle key="handle" elementRef={sidebarHandle} aria-label="Redimensionar panel contextual" className="context-separator" />
+          <ResizableHandle
+            key="handle"
+            ref={sidebarHandle}
+            aria-label="Redimensionar panel contextual"
+            className="context-separator"
+          />
         )}
         <ResizablePanel key="workspace" id="resizable-workspace">
           <SidebarInset className="workspace">
@@ -203,86 +265,30 @@ function WorkspaceLayout({
                 <strong>{appSections[section].name}</strong>
               </div>
               <div className="toolbar-actions">
+                {toolbar}
                 <Badge variant="outline" className="demo-badge"><span aria-hidden="true" />Demo local</Badge>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="theme-toggle"
-                  onClick={onTheme}
-                  aria-label={theme === "light" ? "Activar tema oscuro" : "Activar tema claro"}
-                  title={theme === "light" ? "Activar tema oscuro" : "Activar tema claro"}
-                >
-                  {theme === "light" ? <Moon /> : <Sun />}
-                </Button>
+                <Tooltip delay={400}>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        data-size="icon"
+                        className="theme-toggle"
+                        onClick={onTheme}
+                        aria-label={themeLabel}
+                      />
+                    }
+                  >
+                    {theme === "light" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{themeLabel}</TooltipContent>
+                </Tooltip>
               </div>
             </header>
             {children}
           </SidebarInset>
         </ResizablePanel>
-      </ResizablePanelGroup>
+      </Resizable>
     </>
-  )
-}
-
-function ThemeSettings({ theme, onTheme }: { theme: "light" | "dark"; onTheme: (theme: "light" | "dark") => void }) {
-  return (
-    <div className="standard-view" id="apariencia">
-      <header className="page-heading"><div><h1>Preferencias del espacio</h1><p>Ajusta la apariencia de la pizarra en este navegador.</p></div></header>
-      <Card className="detail-card">
-        <CardHeader><CardTitle><h2>Tema de la interfaz</h2></CardTitle><CardDescription>El cambio se aplica a todas las vistas.</CardDescription></CardHeader>
-        <CardContent>
-          <ToggleGroup variant="outline" aria-label="Tema de la interfaz" value={[theme]} onValueChange={values => {
-            if (values[0] === "light" || values[0] === "dark") onTheme(values[0])
-          }}>
-            <ToggleGroupItem value="light"><Sun /> Claro</ToggleGroupItem>
-            <ToggleGroupItem value="dark"><Moon /> Oscuro</ToggleGroupItem>
-          </ToggleGroup>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-function ResourceView({
-  section,
-  selected,
-  onSelect,
-}: {
-  section: "projects" | "library"
-  selected: string
-  onSelect: (id: string) => void
-}) {
-  const items = section === "projects" ? projects : documents
-  const item = items.find(entry => entry.id === selected) ?? items[0]
-  const project = projects.find(entry => entry.id === item.id)
-  return (
-    <div className="standard-view">
-      <header className="page-heading">
-        <div><h1>{item.name}</h1><p>{item.area} · Contenido de ejemplo</p></div>
-      </header>
-      <Card className="detail-card">
-        <CardHeader>
-          <CardTitle><h2>{section === "projects" ? "Acerca del proyecto" : "Resumen del documento"}</h2></CardTitle>
-          <CardDescription>{item.detail}</CardDescription>
-        </CardHeader>
-        {project && (
-          <CardContent className="project-progress">
-            <ProjectStatus status={project.status} />
-            <label htmlFor="project-progress">Avance de ejemplo <strong>{project.progress} %</strong></label>
-            <progress id="project-progress" value={project.progress} max={100} />
-          </CardContent>
-        )}
-      </Card>
-      <SidebarGroupLabel className="related-label">{section === "projects" ? "Explorar proyectos" : "Explorar documentos"}</SidebarGroupLabel>
-      <div className="related-resources">
-        {items.filter(entry => entry.id !== item.id).map(entry => (
-          <Button key={entry.id} variant="outline" onClick={() => onSelect(entry.id)}>
-            {section === "projects" ? <Folder data-icon="inline-start" /> : <FileText data-icon="inline-start" />}
-            {entry.name}
-          </Button>
-        ))}
-      </div>
-    </div>
   )
 }
 
@@ -294,7 +300,31 @@ function DesktopApplication({
   onTheme: (theme: "light" | "dark") => void
 }) {
   const section = useDestination()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [agentOpen, setAgentOpen] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(readSidebarWidth)
+  const [density, setDensity] = useState<"comfortable" | "compact">(
+    () => readPreference("density") === "compact" ? "compact" : "comfortable"
+  )
+  const [toastsEnabled, setToastsEnabled] = useState(
+    () => readPreference("toasts") !== "disabled"
+  )
+
+  useEffect(() => {
+    document.documentElement.dataset.density = density
+  }, [density])
+
+  function updateSidebarWidth(width: number) {
+    setSidebarWidth(width)
+    writePreference("sidebar-width", String(width))
+  }
+
+  const { isMobile, openMobile, setOpenMobile, mobileReturnFocusRef } = useSidebar()
+  const [nodeId, setNodeId] = useState(() => readNodeId(window.location.hash))
+  const [nodeQuery, setNodeQuery] = useState("")
+  const [nodeGroup, setNodeGroup] = useState("")
+  const nodeHeading = useRef<HTMLHeadingElement>(null)
+  const focusNodeHeading = useRef(false)
   const [threads, setThreads] = useState(demoConversations)
   const [selectedThread, selectThread] = useState(demoConversations[0].id)
   const [search, setSearch] = useState("")
@@ -307,6 +337,39 @@ function DesktopApplication({
 
   function closeMobilePanel() {
     if (isMobile) setOpenMobile(false)
+  }
+
+  useEffect(() => {
+    const readNode = () => {
+      if (window.location.hash.startsWith(nodeHashPrefix)) setNodeId(readNodeId(window.location.hash))
+    }
+    window.addEventListener("hashchange", readNode)
+    return () => window.removeEventListener("hashchange", readNode)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!focusNodeHeading.current) return
+    focusNodeHeading.current = false
+    nodeHeading.current?.focus()
+  }, [nodeId])
+
+  // The link keeps its default navigation, so the hash and the browser history
+  // stay the source of truth; this only decides where focus lands afterwards.
+  function selectNode(event: MouseEvent<HTMLAnchorElement>, targetId: string) {
+    if (!isPlainClick(event)) return
+    const changed = targetId !== nodeId
+    if (isMobile && openMobile && section === "map") {
+      if (changed) mobileReturnFocusRef.current = nodeHeading.current
+      setOpenMobile(false)
+    } else {
+      focusNodeHeading.current = changed
+    }
+  }
+
+  // Opening a node from the flow canvas goes through the hash, like a link.
+  const openNode: OpenNode = (targetId, { keepFocus = false } = {}) => {
+    focusNodeHeading.current = !keepFocus && targetId !== nodeId
+    window.location.hash = nodeHref(targetId)
   }
 
   function createThread() {
@@ -346,37 +409,86 @@ function DesktopApplication({
         <SidebarMenu className="gap-1">
           {dashboardAnchors.map(({ id, label, icon: Icon }) => (
             <SidebarMenuItem key={id}>
-              <SidebarMenuButton className="context-row" isActive={id === dashboardAnchor} onClick={() => {
-                selectDashboardAnchor(id)
-                closeMobilePanel()
-                document.getElementById(id)?.scrollIntoView({ block: "start" })
-              }}><Icon /><span>{label}</span></SidebarMenuButton>
+              <SidebarMenuButton
+                className="context-row"
+                isActive={id === dashboardAnchor}
+                aria-current={id === dashboardAnchor ? "true" : undefined}
+                onClick={() => {
+                  selectDashboardAnchor(id)
+                  closeMobilePanel()
+                  document.getElementById(id)?.scrollIntoView({ block: "start" })
+                }}
+              >
+                <Icon aria-hidden="true" /><span>{label}</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarGroup>
     ),
     projects: <ResourceList label="Proyectos del espacio" items={projects} selected={project} icon={Folder} onSelect={id => { selectProject(id); closeMobilePanel() }} />,
-    library: <ResourceList label="Documentos" items={documents} selected={documentId} icon={FileText} onSelect={id => { selectDocument(id); closeMobilePanel() }} />,
+    library: <ResourceList label="Documentos" items={documents} selected={documentId} icon={File} onSelect={id => { selectDocument(id); closeMobilePanel() }} />,
+    map: <NodeIndex selected={nodeId} query={nodeQuery} onQuery={setNodeQuery} group={nodeGroup} onGroup={setNodeGroup} onSelect={selectNode} />,
     settings: <ResourceList label="Preferencias" items={[{ id: "apariencia", name: "Apariencia" }]} selected="apariencia" icon={Circle} onSelect={id => {
       closeMobilePanel()
       document.getElementById(id)?.scrollIntoView({ block: "start" })
     }} />,
   }
 
+  function notify(message: string, ok = true) {
+    if (toastsEnabled) toast(message, { type: ok ? "success" : "error" })
+  }
+
   const views = {
     chat: <ChatView conversation={thread} draft={drafts[thread.id] ?? ""} onDraft={setDraft} onSend={sendMessage} />,
     dashboard: <DashboardView period={period} onPeriod={setPeriod} onProject={id => { selectProject(id); window.location.hash = "projects" }} />,
-    projects: <ResourceView section="projects" selected={project} onSelect={selectProject} />,
-    library: <ResourceView section="library" selected={documentId} onSelect={selectDocument} />,
-    settings: <ThemeSettings theme={theme} onTheme={onTheme} />,
+    projects: <ProjectsView projectId={project} onSelectProject={selectProject} onNotify={notify} />,
+    library: <LibraryView documentId={documentId} onSelectDocument={selectDocument} />,
+    map: <PluginMapView nodeId={nodeId} headingRef={nodeHeading} onSelect={selectNode} onOpenNode={openNode} />,
+    settings: <SettingsView
+      theme={theme}
+      onThemeChange={onTheme}
+      density={density}
+      onDensityChange={value => {
+        setDensity(value)
+        writePreference("density", value)
+      }}
+      sidebarWidth={sidebarWidth}
+      onSidebarWidthChange={updateSidebarWidth}
+      toastsEnabled={toastsEnabled}
+      onToastsChange={value => {
+        setToastsEnabled(value)
+        writePreference("toasts", value ? "enabled" : "disabled")
+      }}
+    />,
   }
 
+  const commands: CommandAction[] = Object.entries(appSections).map(([id, entry]) => ({
+    id,
+    label: entry.name,
+    icon: entry.icon,
+    group: "Navegación",
+    onSelect: () => { window.location.hash = id },
+  }))
+
   return (
-    <WorkspaceLayout section={section} theme={theme} onTheme={() => onTheme(theme === "light" ? "dark" : "light")} context={contexts[section]}>
+    <WorkspaceLayout
+      section={section}
+      theme={theme}
+      onTheme={() => onTheme(theme === "light" ? "dark" : "light")}
+      context={contexts[section]}
+      sidebarWidth={sidebarWidth}
+      onSidebarWidthChange={updateSidebarWidth}
+      toolbar={<>
+        {section === "map" && <ExportGraphButton />}
+        <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} actions={commands} />
+        <AgentDrawer open={agentOpen} onOpenChange={setAgentOpen} onRunMacroResult={notify} />
+      </>}
+    >
       {section === "chat"
         ? views.chat
         : <div className="workspace-scroll" key={section}><Suspense fallback={<p className="view-loading" role="status">Cargando el dashboard…</p>}>{views[section]}</Suspense></div>}
+      <ToastRegion>{() => <Toast><ToastTitle /></Toast>}</ToastRegion>
     </WorkspaceLayout>
   )
 }

@@ -171,6 +171,52 @@ test("at narrow widths the contextual dialog can be opened and escaped", async (
   await expect(dialog.getByRole("heading", { name: "Analítica" })).toBeVisible()
 })
 
+test("UI SDK controls use the homepage palette and square geometry", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" })
+  await page.goto("/#settings")
+
+  const density = page.getByRole("combobox", { name: "Densidad de la interfaz" })
+  await expect(density.locator("svg.lucide-chevron-down")).toBeVisible()
+  await density.click()
+  const selectedDensity = page.getByRole("option", { name: "Cómoda" })
+  await expect(selectedDensity.locator('[data-slot="select-item-indicator"] svg.lucide-check')).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  const notificationSwitch = page.getByRole("switch", { name: "Notificaciones emergentes" })
+  await expect(notificationSwitch).toHaveCSS("border-radius", "0px")
+  await expect(notificationSwitch).toHaveCSS("background-color", "rgb(10, 10, 10)")
+  await expect(notificationSwitch.locator('[data-slot="switch-thumb"]')).toHaveCSS("border-radius", "0px")
+  await notificationSwitch.click()
+  await expect(notificationSwitch).toHaveCSS("background-color", "rgb(255, 255, 255)")
+
+  await page.getByRole("button", { name: "Comandos" }).click()
+  const palette = page.getByRole("dialog", { name: "Paleta de comandos" })
+  await expect(palette).toHaveCSS("border-radius", "0px")
+  await expect(palette).toHaveCSS("border-top-color", "rgb(10, 10, 10)")
+  await expect(palette.locator("[data-highlighted]")).toHaveCSS("background-color", "rgb(10, 10, 10)")
+  await expect(palette.locator(".command-search svg[aria-hidden='true']")).toBeVisible()
+  const destinations = palette.getByRole("option")
+  await expect(destinations).toHaveCount(6)
+  for (const destination of await destinations.all()) {
+    await expect(destination.locator('[data-slot="command-item-icon"] svg[aria-hidden="true"]')).toBeVisible()
+  }
+  await expect(palette.locator('[data-slot="command-empty"]')).toHaveCSS("padding-top", "0px")
+  await page.keyboard.press("Escape")
+
+  await page.getByRole("link", { name: "Proyectos" }).click()
+  const simulator = page.getByRole("tab", { name: "Simulador" })
+  await simulator.click()
+  await expect(simulator).toHaveCSS("background-color", "rgb(10, 10, 10)")
+  await expect(simulator).toHaveCSS("color", "rgb(255, 255, 255)")
+  const thumb = page.locator('[data-slot="slider-thumb"]')
+  await expect(thumb).toHaveCSS("border-radius", "0px")
+  await expect(thumb).toHaveCSS("border-top-color", "rgb(10, 10, 10)")
+
+  await page.getByRole("button", { name: "Activar tema oscuro" }).click()
+  await expect(thumb).toHaveCSS("background-color", "rgb(10, 10, 10)")
+  await expect(thumb).toHaveCSS("border-top-color", "rgb(250, 250, 250)")
+})
+
 test("rendered views have no runtime errors", async ({ page }) => {
   const screenshots = process.env.DESKTOP_SCREENSHOTS
   const messages: string[] = []
@@ -203,4 +249,21 @@ test("rendered views have no runtime errors", async ({ page }) => {
     }
   }
   expect(messages).toEqual([])
+})
+
+test("the agent inspector tabs fill their segmented list edge to edge", async ({ page }) => {
+  await page.goto("/#map")
+  await page.getByRole("button", { name: "Agente UI" }).click()
+  const list = page.getByRole("tablist", { name: "Modos del inspector" })
+  await expect(list.getByRole("tab", { name: "Flujos" })).toHaveAttribute("aria-selected", "true")
+  const edges = await list.evaluate(element => {
+    const box = element.getBoundingClientRect()
+    const tabs = [...element.querySelectorAll('[role="tab"]')].map(tab => tab.getBoundingClientRect())
+    const border = parseFloat(getComputedStyle(element).borderLeftWidth)
+    return {
+      start: Math.abs(Math.round(tabs[0].left - box.left - border)),
+      end: Math.abs(Math.round(box.right - border - tabs[tabs.length - 1].right)),
+    }
+  })
+  expect(edges).toEqual({ start: 0, end: 0 })
 })
