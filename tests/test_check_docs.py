@@ -105,6 +105,18 @@ class CheckDocsTests(unittest.TestCase):
             **{f'docs/{n}.md': '#\n' for n in 'abcd'},
         }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'abcd'])
 
+    def test_links_may_span_line_endings_within_a_paragraph(self):
+        self.assertClean({'docs/agent/CONTEXT.md': textwrap.dedent('''\
+            [Roadmap](
+              ../specs/mcp-roadmap/README.md)
+            [texto en
+            dos líneas](../b.md "título
+            en dos líneas")
+            '''), 'docs/b.md': '#\n'})
+        self.assertFinds({'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md)\n[b](\n\n../b.md)\n',
+                          'docs/b.md': '#\n'},
+                         ['docs/b.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
+
     def test_comment_marker_inside_inline_code_is_not_a_comment(self):
         self.assertClean({'docs/agent/CONTEXT.md': 'Usa `<!--` para comentar. [Roadmap](../specs/mcp-roadmap/README.md)\n'})
 

@@ -119,7 +119,7 @@ def markdown_files(root: Path) -> list[str]:
 
 def destination(line: str, start: int) -> str | None:
     """Parse a CommonMark link destination that starts at ``line[start]``."""
-    while start < len(line) and line[start] in ' \t':
+    while start < len(line) and line[start] in ' \t\n':
         start += 1
     if start < len(line) and line[start] == '<':
         end = line.find('>', start + 1)
@@ -130,7 +130,7 @@ def destination(line: str, start: int) -> str | None:
         if char == '\\' and index + 1 < len(line):
             index += 2
             continue
-        if char in ' \t':
+        if char in ' \t\n':
             break
         if char == '(':
             depth += 1
@@ -160,19 +160,28 @@ def link_targets(text: str):
         lines.append((number, line))
     definitions: dict[str, tuple[int, str]] = {}
     used: set[str] = set()
-    for number, line in lines:
+    paragraph: list[tuple[int, str]] = []
+    for number, line in [*lines, (0, '')]:
         match = REFERENCE_DEF.match(line)
         if match:
-            definitions.setdefault(match.group(1).strip().lower(), (number, match.group(2) or match.group(3)))
+            definitions.setdefault(' '.join(match.group(1).split()).lower(), (number, match.group(2) or match.group(3)))
+        if line.strip() and not match:
+            paragraph.append((number, line))
             continue
-        for match in LINK_TEXT.finditer(line):
-            target = destination(line, match.end())
-            if target:
-                yield number, target
-        for match in REFERENCE_USE.finditer(line):
-            used.add((match.group(2) or match.group(1)).strip().lower())
-        for match in HTML_LINK.finditer(line):
-            yield number, match.group(1)
+        # CommonMark lets a link span line endings within a paragraph.
+        if paragraph:
+            text = '\n'.join(part for _, part in paragraph)
+            starts = [n for n, _ in paragraph]
+            line_of = lambda offset: starts[text.count('\n', 0, offset)]
+            for found in LINK_TEXT.finditer(text):
+                target = destination(text, found.end())
+                if target:
+                    yield line_of(found.start()), target
+            for found in REFERENCE_USE.finditer(text):
+                used.add(' '.join((found.group(2) or found.group(1)).split()).lower())
+            for found in HTML_LINK.finditer(text):
+                yield line_of(found.start()), found.group(1)
+            paragraph = []
     for label, (number, target) in definitions.items():
         if label in used:
             yield number, target
