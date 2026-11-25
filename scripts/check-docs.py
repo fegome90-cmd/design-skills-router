@@ -19,12 +19,21 @@ Roadmap IDs
       ``DEFINITION_TABLES``.
     A mention in any other table defines nothing.
 
-Files are read as ``utf-8-sig``. Fenced code blocks are ignored by both
-checks; inline code is ignored for links but still counts as an ID mention.
-Link validity itself (missing files, missing anchors) is checked by lychee in
-``.github/workflows/docs.yml``.
+Links are inline links and images (``<dest>``, nested parentheses and
+titles included), reference definitions that a ``[text][label]`` or
+``[label]`` actually uses, and HTML ``href``/``src``. HTML comments, escaped
+brackets and inline code are not links.
 
-Exit status: 0 when clean, 1 when a finding is reported, 2 on usage errors.
+Files are read as ``utf-8-sig``; the Markdown files are the tracked and the
+untracked, not ignored ones, so a new document is checked before ``git add``.
+Fenced code blocks are ignored by both checks and end a table; inline code
+still counts as an ID mention. Known limits: indented code blocks and fences
+nested in lists or block quotes are read as prose, and a table cell holds a
+single ID. Link validity itself (missing files and anchors) is checked by
+lychee in ``.github/workflows/docs.yml``.
+
+Exit status: 0 when clean, 1 when a finding is reported, 2 on usage errors or
+when a Markdown or ``datos.json`` file cannot be read or parsed.
 """
 
 from __future__ import annotations
@@ -43,7 +52,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ID = re.compile(r'\b[RF]\d{2}[A-Z]?\b')
 SKIPPED_DIRS = ('vendor/', 'release/', 'node_modules/')
 ENTRY_POINTS = ('README.md', 'AGENTS.md')
-ENTRY_GLOB = 'docs/agent/*.md'
+ENTRY_DIR = 'docs/agent'  # files directly in it; subfolders are not entry points
 
 # Documents under docs/ that may stay unreachable. Each entry needs a reason.
 ORPHAN_EXCEPTIONS: dict[str, str] = {}
@@ -56,52 +65,117 @@ DEFINITION_TABLES = {
 
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
-INLINE_LINK = re.compile(r'!?\[(?:[^\[\]]|\[[^\]]*\])*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)')
-REFERENCE_DEF = re.compile(r'^ {0,3}\[[^\]]+\]:\s*<?(\S+?)>?(?:\s+.*)?$')
+LINK_TEXT = re.compile(r'!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
+REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
+REFERENCE_USE = re.compile(r'\[([^\]]+)\](?:\[([^\]]*)\]|(?![(:]))')
 HTML_LINK = re.compile(r'\b(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
+HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 SCHEME = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')
 UNIT_FILE = re.compile(r'^docs/specs/(?:.+/)?units/([RF]\d{2}[A-Z]?)-[^/]*\.md$')
 MD_LINK_TEXT = re.compile(r'^\[([^\]]+)\]\([^)]*\)$')
+TABLE_SEPARATOR = re.compile(r'^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$')
+CELL_SPLIT = re.compile(r'(?<!\\)\|')
 
 
 def read(path: Path) -> str:
     return path.read_text(encoding='utf-8-sig')
 
 
-def prose_lines(text: str):
-    """Yield (line number, line) outside fenced code blocks."""
+def all_lines(text: str):
+    """Yield (line number, line, inside a fenced code block). Fence lines count as inside."""
     fence = None
     for number, line in enumerate(text.splitlines(), 1):
         match = FENCE.match(line)
         if fence is None:
             if match:
                 fence = match.group(1)
+                yield number, line, True
                 continue
+            yield number, line, False
+        else:
+            if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
+                    and not line.strip()[len(match.group(1)):].strip():
+                fence = None
+            yield number, line, True
+
+
+def prose_lines(text: str):
+    """Yield (line number, line) outside fenced code blocks."""
+    for number, line, code in all_lines(text):
+        if not code:
             yield number, line
-        elif match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
-                and not line.strip()[len(match.group(1)):].strip():
-            fence = None
 
 
 def markdown_files(root: Path) -> list[str]:
+    """Tracked and untracked (not ignored) Markdown, so a new document is checked before git add."""
     try:
-        result = subprocess.run(['git', 'ls-files', '-z', '--', '*.md'], cwd=root,
-                                capture_output=True, check=True)
-        files = [p for p in result.stdout.decode('utf-8').split('\0') if p]
+        result = subprocess.run(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard',
+                                 '--', '*.md'], cwd=root, capture_output=True, check=True)
+        files = {p for p in result.stdout.decode('utf-8').split('\0') if p}
     except (OSError, subprocess.CalledProcessError):
-        files = [p.relative_to(root).as_posix() for p in root.rglob('*.md') if '.git' not in p.parts]
+        files = {p.relative_to(root).as_posix() for p in root.rglob('*.md') if '.git' not in p.parts}
     return sorted(p for p in files if not p.startswith(SKIPPED_DIRS) and (root / p).is_file())
 
 
+def destination(line: str, start: int) -> str | None:
+    """Parse a CommonMark link destination that starts at ``line[start]``."""
+    while start < len(line) and line[start] in ' \t':
+        start += 1
+    if start < len(line) and line[start] == '<':
+        end = line.find('>', start + 1)
+        return line[start + 1:end] if end != -1 else None
+    depth, index = 0, start
+    while index < len(line):
+        char = line[index]
+        if char == '\\' and index + 1 < len(line):
+            index += 2
+            continue
+        if char in ' \t':
+            break
+        if char == '(':
+            depth += 1
+        elif char == ')':
+            if depth == 0:
+                break
+            depth -= 1
+        index += 1
+    return line[start:index] or None
+
+
 def link_targets(text: str):
+    """Yield (line number, target) for inline, used reference and HTML links in prose."""
+    lines = []
+    in_comment = False
     for number, line in prose_lines(text):
-        line = INLINE_CODE.sub('', line)
-        for pattern in (INLINE_LINK, HTML_LINK):
-            for match in pattern.finditer(line):
-                yield number, match.group(1)
+        if in_comment:
+            end = line.find('-->')
+            if end == -1:
+                continue
+            line, in_comment = ' ' * (end + 3) + line[end + 3:], False
+        line = HTML_COMMENT.sub(lambda m: ' ' * len(m.group(0)), line)
+        if '<!--' in line:
+            line, in_comment = line[:line.index('<!--')], True
+        line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)
+        line = line.replace('\\[', '  ').replace('\\]', '  ')
+        lines.append((number, line))
+    definitions: dict[str, tuple[int, str]] = {}
+    used: set[str] = set()
+    for number, line in lines:
         match = REFERENCE_DEF.match(line)
         if match:
+            definitions.setdefault(match.group(1).strip().lower(), (number, match.group(2) or match.group(3)))
+            continue
+        for match in LINK_TEXT.finditer(line):
+            target = destination(line, match.end())
+            if target:
+                yield number, target
+        for match in REFERENCE_USE.finditer(line):
+            used.add((match.group(2) or match.group(1)).strip().lower())
+        for match in HTML_LINK.finditer(line):
             yield number, match.group(1)
+    for label, (number, target) in definitions.items():
+        if label in used:
+            yield number, target
 
 
 def resolve(source: str, target: str, files: set[str]) -> str | None:
@@ -130,7 +204,7 @@ def resolve(source: str, target: str, files: set[str]) -> str | None:
 def check_reachability(root: Path, files: list[str], texts: dict[str, str]) -> tuple[list[str], dict]:
     known = set(files)
     edges = {f: {t for _, link in link_targets(texts[f]) if (t := resolve(f, link, known))} for f in files}
-    entries = [f for f in files if f in ENTRY_POINTS or PurePosixPath(f).match(ENTRY_GLOB)]
+    entries = [f for f in files if f in ENTRY_POINTS or PurePosixPath(f).parent.as_posix() == ENTRY_DIR]
     seen = set(entries)
     queue = deque(entries)
     while queue:
@@ -166,20 +240,20 @@ def json_ids(root: Path) -> set[str]:
 
 
 def table_ids(text: str, header: str) -> set[str]:
-    """IDs in the first column of the tables whose first header cell is ``header``."""
+    """IDs in the first column of the GFM tables whose first header cell is ``header``."""
     found: set[str] = set()
-    rows = [line.strip() for _, line in prose_lines(text)]
+    rows = [(line.strip(), code) for _, line, code in all_lines(text)]
     active = False
-    for index, row in enumerate(rows):
-        if not row.startswith('|'):
+    for index, (row, code) in enumerate(rows):
+        if code or '|' not in row:
             active = False
             continue
-        cells = [cell.strip() for cell in row.strip('|').split('|')]
-        following = rows[index + 1] if index + 1 < len(rows) else ''
-        if re.fullmatch(r'\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?', following):
+        cells = [cell.strip() for cell in CELL_SPLIT.split(row.strip('|'))]
+        following, following_code = rows[index + 1] if index + 1 < len(rows) else ('', True)
+        if not following_code and '|' in following and TABLE_SEPARATOR.match(following):
             active = cells[0] == header
             continue
-        if active and not re.fullmatch(r'[\s:|-]+', row):
+        if active and not TABLE_SEPARATOR.match(row):
             cell = cells[0].strip('*` ')
             match = MD_LINK_TEXT.match(cell)
             cell = match.group(1).strip('*` ') if match else cell

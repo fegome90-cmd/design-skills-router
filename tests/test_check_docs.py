@@ -76,6 +76,91 @@ class CheckDocsTests(unittest.TestCase):
             'docs/plan b.md': '# B\n',
         })
 
+    def test_link_destination_forms(self):
+        self.assertClean({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                [espacios](<../mi plan.md>) [paréntesis](../a(1).md)
+                [título simple](../t1.md 'Título') [título paréntesis](../t2.md (Título))
+                [referencia completa][ref] y [atajo].
+
+                [ref]: ../r1.md
+                [Atajo]: <../r 2.md> "t"
+                '''),
+            'docs/mi plan.md': '#\n', 'docs/a(1).md': '#\n', 'docs/t1.md': '#\n',
+            'docs/t2.md': '#\n', 'docs/r1.md': '#\n', 'docs/r 2.md': '#\n',
+        })
+
+    def test_comments_escapes_and_unused_definitions_do_not_reach(self):
+        orphan = 'not reachable from README.md, AGENTS.md or docs/agent/*.md'
+        self.assertFinds({
+            'AGENTS.md': textwrap.dedent('''\
+                <!-- [a](docs/a.md) -->
+                <!--
+                [b](docs/b.md)
+                -->
+                \\[c](docs/c.md)
+                [sin uso]: docs/d.md
+                '''),
+            **{f'docs/{n}.md': '#\n' for n in 'abcd'},
+        }, [f'docs/{n}.md:1: ORPHAN: {orphan}' for n in 'abcd'])
+
+    def test_only_files_directly_in_docs_agent_are_entry_points(self):
+        self.assertFinds({
+            'plugin/docs/agent/X.md': '[h](../../../docs/h.md)\n',
+            'docs/agent/sub/Y.md': '[h](../../h.md)\n',
+            'docs/h.md': '#\n',
+        }, ['docs/agent/sub/Y.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md',
+            'docs/h.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
+
+    def test_untracked_documents_are_checked_in_a_git_checkout(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, text in {**BASE, 'docs/nuevo.md': 'Depende de R98.\n'}.items():
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / name).write_text(text, encoding='utf-8')
+            (root / '.gitignore').write_text('ignorado.md\n', encoding='utf-8')
+            (root / 'ignorado.md').write_text('[x](docs/nuevo.md)\n', encoding='utf-8')
+            git = lambda *a: subprocess.run(['git', *a], cwd=root, capture_output=True, check=True)
+            git('init', '-q')
+            git('add', 'README.md')
+            result = subprocess.run([sys.executable, '-B', str(SCRIPT), '--root', str(root)],
+                                    capture_output=True, encoding='utf-8')
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(result.stdout.splitlines(), [
+            'docs/nuevo.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md',
+            'docs/nuevo.md:1: UNDEFINED_ID: R98 has no recognised definition'])
+
+    def test_gfm_table_variants_define_ids(self):
+        self.assertClean({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R14 R15 R16\n',
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |-|-|
+                | R14 | x \\| y |
+
+                Unidad | Estado
+                :--|--:
+                R15 | x
+                | R16 | sin barra final
+                '''),
+        })
+
+    def test_a_fence_ends_a_definition_table(self):
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R17\n',
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |---|---|
+                | R02 | x |
+                ```
+                código
+                ```
+                | R17 | después del bloque |
+                '''),
+        }, ['docs/agent/CONTEXT.md:1: UNDEFINED_ID: R17 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:7: UNDEFINED_ID: R17 has no recognised definition'])
+
     def test_orphan_document(self):
         self.assertFinds({'docs/suelto.md': '# Sin enlaces entrantes\n'}, [
             'docs/suelto.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
