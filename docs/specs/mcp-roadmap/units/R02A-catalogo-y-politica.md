@@ -1,11 +1,12 @@
 # R02A — Catálogo y política por operación
 
-Estado: implementado y verificado localmente. No integrado ni publicado.
-Base: e1aa16f2fe20540dd4de47704d169c4690e5c42a (main).
-Gate de publicación: R01 (#7) integrado, revisión y CI del HEAD correspondiente.
-El roadmap v0.2 y la rama preparatoria citados en el encargo no estaban
-disponibles en los checkouts inspeccionados; el contrato de esta unidad
-es el ancla del operador. No reconstruye R01 ni las unidades posteriores.
+Estado: integrado en PR #11 (revisado y verificado por CI).
+Base: fa3f628ff8e1e84273c882f21492cb5c2de82847 (main, con R01 #7 y PR #9 integrados).
+Gate de publicación: R01 (#7) y PR #9 integrados, revisión y CI en verde en PR #11.
+En la primera implementación local (base e1aa16f), el roadmap v0.2 y la rama
+preparatoria citados en el encargo no estaban disponibles en los checkouts
+inspeccionados; el contrato de esta unidad es el ancla del operador y no
+reconstruye R01 ni las unidades posteriores.
 
 ## Procedencia del port
 
@@ -106,7 +107,7 @@ devuelve Unknown tool: search_context. La CLI devuelve
 TOOL_DISABLED:search_context con exit 2.
 
 El manifiesto de distribución se actualiza solo para los archivos tocados;
-el baseline canónico v0.4 no cambia. CI de R02A no ejecutada: no hay PR.
+el baseline canónico v0.4 no cambia. La verificación de CI corre en PR #11 (Docs quality, Python quality, G5 pilot y Repository security).
 
 ## Revisión independiente de la primera iteración
 
@@ -127,4 +128,4 @@ CLI base 11/11; doctor exit 0, sin hallazgos; baseline intacto.
 Wheel y sdist reconstruidos e instalados. La prueba instalada incluye
 un JSON deliberadamente inválido bajo submit_evidence deshabilitada,
 que se rechaza por política antes de parsearlo.
-El HEAD de seguimiento requiere revisión independiente/CI antes del PR.
+El HEAD de seguimiento se publicó y validó en PR #11 con revisión y CI en verde.

@@ -146,7 +146,9 @@ class InstalledOperationPolicyTests(unittest.TestCase):
                         self.assertEqual(set(tool.meta['design-router/capabilities']),
                                          {'ledger:read', 'source:read', 'evidence:read'})
 
-                self.assertEqual(self.cli('context-next'), await self.call(client, 'next_node'))
+                next_step = self.cli('context-next')
+                self.assertEqual(next_step, await self.call(client, 'next_node'))
+                self.assertIn(node, next_step['context_nodes'])
                 packet = self.cli('context-open', node)
                 self.assertEqual(packet, await self.call(client, 'open_node', node_id=node))
                 self.assertEqual(len(packet['required_sections']), 5)

@@ -63,8 +63,12 @@ class OperationPolicyTests(unittest.TestCase):
 
     def test_unknown_runner_context_command_is_rejected(self):
         c = self.case
+        before = c.ledger.read_bytes()
+        index = c.ledger.with_name(c.ledger.name + '.context.sqlite3')
         with self.assertRaisesRegex(c.runtime.GateError, 'UNKNOWN_TOOL_COMMAND'):
             c.runtime.context_command(c.ledger, 'unregistered', node_id=fixture.NODE)
+        self.assertEqual(c.ledger.read_bytes(), before)
+        self.assertFalse(index.exists())
 
     def test_policy_parser_normalizes_deduplicates_and_projects(self):
         from tool_catalog import create_tool_descriptors, parse_disabled_tools, apply_tool_policy
