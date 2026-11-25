@@ -74,7 +74,7 @@ CI queda en rojo hasta el commit 2, y así se indica en el PR.
 - Workflow `python-quality.yml`, con `contents: read`, acciones fijadas por SHA y `persist-credentials: false`. Pasos:
   - la guardia AST;
   - `plugin/tests`, `packages/cli/tests` (wheel con `[mcp]`), `telemetry/tests` y `tests/`, con `PYTHONWARNDEFAULTENCODING=1` y `PYTHONWARNINGS=error::EncodingWarning`, para que el control llegue también a los subprocesos Python que heredan el entorno;
-  - la suite CLI con `LC_ALL=C PYTHONUTF8=0 PYTHONCOERCECLOCALE=0`.
+  - la suite CLI con `LC_ALL=C PYTHONUTF8=0 PYTHONCOERCECLOCALE=0`. Con ese locale, la codificación del sistema de archivos es ASCII y POSIX no puede pasar argumentos no ASCII a un subproceso. Por eso `scripts/run-cli-tests-locale-c.py` excluye, por ID y con su motivo, las tres pruebas que los usan a propósito; esas pruebas siguen ejecutándose en los pasos UTF-8. El fallo es idéntico en `main` (`926a225`). Si una exclusión deja de existir, el script falla.
 - Los fallos ajenos a la codificación que aparezcan se informan, pero no se corrigen en este PR.
 - Enlazar este plan desde `docs/agent/CONTEXT.md`, una vez fusionado el #7, para evitar conflictos en ese archivo.
 
