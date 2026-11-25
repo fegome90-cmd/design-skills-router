@@ -63,7 +63,7 @@ import {
   RotateCcw,
   Sun,
 } from "lucide-react"
-import { useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { ProjectStatus } from "@/components/project-status"
 import { Button } from "@ui-sdk/react/button"
 import {
@@ -113,10 +113,18 @@ export function ProjectsView({
   onNotify?: (message: string) => void
 }) {
   const project = projects.find((entry) => entry.id === projectId) ?? projects[0]
+  const projectHeading = useRef<HTMLHeadingElement>(null)
+  const focusHeading = useRef(false)
   const [progressByProject, setProgressByProject] = useState<
     Record<string, number>
   >({})
   const simulatedProgress = progressByProject[project.id] ?? project.progress
+
+  useLayoutEffect(() => {
+    if (!focusHeading.current) return
+    focusHeading.current = false
+    projectHeading.current?.focus()
+  }, [project.id])
 
   function setSimulatedProgress(value: number) {
     setProgressByProject((prev) => ({ ...prev, [project.id]: value }))
@@ -128,7 +136,7 @@ export function ProjectsView({
     <div className="standard-view">
       <header className="page-heading">
         <div>
-          <h1>{project.name}</h1>
+          <h1 ref={projectHeading} tabIndex={-1}>{project.name}</h1>
           <p>{project.area} · Contenido de ejemplo</p>
         </div>
       </header>
@@ -292,7 +300,10 @@ export function ProjectsView({
           .map((entry) => (
             <Button
               key={entry.id}
-              onClick={() => onSelectProject(entry.id)}
+              onClick={() => {
+                focusHeading.current = true
+                onSelectProject(entry.id)
+              }}
             >
               <Folder data-icon="inline-start" aria-hidden="true" />
               {entry.name}
@@ -312,6 +323,14 @@ export function LibraryView({
 }) {
   const activeDocument =
     documents.find((entry) => entry.id === documentId) ?? documents[0]
+  const documentHeading = useRef<HTMLHeadingElement>(null)
+  const focusHeading = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!focusHeading.current) return
+    focusHeading.current = false
+    documentHeading.current?.focus()
+  }, [activeDocument.id])
 
   const treeGroups = [
     {
@@ -341,7 +360,7 @@ export function LibraryView({
     <div className="standard-view">
       <header className="page-heading">
         <div>
-          <h1>{activeDocument.name}</h1>
+          <h1 ref={documentHeading} tabIndex={-1}>{activeDocument.name}</h1>
           <p>{activeDocument.area} · Contenido de ejemplo</p>
         </div>
       </header>
@@ -411,7 +430,10 @@ export function LibraryView({
           .map((entry) => (
             <Button
               key={entry.id}
-              onClick={() => onSelectDocument(entry.id)}
+              onClick={() => {
+                focusHeading.current = true
+                onSelectDocument(entry.id)
+              }}
             >
               <File data-icon="inline-start" aria-hidden="true" />
               {entry.name}

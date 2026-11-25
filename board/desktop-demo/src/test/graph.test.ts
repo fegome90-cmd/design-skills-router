@@ -65,7 +65,11 @@ describe("node flow projection", () => {
     const [from, to] = pair.split("\u0000")
     const flow = flowProjection(from)
     const parallel = itemEdges(flow.outgoing).filter(edge => edge.to === to)
-    expect(parallel).toHaveLength(2)
+    const expected = edges.filter(edge => edge.from === from && edge.to === to)
+    const byKey = (edge: (typeof edges)[number]) => `${edge.kind}\u0000${edge.condition}`
+    expect(expected.length).toBeGreaterThan(1)
+    expect([...parallel].sort((a, b) => byKey(a).localeCompare(byKey(b))))
+      .toEqual([...expected].sort((a, b) => byKey(a).localeCompare(byKey(b))))
   })
 })
 

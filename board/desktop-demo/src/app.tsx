@@ -1,5 +1,7 @@
+import type { AgentAction } from "@ui-sdk/react/agent"
 import { Toast, ToastRegion, ToastTitle, toast } from "@ui-sdk/react/toast"
-import { AgentDrawer } from "@/components/agent-drawer"
+import { setAgentConfirmHandler } from "@/agent"
+import { AgentConfirmDialog, AgentDrawer } from "@/components/agent-drawer"
 import { CommandPalette, type CommandAction } from "@/components/command-palette"
 import { LibraryView, ProjectsView, SettingsView } from "@/components/section-views"
 import type { OpenNode } from "@/node-flow"
@@ -7,6 +9,7 @@ import { ExportGraphButton, isPlainClick, NodeIndex, PluginMapView } from "@/plu
 import { nodeHashPrefix, nodeHref, readNodeId } from "@/graph"
 import { Button } from "@ui-sdk/react/button"
 import {
+  createResizableController,
   Resizable, ResizableHandle, ResizablePanel, type ResizableLayoutCommitDetails,
 } from "@ui-sdk/react/resizable"
 import {
@@ -212,18 +215,38 @@ function WorkspaceLayout({
   children: ReactNode
 }) {
   const { isMobile, open } = useSidebar()
+  const [resizable] = useState(createResizableController)
   const panelGroup = useRef<HTMLDivElement>(null)
   const sidebarHandle = useRef<HTMLDivElement>(null)
+  const lastCommittedWidth = useRef<number | null>(null)
+  const syncingSidebarWidth = useRef(false)
   const contextualPanel = <ContextContents section={section}>{context}</ContextContents>
   const themeLabel = theme === "light" ? "Activar tema oscuro" : "Activar tema claro"
 
+  useEffect(() => {
+    if (isMobile || !open) return
+    if (lastCommittedWidth.current === sidebarWidth) {
+      lastCommittedWidth.current = null
+      return
+    }
+    lastCommittedWidth.current = null
+    syncingSidebarWidth.current = true
+    try {
+      resizable.resize("resizable-context", `${sidebarWidth}px`)
+    } finally {
+      syncingSidebarWidth.current = false
+    }
+  }, [isMobile, open, resizable, sidebarWidth])
+
   function commitSidebarWidth(layout: number[], details: ResizableLayoutCommitDetails) {
+    if (syncingSidebarWidth.current) return
     if (details.reason !== "drag" && details.reason !== "step-key" && details.reason !== "imperative") return
     if (!panelGroup.current || layout.length < 2) return
     const handleWidth = sidebarHandle.current?.offsetWidth ?? 0
     const panelSpace = panelGroup.current.clientWidth - handleWidth
     const pixels = Math.round((panelSpace * layout[0]) / 100)
     const width = Math.min(sidebarRange.maximum, Math.max(sidebarRange.minimum, pixels))
+    lastCommittedWidth.current = width
     onSidebarWidthChange(width)
   }
 
@@ -233,6 +256,7 @@ function WorkspaceLayout({
       {isMobile && <Sidebar>{contextualPanel}</Sidebar>}
       <Resizable
         ref={panelGroup}
+        controller={resizable}
         className="shell-panels"
         orientation="horizontal"
         onLayoutCommit={commitSidebarWidth}
@@ -302,7 +326,43 @@ function DesktopApplication({
   const section = useDestination()
   const [commandOpen, setCommandOpen] = useState(false)
   const [agentOpen, setAgentOpen] = useState(false)
+  const pendingConfirms = useRef<
+    Array<{ id: number; message: string; resolve: (approved: boolean) => void }>
+  >([])
+  const nextConfirmId = useRef(0)
+  const [activeConfirm, setActiveConfirm] = useState<{ id: number; message: string } | null>(null)
   const [sidebarWidth, setSidebarWidth] = useState(readSidebarWidth)
+
+  useEffect(() => {
+    const queue = pendingConfirms.current
+    setAgentConfirmHandler((step: AgentAction) =>
+      new Promise<boolean>((resolve) => {
+        const id = ++nextConfirmId.current
+        const message =
+          typeof step.confirm === "string" && step.confirm.trim()
+            ? step.confirm.trim()
+            : `El agente solicita autorización para «${step.ref}».`
+        queue.push({ id, message, resolve })
+        if (queue.length === 1) {
+          setActiveConfirm({ id, message })
+        }
+      })
+    )
+    return () => {
+      setAgentConfirmHandler(null)
+      while (queue.length > 0) {
+        queue.shift()?.resolve(false)
+      }
+      setActiveConfirm(null)
+    }
+  }, [])
+
+  function resolveConfirm(approved: boolean) {
+    const current = pendingConfirms.current.shift()
+    current?.resolve(approved)
+    const next = pendingConfirms.current[0]
+    setActiveConfirm(next ? { id: next.id, message: next.message } : null)
+  }
   const [density, setDensity] = useState<"comfortable" | "compact">(
     () => readPreference("density") === "compact" ? "compact" : "comfortable"
   )
@@ -440,7 +500,7 @@ function DesktopApplication({
   }
 
   const views = {
-    chat: <ChatView conversation={thread} draft={drafts[thread.id] ?? ""} onDraft={setDraft} onSend={sendMessage} />,
+    chat: <ChatView conversation={thread} draft={drafts[thread.id] ?? ""} onDraft={setDraft} onSend={sendMessage} onNotify={notify} />,
     dashboard: <DashboardView period={period} onPeriod={setPeriod} onProject={id => { selectProject(id); window.location.hash = "projects" }} />,
     projects: <ProjectsView projectId={project} onSelectProject={selectProject} onNotify={notify} />,
     library: <LibraryView documentId={documentId} onSelectDocument={selectDocument} />,
@@ -489,6 +549,7 @@ function DesktopApplication({
         ? views.chat
         : <div className="workspace-scroll" key={section}><Suspense fallback={<p className="view-loading" role="status">Cargando el dashboard…</p>}>{views[section]}</Suspense></div>}
       <ToastRegion>{() => <Toast><ToastTitle /></Toast>}</ToastRegion>
+      <AgentConfirmDialog request={activeConfirm} onResolve={resolveConfirm} />
     </WorkspaceLayout>
   )
 }

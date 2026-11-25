@@ -57,7 +57,7 @@ export function CommandPalette({
         className="command-trigger"
         shortcut="mod+k"
         aria-label="Comandos"
-        title="Comandos (⌘K)"
+        title="Comandos"
       >
         <Search aria-hidden="true" />
         <span className="toolbar-btn-label">Comandos</span>

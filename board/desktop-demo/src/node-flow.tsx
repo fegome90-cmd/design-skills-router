@@ -494,7 +494,14 @@ export function NodeFlowCard({
   }
 
   function finalFocus() {
-    if (pendingSection.current) return getSectionTarget(pendingSection.current) ?? trigger.current
+    if (pendingSection.current) {
+      const target = getSectionTarget(pendingSection.current) ?? trigger.current
+      // UI SDK restores with preventScroll, possibly after close completion.
+      requestAnimationFrame(() => {
+        if (target && document.activeElement === target) target.scrollIntoView({ block: "nearest" })
+      })
+      return target
+    }
     const heading = navigatedWhileOpen.current ? headingRef?.current : null
     if (!heading) return trigger.current
     // UI SDK restores with preventScroll, possibly after close completion.

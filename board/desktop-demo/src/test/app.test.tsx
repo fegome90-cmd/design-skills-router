@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, test } from "vitest"
-import { agent, registerAppWebMCP, setAgentConfirmHandler } from "@/agent"
+import { beforeEach, describe, expect, test, vi } from "vitest"
+import type { AgentAction } from "@ui-sdk/react/agent"
+import { agent, allow, registerAppWebMCP, setAgentConfirmHandler } from "@/agent"
 import { App } from "@/app"
 
 beforeEach(() => {
@@ -248,5 +249,74 @@ describe("Pizarra Desktop Demo", () => {
     await waitFor(() => {
       expect(screen.getByRole("complementary", { name: "Panel contextual" })).toBeInTheDocument()
     })
+  })
+
+  test("wires AgentConfirmDialog on mount, resolves true/false on user decision, and cleans up on unmount", async () => {
+    const user = userEvent.setup()
+    const { unmount } = render(<App />)
+
+    await user.click(screen.getByRole("link", { name: "Proyectos" }))
+    await user.click(screen.getByRole("tab", { name: "Simulador" }))
+    const slider = screen.getByRole("slider", { name: "Simular avance del proyecto" })
+    slider.focus()
+    await user.keyboard("{ArrowRight}")
+    expect(slider).toHaveValue("73")
+
+    const deniedPromise = agent.act({
+      steps: [{ ref: "Restablecer avance", action: "press", args: ["Restablecer"] }],
+    })
+    const denyDialog = await screen.findByRole("alertdialog", { name: "Confirmar acción del agente" })
+    expect(denyDialog).toHaveTextContent("Restablece el avance de Pizarra React a 72 %")
+    await user.click(screen.getByRole("button", { name: "Denegar" }))
+    const deniedResult = await deniedPromise
+    expect(deniedResult.ok).toBe(false)
+    expect(slider).toHaveValue("73")
+
+    const approvedPromise = agent.act({
+      steps: [{ ref: "Restablecer avance", action: "press", args: ["Restablecer"] }],
+    })
+    await screen.findByRole("alertdialog", { name: "Confirmar acción del agente" })
+    await user.click(screen.getByRole("button", { name: "Autorizar" }))
+    const approvedResult = await approvedPromise
+    expect(approvedResult.ok, approvedResult.error?.message).toBe(true)
+    expect(slider).toHaveValue("72")
+
+    unmount()
+    expect(allow({ confirm: "Acción protegida" } as unknown as AgentAction)).toBe(false)
+  })
+
+  test("notifies on copied chat message, uses generic command tooltip, and moves focus on related navigation", async () => {
+    const user = userEvent.setup()
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue()
+    try {
+      render(<App />)
+
+      const commandsButton = screen.getByRole("button", { name: "Comandos" })
+      expect(commandsButton).toHaveAttribute("title", "Comandos")
+
+      await user.click(screen.getAllByRole("button", { name: "Copiar respuesta" })[0])
+      expect(writeText).toHaveBeenCalled()
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="toast-title"]')).toHaveTextContent("Respuesta copiada")
+      })
+
+      await user.click(screen.getByRole("link", { name: "Proyectos" }))
+      await user.click(
+        within(document.querySelector(".related-resources")!).getByRole("button", {
+          name: "Archivo de referencias",
+        })
+      )
+      expect(screen.getByRole("heading", { level: 1, name: "Archivo de referencias" })).toHaveFocus()
+
+      await user.click(screen.getByRole("link", { name: "Biblioteca" }))
+      await user.click(
+        within(document.querySelector(".related-resources")!).getByRole("button", {
+          name: "Tokens de superficie",
+        })
+      )
+      expect(screen.getByRole("heading", { level: 1, name: "Tokens de superficie" })).toHaveFocus()
+    } finally {
+      writeText.mockRestore()
+    }
   })
 })

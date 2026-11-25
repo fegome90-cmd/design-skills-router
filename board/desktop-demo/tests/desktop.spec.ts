@@ -53,6 +53,20 @@ test("the sidebar resizes with pointer and keyboard and restores its width", asy
   await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - savedWidth)).toBeLessThan(2)
 })
 
+test("changing sidebar width in Settings updates the open panel immediately and persists", async ({ page }) => {
+  await page.goto("/#settings")
+  const panel = page.getByRole("complementary", { name: "Panel contextual" })
+  const slider = page.getByRole("slider", { name: "Ancho del panel contextual" })
+  const before = (await panel.boundingBox())!.width
+  await slider.focus()
+  await page.keyboard.press("End")
+  await expect(slider).toHaveValue("320")
+  await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - 320)).toBeLessThan(2)
+  expect((await panel.boundingBox())!.width).toBeGreaterThan(before)
+  await page.reload()
+  await expect.poll(async () => Math.abs((await panel.boundingBox())!.width - 320)).toBeLessThan(2)
+})
+
 test("the sidebar keeps its width when browser storage cannot be written", async ({ page }) => {
   await page.addInitScript(() => {
     Storage.prototype.setItem = () => { throw new DOMException("Storage is read-only", "QuotaExceededError") }

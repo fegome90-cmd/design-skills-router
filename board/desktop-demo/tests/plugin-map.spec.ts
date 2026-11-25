@@ -804,9 +804,11 @@ for (const target of ["web", "standalone"] as const) {
             const trigger = page.getByRole("button", { name: `Llega desde · ${count}`, exact: true })
             await expect(trigger).toHaveAttribute("aria-expanded", "true")
             await expect(trigger).toBeFocused()
+            await expect(trigger).toBeInViewport()
           } else {
             await expect(list).toHaveAttribute("tabindex", "-1")
             await expect(list).toBeFocused()
+            await expect(list).toBeInViewport()
           }
           await expect(list.getByRole("link")).toHaveCount(count)
           expect(new URL(page.url()).hash).toBe(`#router-node-${nodeId}`)
