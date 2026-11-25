@@ -30,7 +30,8 @@ Fenced code blocks are ignored by both checks and end a table; inline code
 still counts as an ID mention. Known limits: indented code blocks and fences
 nested in lists or block quotes are read as prose, and a table cell holds a
 single ID; an HTML comment that opens in one table row
-and closes in a later one hides the rows in between. Link validity itself
+and closes in a later one hides the rows in between. HTML script/style
+raw text is not a distinct context for tag detection. Link validity itself
 (missing files and anchors) is checked by lychee in ``.github/workflows/docs.yml``.
 
 Exit status: 0 when clean, 1 when a finding is reported, 2 on usage errors or
@@ -66,7 +67,7 @@ DEFINITION_TABLES = {
 }
 
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
-INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1')
+INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1', re.S)
 LINK_TEXT = re.compile(r'(?<!\\)(?:\\\\)*!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
 REFERENCE_DEF_START = re.compile(r'^ {0,3}\[([^\]]+)\]:[ \t]*$')
@@ -90,13 +91,24 @@ def read(path: Path) -> str:
 def all_lines(text: str):
     """Yield (line number, line, inside a fenced code block). Fence lines count as inside."""
     fence = None
+    in_comment = False
     for number, line in enumerate(text.splitlines(), 1):
         match = FENCE.match(line)
         if fence is None:
-            if match:
+            rest = line
+            if in_comment:
+                end = line.find('-->')
+                if end == -1:
+                    yield number, line, False
+                    continue
+                rest, in_comment = line[end + 3:], False
+            elif match:
                 fence = match.group(1)
                 yield number, line, True
                 continue
+            # An opener inside inline code is not an HTML comment.
+            rest = INLINE_CODE.sub('', rest)
+            in_comment = '<!--' in HTML_COMMENT.sub('', rest)
             yield number, line, False
         else:
             if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
@@ -201,12 +213,12 @@ def link_targets(text: str):
         if code:  # a fenced block ends the paragraph
             lines.append((number, ''))
             continue
-        line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)  # before comments: `<!--` is code
         if in_comment:
             end = line.find('-->')
             if end == -1:
                 continue
             line, in_comment = ' ' * (end + 3) + line[end + 3:], False
+        line = INLINE_CODE.sub(lambda m: ' ' * len(m.group(0)), line)  # new openers in code are not comments
         line = HTML_COMMENT.sub(lambda m: ' ' * len(m.group(0)), line)
         if '<!--' in line:
             line, in_comment = line[:line.index('<!--')], True
@@ -244,6 +256,7 @@ def link_targets(text: str):
         # CommonMark lets a link span line endings within a paragraph.
         if paragraph:
             text = '\n'.join(part for _, part in paragraph)
+            text = INLINE_CODE.sub(lambda m: re.sub(r'[^\n]', ' ', m.group(0)), text)
             starts = [n for n, _ in paragraph]
             line_of = lambda offset: starts[text.count('\n', 0, offset)]
             for found in LINK_TEXT.finditer(text):
@@ -334,14 +347,14 @@ def table_ids(text: str, header: str) -> set[str]:
         if code:
             rows.append(('', True))
             continue
-        # Comment markers inside inline code are code, not comments.
-        line = INLINE_CODE.sub(lambda m: m.group(0).replace('<!--', '<!-').replace('-->', '->'), line)
         if in_comment:
             end = line.find('-->')
             if end == -1:
                 rows.append(('', True))
                 continue
             line, in_comment = line[end + 3:], False
+        # New comment markers inside inline code are code, not comments.
+        line = INLINE_CODE.sub(lambda m: m.group(0).replace('<!--', '<!-').replace('-->', '->'), line)
         line = HTML_COMMENT.sub('', line)
         if '<!--' in line:
             line, in_comment = line[:line.index('<!--')], True

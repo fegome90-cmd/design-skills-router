@@ -169,6 +169,31 @@ class CheckDocsTests(unittest.TestCase):
             'docs/a.md': '#\n', 'docs/b.md': '#\n',
         })
 
+    def test_multiline_code_span_does_not_create_links(self):
+        self.assertFinds({
+            'AGENTS.md': 'Ejemplo: \x60[x](\ndocs/x.md)\x60\n\n'
+                         '[real](\ndocs/real.md)\n',
+            'docs/x.md': '# X\n', 'docs/real.md': '# Real\n',
+        }, ['docs/x.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
+
+    def test_fence_inside_html_comment_does_not_hide_visible_links_and_table(self):
+        self.assertClean({
+            'AGENTS.md': '<!--\n\x60\x60\x60\n-->\n\n[real](docs/real.md)\n',
+            'docs/real.md': '# Real\n',
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R17\n',
+            'docs/specs/mcp-roadmap/README.md': '<!--\n\x60\x60\x60\n-->\n\n'
+                                                '| Unidad | Estado |\n|---|---|\n| R17 | x |\n',
+        })
+
+    def test_backticks_do_not_protect_closing_marker_inside_active_comment(self):
+        self.assertClean({
+            'AGENTS.md': '<!--\n\x60-->\x60\n\n[real](docs/real.md)\n',
+            'docs/real.md': '# Real\n',
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R17\n',
+            'docs/specs/mcp-roadmap/README.md': '<!--\n\x60-->\x60\n\n'
+                                                '| Unidad | Estado |\n|---|---|\n| R17 | x |\n',
+        })
+
     def test_comment_marker_inside_inline_code_is_not_a_comment(self):
         self.assertClean({'docs/agent/CONTEXT.md': 'Usa `<!--` para comentar. [Roadmap](../specs/mcp-roadmap/README.md)\n'})
 
