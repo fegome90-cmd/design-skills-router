@@ -20,14 +20,18 @@ Any other mode, including a variable, is treated as text. ``mkstemp``,
 ``mkdtemp``, ``TemporaryDirectory`` and ``gettempdir`` do not open text
 streams and are never reported.
 
-A call on a line marked ``# check-encoding: ignore[reason]`` is skipped;
-the reason is mandatory. Use it only for a false positive, for example the
+A call is skipped when the line where it starts carries the comment
+``# check-encoding: ignore[reason]``. The reason is mandatory, the marker
+must be a real comment (not text inside a string), and it covers a single
+reportable call: a marked line with two of them reports both. ``--summary``
+lists every skipped call. Use it only for a false positive, for example the
 ``open`` method of a binary API that the heuristics take for ``Path.open``.
 
 Known limits, covered at run time by ``EncodingWarning`` in CI: a local
 function that shadows ``open``, arguments passed through ``**kwargs``,
 ``os.popen`` and ``subprocess.getoutput`` (no ``encoding`` parameter on
-Python 3.10), and dynamic lookups such as ``getattr(io, 'open')``.
+Python 3.10), dynamic lookups such as ``getattr(io, 'open')``, and imports inside a
+function, which apply from that point to the end of the function.
 
 By default the check reads the Python files tracked by Git, minus the
 frozen paths listed in ``EXCLUDED``. Exit status: 0 when clean, 1 when a
@@ -39,8 +43,10 @@ from __future__ import annotations
 import argparse
 import ast
 import re
+import io
 import subprocess
 import sys
+import tokenize
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -78,20 +84,38 @@ OPEN_LIKE = {
 
 
 class Visitor(ast.NodeVisitor):
-    def __init__(self, path: str, lines: list[str] | None = None):
+    def __init__(self, path: str, ignore_lines: set[int] | None = None):
         self.path = path
-        self.lines = lines or []
+        self.ignore_lines = ignore_lines or set()
         self.found: list[tuple[str, int, int, str]] = []
+        self.ignored: list[tuple[str, int, int, str]] = []
         self.modules: dict[str, str] = {}  # local alias -> module
         self.names: dict[str, str] = {}    # local name -> 'module.attr'
 
     def collect_imports(self, tree: ast.AST) -> None:
-        """Register every import first, so a use before its import resolves."""
-        for node in ast.walk(tree):
+        """Register module-level imports first, so a use before them resolves.
+
+        Imports inside functions, classes and lambdas are left to the normal
+        visit, so they cannot hide calls elsewhere in the module.
+        """
+        pending = list(ast.iter_child_nodes(tree))
+        while pending:
+            node = pending.pop()
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                continue
             if isinstance(node, ast.Import):
                 self.visit_Import(node, recurse=False)
             elif isinstance(node, ast.ImportFrom):
                 self.visit_ImportFrom(node, recurse=False)
+            pending.extend(ast.iter_child_nodes(node))
+
+    def visit_scope(self, node: ast.AST) -> None:
+        """Imports inside a function, class or lambda stay inside it."""
+        saved = dict(self.modules), dict(self.names)
+        self.generic_visit(node)
+        self.modules, self.names = saved
+
+    visit_FunctionDef = visit_AsyncFunctionDef = visit_ClassDef = visit_Lambda = visit_scope
 
     def visit_Import(self, node: ast.Import, recurse: bool = True) -> None:
         for alias in node.names:
@@ -131,10 +155,20 @@ class Visitor(ast.NodeVisitor):
         return None
 
     def report(self, node: ast.Call, name: str, detail: str) -> None:
-        line = self.lines[node.lineno - 1] if node.lineno <= len(self.lines) else ''
-        if IGNORE.search(line):
-            return
-        self.found.append((self.path, node.lineno, node.col_offset + 1, f'{name}: {detail}'))
+        entry = (self.path, node.lineno, node.col_offset + 1, f'{name}: {detail}')
+        (self.ignored if node.lineno in self.ignore_lines else self.found).append(entry)
+
+    def finish(self) -> None:
+        """A marker covers one call: report every call of a line that holds several."""
+        per_line: dict[int, int] = {}
+        for entry in self.ignored:
+            per_line[entry[1]] = per_line.get(entry[1], 0) + 1
+        crowded = {line for line, count in per_line.items() if count > 1}
+        for entry in self.ignored:
+            if entry[1] in crowded:
+                self.found.append((*entry[:3], entry[3] + ' (ignore marker covers more than one call)'))
+        self.ignored = [entry for entry in self.ignored if entry[1] not in crowded]
+        self.found.sort()
 
     def visit_Call(self, node: ast.Call) -> None:
         name = self.qualified(node.func)
@@ -206,13 +240,24 @@ def tracked_files() -> list[str]:
     return sorted(p for p in result.stdout.decode('utf-8').split('\0') if p)
 
 
-def check_file(path: Path, relative: str) -> list[tuple[str, int, int, str]]:
+def marked_lines(source: str) -> set[int]:
+    """Lines whose comment token carries a valid ignore marker."""
+    tokens = tokenize.generate_tokens(io.StringIO(source).readline)
+    return {tok.start[0] for tok in tokens if tok.type == tokenize.COMMENT and IGNORE.search(tok.string)}
+
+
+def inspect_file(path: Path, relative: str) -> Visitor:
     source = path.read_text(encoding='utf-8')
     tree = ast.parse(source, filename=relative)
-    visitor = Visitor(relative, re.split(r'\r\n|\r|\n', source))  # same line breaks as ast
+    visitor = Visitor(relative, marked_lines(source))
     visitor.collect_imports(tree)
     visitor.visit(tree)
-    return visitor.found
+    visitor.finish()
+    return visitor
+
+
+def check_file(path: Path, relative: str) -> list[tuple[str, int, int, str]]:
+    return inspect_file(path, relative).found
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -233,10 +278,13 @@ def main(argv: list[str] | None = None) -> int:
         targets = [(ROOT / p, p) for p in tracked_files() if not excluded(p)]
 
     found: list[tuple[str, int, int, str]] = []
+    ignored: list[tuple[str, int, int, str]] = []
     for path, relative in targets:
         try:
-            found.extend(check_file(path, relative))
-        except (OSError, SyntaxError, UnicodeDecodeError) as error:
+            visitor = inspect_file(path, relative)
+            found.extend(visitor.found)
+            ignored.extend(visitor.ignored)
+        except (OSError, SyntaxError, UnicodeDecodeError, tokenize.TokenError) as error:
             print(f'{relative}: cannot check: {error}', file=sys.stderr)
             return 2
 
@@ -246,7 +294,9 @@ def main(argv: list[str] | None = None) -> int:
         lines = {(f[0], f[1]) for f in found}
         files = {f[0] for f in found}
         print(f'{len(found)} calls, {len(lines)} lines, {len(files)} files '
-              f'({len(targets)} files checked)', file=sys.stderr)
+              f'({len(targets)} files checked, {len(ignored)} calls ignored by marker)', file=sys.stderr)
+        for relative, line, column, message in ignored:
+            print(f'ignored: {relative}:{line}:{column}: {message}', file=sys.stderr)
     return 1 if found else 0
 
 

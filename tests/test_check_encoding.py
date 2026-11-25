@@ -169,7 +169,28 @@ class CheckEncodingTests(unittest.TestCase):
             archive.open('x')  # check-encoding: ignore[ZipFile.open reads bytes]
             archive.open('y')  # check-encoding: ignore[]
             archive.open('z')  # check-encoding: ignore
-            ''', [(4, 'Path.open'), (5, 'Path.open')])
+            note = "# check-encoding: ignore[inside a string]"; open('s')
+            open('a'); open('b')  # check-encoding: ignore[covers one call only]
+            ''', [(4, 'Path.open'), (5, 'Path.open'), (6, 'open'), (7, 'open'), (7, 'open')])
+
+    def test_function_level_import_does_not_hide_module_calls(self):
+        self.assertReports('''\
+            open('a')
+            def compress():
+                from gzip import open
+                return open('b.gz')
+            open('c')
+            ''', [(1, 'open'), (5, 'open')])
+
+    def test_summary_lists_calls_ignored_by_marker(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'marked.py'
+            path.write_text("open('a')  # check-encoding: ignore[fixture]\n", encoding='utf-8')
+            result = subprocess.run([sys.executable, '-B', str(SCRIPT), '--summary', str(path)],
+                                    capture_output=True, encoding='utf-8')
+            self.assertEqual(result.returncode, 0)
+            self.assertIn('1 calls ignored by marker', result.stderr)
+            self.assertIn('ignored: ' + path.as_posix() + ':1:1: open', result.stderr)
 
     def test_command_line_exit_codes_and_exclusions(self):
         with tempfile.TemporaryDirectory() as temp:
