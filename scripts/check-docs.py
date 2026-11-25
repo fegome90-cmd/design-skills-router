@@ -29,8 +29,9 @@ untracked, not ignored ones, so a new document is checked before ``git add``.
 Fenced code blocks are ignored by both checks and end a table; inline code
 still counts as an ID mention. Known limits: indented code blocks and fences
 nested in lists or block quotes are read as prose, and a table cell holds a
-single ID. Link validity itself (missing files and anchors) is checked by
-lychee in ``.github/workflows/docs.yml``.
+single ID; an HTML comment that opens in one table row
+and closes in a later one hides the rows in between. Link validity itself
+(missing files and anchors) is checked by lychee in ``.github/workflows/docs.yml``.
 
 Exit status: 0 when clean, 1 when a finding is reported, 2 on usage errors or
 when a Markdown or ``datos.json`` file cannot be read or parsed.
@@ -294,6 +295,8 @@ def table_ids(text: str, header: str) -> set[str]:
         if code:
             rows.append(('', True))
             continue
+        # Comment markers inside inline code are code, not comments.
+        line = INLINE_CODE.sub(lambda m: m.group(0).replace('<!--', '<!-').replace('-->', '->'), line)
         if in_comment:
             end = line.find('-->')
             if end == -1:

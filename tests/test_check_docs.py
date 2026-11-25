@@ -291,11 +291,13 @@ class CheckDocsTests(unittest.TestCase):
 
     def test_a_table_inside_an_html_comment_defines_nothing(self):
         self.assertFinds({
-            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R18 R19\n',
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R18 R19 R20 R21\n',
             'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
                 | Unidad | Estado |
                 |---|---|
                 | R19 | visible <!-- nota --> |
+                | `R20` | usa `<!--` como código |
+                | R21 | después del código |
 
                 <!--
                 | Unidad | Estado |
@@ -304,7 +306,7 @@ class CheckDocsTests(unittest.TestCase):
                 -->
                 '''),
         }, ['docs/agent/CONTEXT.md:1: UNDEFINED_ID: R18 has no recognised definition',
-            'docs/specs/mcp-roadmap/README.md:8: UNDEFINED_ID: R18 has no recognised definition'])
+            'docs/specs/mcp-roadmap/README.md:10: UNDEFINED_ID: R18 has no recognised definition'])
 
 
 if __name__ == '__main__':
