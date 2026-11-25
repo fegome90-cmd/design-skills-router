@@ -10,7 +10,9 @@ that open or decode text without an explicit ``encoding`` argument, or with
 * ``Path.read_text`` and ``Path.write_text``;
 * ``tempfile.TemporaryFile``, ``NamedTemporaryFile`` and
   ``SpooledTemporaryFile`` in text mode (their default mode is binary);
-* ``fileinput.input`` and ``fileinput.FileInput`` in text mode;
+* ``fileinput.input`` and ``fileinput.FileInput`` in text mode, unless the
+  ``openhook`` is ``hook_encoded(enc)`` or ``hook_compressed(encoding=enc)``
+  (fileinput passes its own ``encoding`` to any other hook);
 * ``subprocess.run``, ``Popen``, ``call``, ``check_call`` and
   ``check_output`` with ``text``, ``universal_newlines`` or ``errors``
   enabled (any of them puts the pipes in text mode).
@@ -115,7 +117,22 @@ class Visitor(ast.NodeVisitor):
         self.generic_visit(node)
         self.modules, self.names = saved
 
-    visit_FunctionDef = visit_AsyncFunctionDef = visit_ClassDef = visit_Lambda = visit_scope
+    visit_FunctionDef = visit_AsyncFunctionDef = visit_Lambda = visit_scope
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Class-body bindings are visible in the class body, not in its methods."""
+        outer = dict(self.modules), dict(self.names)
+        for child in [*node.decorator_list, *node.bases, *node.keywords]:
+            self.visit(child)
+        for statement in node.body:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                inner = self.modules, self.names
+                self.modules, self.names = dict(outer[0]), dict(outer[1])
+                self.visit(statement)
+                self.modules, self.names = inner
+            else:
+                self.visit(statement)
+        self.modules, self.names = outer
 
     def visit_Import(self, node: ast.Import, recurse: bool = True) -> None:
         for alias in node.names:
@@ -170,23 +187,34 @@ class Visitor(ast.NodeVisitor):
         self.ignored = [entry for entry in self.ignored if entry[1] not in crowded]
         self.found.sort()
 
+    def is_path_class(self, value: ast.expr) -> bool:
+        """True for the ``pathlib.Path`` class itself, as in ``Path.read_text(p)``."""
+        if isinstance(value, ast.Name):
+            return self.names.get(value.id) == 'pathlib.Path'
+        return (isinstance(value, ast.Attribute) and value.attr == 'Path'
+                and isinstance(value.value, ast.Name) and self.modules.get(value.value.id) == 'pathlib')
+
     def visit_Call(self, node: ast.Call) -> None:
         name = self.qualified(node.func)
+        # Calling a method on the class passes the path as the first argument.
+        shift = 1 if (isinstance(node.func, ast.Attribute) and self.is_path_class(node.func.value)) else 0
         if name == 'pathlib.Path.open':
             name = 'Path.open'
         elif name == 'builtins.open':
             name = 'open'
         if name in OPEN_LIKE:
-            self.check_open(node, name)
+            self.check_open(node, name, shift if name == 'Path.open' else 0)
         elif name in ('Path.read_text', 'Path.write_text'):
             index = 0 if name == 'Path.read_text' else 1
-            self.check_encoding(node, name, index)
+            self.check_encoding(node, name, index + shift)
         elif name and name.startswith('subprocess.') and name.split('.', 1)[1] in SUBPROCESS_CALLS:
             self.check_subprocess(node, name)
         self.generic_visit(node)
 
-    def check_open(self, node: ast.Call, name: str) -> None:
+    def check_open(self, node: ast.Call, name: str, shift: int = 0) -> None:
         mode_index, encoding_index, text_by_default = OPEN_LIKE[name]
+        if shift:
+            mode_index, encoding_index = mode_index + shift, encoding_index + shift
         mode = keyword(node, 'mode')
         if mode is None and mode_index is not None and len(node.args) > mode_index:
             mode = node.args[mode_index]
@@ -196,10 +224,25 @@ class Visitor(ast.NodeVisitor):
             is_text = not (isinstance(mode, ast.Constant) and isinstance(mode.value, str) and 'b' in mode.value)
         if not is_text:
             return
-        hook = keyword(node, 'openhook')
-        if name.startswith('fileinput.') and hook is not None and not is_none(hook):
+        if name.startswith('fileinput.') and self.hook_sets_encoding(keyword(node, 'openhook')):
             return
         self.check_encoding(node, name, encoding_index)
+
+    def hook_sets_encoding(self, hook: ast.expr | None) -> bool:
+        """``hook_encoded(enc)`` or ``hook_compressed(encoding=enc)`` with a real encoding.
+
+        Any other hook gets fileinput's own ``encoding``, which is checked as usual.
+        """
+        if not isinstance(hook, ast.Call):
+            return False
+        name = self.qualified(hook.func)
+        if name == 'fileinput.hook_encoded':
+            value = keyword(hook, 'encoding') or (hook.args[0] if hook.args else None)
+        elif name == 'fileinput.hook_compressed':
+            value = keyword(hook, 'encoding')
+        else:
+            return False
+        return value is not None and not is_none(value)
 
     def check_encoding(self, node: ast.Call, name: str, index: int | None) -> None:
         value = keyword(node, 'encoding')

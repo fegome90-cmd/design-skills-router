@@ -182,6 +182,34 @@ class CheckEncodingTests(unittest.TestCase):
             open('c')
             ''', [(1, 'open'), (5, 'open')])
 
+    def test_review_findings_on_scopes_class_calls_and_hooks(self):
+        self.assertReports('''\
+            import fileinput, pathlib
+            from pathlib import Path
+            class Reader:
+                from gzip import open
+                data = open('in-class.gz')
+                def read(self):
+                    return open('notes.txt')
+            Path.read_text(Path('a'))
+            Path.open(Path('a'), 'r', -1)
+            pathlib.Path.write_text(Path('a'), 'x')
+            fileinput.input(['a'], openhook=fileinput.hook_compressed)
+            fileinput.input(['a'], openhook=custom_hook)
+            ''', [(7, 'open'), (8, 'Path.read_text'), (9, 'Path.open'),
+                  (10, 'Path.write_text'), (11, 'fileinput.input'), (12, 'fileinput.input')])
+        self.assertReports('''\
+            import fileinput
+            from pathlib import Path
+            Path.read_text(Path('a'), 'utf-8')
+            Path.open(Path('a'), 'r', -1, 'utf-8')
+            Path.write_text(Path('a'), 'x', 'utf-8')
+            Path.open(Path('a'), 'rb')
+            fileinput.input(['a'], openhook=fileinput.hook_compressed(encoding='utf-8'))
+            fileinput.input(['a'], openhook=fileinput.hook_compressed, encoding='utf-8')
+            fileinput.input(['a'], openhook=custom_hook, encoding='utf-8')
+            ''', [])
+
     def test_summary_lists_calls_ignored_by_marker(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / 'marked.py'
