@@ -11148,7 +11148,7 @@
       "file": "skills/design-tree/references/CLI.md",
       "layer": "protocolo",
       "summary": "Comandos y contratos del helper.",
-      "sha256": "76171664c8a09af2f1e44d0855e942f0848755799be482a63b29211cccd30bd9",
+      "sha256": "f9321625724c2154c8bbd63ad6e99b89aa5d8fac43e3f2f612409d0ce0556caa",
       "locked": false
     },
     {
@@ -11176,7 +11176,7 @@
       "file": "skills/design-tree/scripts/runner.py",
       "layer": "helper",
       "summary": "Helper de expediente y transiciones supervisadas.",
-      "sha256": "925d43f2ded1d6bb16941b114e9224cdb78193ec2788c03d4b9bf80c1e98f4d1",
+      "sha256": "336fb3f12121a890f398f796b35b81330e19c05d29a2e6eb40c1ca7bfc675250",
       "locked": false
     }
   ],
