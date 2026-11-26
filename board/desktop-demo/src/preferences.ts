@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { nodeHashPrefix } from "@/graph"
 
 const preferencePrefix = "dsr.desktop.v1."
 
@@ -42,10 +43,12 @@ export function useTheme() {
   return [theme, setTheme] as const
 }
 
-export const destinations = ["chat", "dashboard", "projects", "library", "settings"] as const
+export const destinations = ["chat", "dashboard", "projects", "library", "map", "settings"] as const
 export type Destination = typeof destinations[number]
 
 function getDestination(): Destination {
+  // Node links such as #router-node-Q00 belong to the plugin map.
+  if (window.location.hash.startsWith(nodeHashPrefix)) return "map"
   const section = window.location.hash.slice(1)
   return destinations.find(destination => destination === section) ?? "chat"
 }

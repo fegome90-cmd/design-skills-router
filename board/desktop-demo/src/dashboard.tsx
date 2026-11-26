@@ -1,17 +1,17 @@
-import { ArrowUpRight, FileStack, FolderKanban, ListChecks, MessageSquare } from "lucide-react"
+import { ArrowUpRight, File, Folder, ListChecks, MessageSquare } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ProjectStatus } from "@/components/project-status"
-import { Button } from "@/components/ui/button"
+import { Button } from "@ui-sdk/react/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Toggle, ToggleGroup } from "@ui-sdk/react/toggle"
 import { activity, metrics, periods, projects, type Period } from "@/data"
 
 const metricLabels = [
   { name: "Conversaciones", key: "conversations", icon: MessageSquare, note: "Hilos iniciados" },
-  { name: "Proyectos", key: "projects", icon: FolderKanban, note: "Con actividad" },
-  { name: "Recursos", key: "resources", icon: FileStack, note: "Añadidos a la biblioteca" },
+  { name: "Proyectos", key: "projects", icon: Folder, note: "Con actividad" },
+  { name: "Recursos", key: "resources", icon: File, note: "Añadidos a la biblioteca" },
   { name: "Revisiones", key: "reviews", icon: ListChecks, note: "Completadas" },
 ] as const
 
@@ -40,16 +40,16 @@ export default function DashboardView({
         </div>
         <ToggleGroup
           className="periods"
-          size="sm"
-          spacing={1}
+          data-size="sm"
+          deselectable={false}
           aria-label="Período"
           value={[String(period)]}
-          onValueChange={values => {
+          onValueChange={(values: string[]) => {
             const selected = periods.find(option => String(option) === values[0])
             if (selected) onPeriod(selected)
           }}
         >
-          {periods.map(option => <ToggleGroupItem key={option} value={String(option)}>{option} días</ToggleGroupItem>)}
+          {periods.map(option => <Toggle key={option} value={String(option)} data-size="sm">{option} días</Toggle>)}
         </ToggleGroup>
       </header>
 
@@ -72,8 +72,8 @@ export default function DashboardView({
           <CardDescription>Conversaciones iniciadas y revisiones completadas</CardDescription>
           <CardAction>
             <div className="chart-key">
-              <span><i className="chart-dot" />Conversaciones</span>
-              <span><i className="chart-dot chart-dot-secondary" />Revisiones</span>
+              <span><i className="chart-dot" aria-hidden="true" />Conversaciones</span>
+              <span><i className="chart-dot chart-dot-secondary" aria-hidden="true" />Revisiones</span>
             </div>
           </CardAction>
         </CardHeader>
@@ -111,8 +111,8 @@ export default function DashboardView({
                   <TableCell><ProjectStatus status={project.status} /></TableCell>
                   <TableCell>{project.date}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon-sm" aria-label={`Abrir proyecto ${project.name}`} title={`Abrir ${project.name}`} onClick={() => onProject(project.id)}>
-                      <ArrowUpRight />
+                    <Button data-variant="ghost" data-size="icon-sm" aria-label={`Abrir proyecto ${project.name}`} title={`Abrir ${project.name}`} onClick={() => onProject(project.id)}>
+                      <ArrowUpRight aria-hidden="true" />
                     </Button>
                   </TableCell>
                 </TableRow>

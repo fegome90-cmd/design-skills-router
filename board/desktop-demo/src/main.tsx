@@ -1,13 +1,14 @@
+import { registerAppWebMCP } from "./agent"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { App } from "@/app"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import "./styles.css"
+
+const unregister = registerAppWebMCP()
+if (import.meta.hot) import.meta.hot.dispose(unregister)
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TooltipProvider delay={250}>
-      <App />
-    </TooltipProvider>
+    <App />
   </StrictMode>
 )
