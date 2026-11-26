@@ -28,8 +28,9 @@ Files are read as ``utf-8-sig``; the Markdown files are the tracked and the
 untracked, not ignored ones, so a new document is checked before ``git add``.
 Fenced code blocks are ignored by both checks and end a table; inline code
 still counts as an ID mention. Known limits: indented code blocks and fences
-nested in lists or block quotes are read as prose, and a table cell holds a
-single ID; an HTML comment that opens in one table row
+nested in lists or block quotes are read as prose, a definition table cell
+holds one or more IDs separated by ',' or '/' outside links (with no delimiters
+inside the link text itself), and an HTML comment that opens in one table row
 and closes in a later one hides the rows in between. HTML script/style
 raw text is not a distinct context for tag detection. Link validity itself
 (missing files and anchors) is checked by lychee in ``.github/workflows/docs.yml``.
@@ -79,7 +80,6 @@ HTML_TAG = re.compile(r"""(?<!\\)(?:\\\\)*(?P<tag><[A-Za-z][A-Za-z0-9-]*(?=[\s/>
 HTML_COMMENT = re.compile(r'<!--.*?-->', re.S)
 SCHEME = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')
 UNIT_FILE = re.compile(r'^docs/specs/(?:.+/)?units/([RF]\d{2}[A-Z]?)-[^/]*\.md$')
-MD_LINK_TEXT = re.compile(r'^\[([^\]]+)\]\([^)]*\)$')
 TABLE_SEPARATOR = re.compile(r'^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$')
 CELL_SPLIT = re.compile(r'(?<!\\)\|')
 
@@ -149,16 +149,31 @@ def label_key(label: str) -> str:
     return ' '.join(label.split()).casefold()
 
 
-def destination(line: str, start: int) -> str | None:
-    """Parse an inline link's destination after ``](``; None unless the link closes with ``)``."""
+def _parse_destination(line: str, start: int) -> tuple[str, int] | None:
+    """Parse an inline link destination and optional title after ``](``.
+
+    Returns ``(raw_target, closing_paren_index)`` or ``None`` if unclosed/invalid.
+    """
     index = start
     while index < len(line) and line[index] in ' \t\n':
         index += 1
     if index < len(line) and line[index] == '<':
-        end = line.find('>', index + 1)
-        if end == -1:
+        index += 1
+        begin = index
+        while index < len(line):
+            char = line[index]
+            if char == '\\' and index + 1 < len(line):
+                index += 2
+                continue
+            if char in '<\n':
+                return None
+            if char == '>':
+                target = line[begin:index]
+                index += 1
+                break
+            index += 1
+        else:
             return None
-        target, index = line[index + 1:end], end + 1
     else:
         depth, begin = 0, index
         while index < len(line):
@@ -176,13 +191,19 @@ def destination(line: str, start: int) -> str | None:
                 depth -= 1
             index += 1
         target = line[begin:index]
+    ws_start = index
     while index < len(line) and line[index] in ' \t\n':
         index += 1
-    if index < len(line) and line[index] in TITLE_END:
+    if index > ws_start and index < len(line) and line[index] in TITLE_END:
         closing = TITLE_END[line[index]]
         index += 1
         while index < len(line) and line[index] != closing:
-            index += 2 if line[index] == '\\' else 1
+            if line[index] == '\\':
+                index += 2
+                continue
+            if closing == ')' and line[index] == '(':
+                return None
+            index += 1
         if index >= len(line):
             return None
         index += 1
@@ -190,7 +211,13 @@ def destination(line: str, start: int) -> str | None:
             index += 1
     if index >= len(line) or line[index] != ')':
         return None
-    return unescape(target) or None
+    return target, index
+
+
+def destination(line: str, start: int) -> str | None:
+    """Parse an inline link's destination after ``](``; None unless the link closes with ``)``."""
+    parsed = _parse_destination(line, start)
+    return (unescape(parsed[0]) or None) if parsed is not None else None
 
 
 class HTMLLinks(HTMLParser):
@@ -338,6 +365,95 @@ def json_ids(root: Path) -> set[str]:
     return found
 
 
+def _close_bracket(text: str, open_index: int) -> int | None:
+    """Return the matching ']' index for '[' at ``open_index``, respecting escapes and nesting."""
+    depth = 0
+    index = open_index
+    while index < len(text):
+        char = text[index]
+        if char == '\\' and index + 1 < len(text):
+            index += 2
+            continue
+        if char == '[':
+            depth += 1
+        elif char == ']':
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
+def _split_cell_items(cell: str) -> list[str]:
+    """Split a table cell on ',' or '/' only outside '[text](url)' and balanced '()'."""
+    items: list[str] = []
+    start = 0
+    bracket_depth = 0
+    paren_depth = 0
+    index = 0
+    while index < len(cell):
+        ch = cell[index]
+        if ch == '\\' and index + 1 < len(cell):
+            index += 2
+            continue
+        if ch == '[' and bracket_depth == 0 and paren_depth == 0:
+            close_bracket = _close_bracket(cell, index)
+            if (close_bracket is not None and close_bracket + 1 < len(cell) and
+                    cell[close_bracket + 1] == '('):
+                parsed = _parse_destination(cell, close_bracket + 2)
+                if parsed is not None:
+                    index = parsed[1] + 1
+                    continue
+        if ch == '[':
+            bracket_depth += 1
+        elif ch == ']' and bracket_depth > 0:
+            bracket_depth -= 1
+        elif ch == '(':
+            paren_depth += 1
+        elif ch == ')' and paren_depth > 0:
+            paren_depth -= 1
+        elif ch in (',', '/') and bracket_depth == 0 and paren_depth == 0:
+            items.append(cell[start:index])
+            start = index + 1
+        index += 1
+    items.append(cell[start:])
+    return items
+
+
+def _unwrap_cell_link(item: str) -> str:
+    """Return link text when ``item`` is a single '[text](dest)' link, else ``item``."""
+    if not item.startswith('['):
+        return item
+    close_bracket = _close_bracket(item, 0)
+    if (close_bracket is None or close_bracket <= 1 or
+            close_bracket + 1 >= len(item) or item[close_bracket + 1] != '('):
+        return item
+    parsed = _parse_destination(item, close_bracket + 2)
+    if parsed is not None and parsed[1] == len(item) - 1:
+        return item[1:close_bracket]
+    return item
+
+
+def _strip_cell_emphasis(value: str) -> str:
+    """Trim surrounding whitespace (including tabs) and '*' / '`' emphasis markers."""
+    while True:
+        trimmed = value.strip().strip('*`')
+        if trimmed == value:
+            return value
+        value = trimmed
+
+
+def _parse_definition_cell(raw: str) -> set[str]:
+    """Parse one or more delimited IDs from a definition cell (all-or-nothing)."""
+    parsed: set[str] = set()
+    for item in _split_cell_items(raw.strip()):
+        candidate = _strip_cell_emphasis(_unwrap_cell_link(_strip_cell_emphasis(item)))
+        if not ID.fullmatch(candidate):
+            return set()
+        parsed.add(candidate)
+    return parsed
+
+
 def table_ids(text: str, header: str) -> set[str]:
     """IDs in the first column of the GFM tables whose first header cell is ``header``."""
     found: set[str] = set()
@@ -370,11 +486,7 @@ def table_ids(text: str, header: str) -> set[str]:
             active = cells[0] == header
             continue
         if active and not TABLE_SEPARATOR.match(row):
-            cell = cells[0].strip('*` ')
-            match = MD_LINK_TEXT.match(cell)
-            cell = match.group(1).strip('*` ') if match else cell
-            if ID.fullmatch(cell):
-                found.add(cell)
+            found |= _parse_definition_cell(cells[0])
     return found
 
 
