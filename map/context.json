@@ -104,7 +104,7 @@
       "symbol": "## Propuesta y decisión",
       "summary": "Aporta alternativas, revisiones y evidencia. Confirmación humana y decisión delegada son operaciones alternativas con requisitos distintos.",
       "group": "host",
-      "line": 64
+      "line": 98
     },
     {
       "id": "ctx-cli-source",
@@ -122,7 +122,7 @@
       "symbol": "## Gate de fase",
       "summary": "phase-prepare detiene cambios pendientes de aceptación. phase-accept usa recibo exacto del paquete, y reabrir conserva historia.",
       "group": "host",
-      "line": 93
+      "line": 131
     },
     {
       "id": "ctx-cli-persist",
@@ -131,7 +131,7 @@
       "symbol": "## Persistencia y migración",
       "summary": "export, resume y upgrade-state trabajan con estado externo. Recuperación valida evidencia y vuelve a manual.",
       "group": "host",
-      "line": 107
+      "line": 149
     },
     {
       "id": "ctx-protocol",
@@ -422,7 +422,7 @@
       "symbol": "export_bundle",
       "summary": "Genera copia en staging, verifica y renombra. Copia evidencias referenciadas y conserva sha256.",
       "group": "mantenimiento",
-      "line": 58
+      "line": 60
     },
     {
       "id": "ctx-migration-upgrade",
@@ -431,7 +431,7 @@
       "symbol": "upgrade_bundle",
       "summary": "Dry-run o copia nueva 0.3. Conserva snapshot histórico y reabre obligaciones en manual.",
       "group": "mantenimiento",
-      "line": 81
+      "line": 83
     },
     {
       "id": "ctx-release-prepare",
