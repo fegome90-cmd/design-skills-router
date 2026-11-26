@@ -395,6 +395,69 @@ class CheckDocsTests(unittest.TestCase):
         }, ['docs/agent/CONTEXT.md:1: UNDEFINED_ID: R18 has no recognised definition',
             'docs/specs/mcp-roadmap/README.md:10: UNDEFINED_ID: R18 has no recognised definition'])
 
+    def test_definition_table_accepts_delimited_multi_ids_and_rejects_prose(self):
+        err = self.assertClean({
+            'docs/agent/CONTEXT.md': (
+                '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                'R84 R85 R86 R87 R88 R89 R90 R91 R96 R97\n'
+            ),
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |---|---|
+                | R84, R85 | Planeadas |
+                | R86 / R87 | Planeadas |
+                | [R88](r88.md), [R89](r89.md) | Planeadas |
+                | `R90`, **R91** | Planeadas |
+                | **R96, R97** | Planeadas |
+                '''),
+            'docs/specs/mcp-roadmap/r88.md': '#\n',
+            'docs/specs/mcp-roadmap/r89.md': '#\n',
+        })
+        self.assertIn('defined_by_table=10', err)
+
+        code, lines, err = self.run_guard({
+            'docs/agent/CONTEXT.md': (
+                '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                'R80 R81 R92 R93 R94 R98\n'
+            ),
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |---|---|
+                | Reemplaza a R92 | Prosa |
+                | R93, nota | Parcial |
+                | R98, | Delimitador final |
+                | [R80 / R81](r80.md) | Delimitador en texto |
+                | [R94](R95-x.md) | URL con otro ID |
+                '''),
+            'docs/specs/mcp-roadmap/r80.md': '#\n',
+            'docs/specs/mcp-roadmap/R95-x.md': '#\n',
+        })
+        self.assertEqual(code, 1, err)
+        self.assertEqual(lines, [
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R80 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R81 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R92 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R93 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R98 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:3: UNDEFINED_ID: R92 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:4: UNDEFINED_ID: R93 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:5: UNDEFINED_ID: R98 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:6: UNDEFINED_ID: R80 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:6: UNDEFINED_ID: R81 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:7: UNDEFINED_ID: R95 has no recognised definition',
+        ])
+        self.assertIn('defined_by_table=1', err)
+
+    def test_invalid_datos_json_exits_2(self):
+        for payload in (b'{', b'\xff\xfe'):
+            with self.subTest(payload=payload):
+                code, _, err = self.run_guard({
+                    'docs/agent/CONTEXT.md': '# OK\n',
+                    'docs/specs/mcp-roadmap/README.md': '| Unidad |\n|---|\n',
+                }, raw={'board/src/demo/datos.json': payload})
+                self.assertEqual(code, 2, err)
+                self.assertIn('cannot read ID sources:', err)
+
 
 if __name__ == '__main__':
     unittest.main()
