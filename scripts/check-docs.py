@@ -26,14 +26,16 @@ brackets and inline code are not links.
 
 Files are read as ``utf-8-sig``; the Markdown files are the tracked and the
 untracked, not ignored ones, so a new document is checked before ``git add``.
-Fenced code blocks are ignored by both checks and end a table; inline code
-still counts as an ID mention. Known limits: indented code blocks and fences
-nested in lists or block quotes are read as prose, a definition table cell
-holds one or more IDs separated by ',' or '/' outside links (with no delimiters
-inside the link text itself), and an HTML comment that opens in one table row
-and closes in a later one hides the rows in between. HTML script/style
-raw text is not a distinct context for tag detection. Link validity itself
-(missing files and anchors) is checked by lychee in ``.github/workflows/docs.yml``.
+Fenced code blocks (including those nested in list items and block quotes,
+following CommonMark §4.5, §5.1 and §5.2) are ignored by both checks and end a
+table; inline code still counts as an ID mention. Known limits: indented code
+blocks (4+ spaces without a fence) are read as prose, reference definitions are
+only recognised at top level, a definition table cell holds one or more IDs
+separated by ',' or '/' outside links (with no delimiters inside the link text
+itself), and an HTML comment that opens in one table row and closes in a later
+one hides the rows in between. HTML script/style raw text is not a distinct
+context for tag detection. Link validity itself (missing files and anchors) is
+checked by lychee in ``.github/workflows/docs.yml``.
 
 Exit status: 0 when clean, 1 when a finding is reported, 2 on usage errors or
 when a Markdown or ``datos.json`` file cannot be read or parsed.
@@ -43,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+from dataclasses import dataclass
 from html.parser import HTMLParser
 import json
 from pathlib import Path, PurePosixPath
@@ -67,7 +70,15 @@ DEFINITION_TABLES = {
     'docs/specs/mcp-roadmap/README.md': 'Unidad',
 }
 
-FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
+_BLOCKQUOTE = re.compile(r'^ {0,3}> ?')
+_LIST_BULLET = re.compile(r'^( {0,3})([-+*])(?:( +)(\S.*)| *)$')
+_LIST_ORDERED = re.compile(r'^( {0,3})(\d{1,9})([.)])(?:( +)(\S.*)| *)$')
+_THEMATIC_BREAK = re.compile(r'^ {0,3}(?:(?:- *){3,}|(?:\* *){3,}|(?:_ *){3,})$')
+_ATX_HEADING = re.compile(r'^ {0,3}#{1,6}(?: |$)')
+_SETEXT_UNDERLINE = re.compile(r'^ {0,3}(?:=+|-+) *$')
+_HTML_COMMENT_START = re.compile(r'^ {0,3}<!--')
+_FENCE_OPEN = re.compile(r'^ {0,3}(`{3,}|~{3,})(.*)$')
+_FENCE_CLOSE = re.compile(r'^ {0,3}(`{3,}|~{3,}) *$')
 INLINE_CODE = re.compile(r'(`+)(?:(?!\1).)+?\1', re.S)
 LINK_TEXT = re.compile(r'(?<!\\)(?:\\\\)*!?\[(?:[^\[\]\\]|\\.|\[[^\]]*\])*\]\(')
 REFERENCE_DEF = re.compile(r'^ {0,3}\[([^\]]+)\]:\s*(?:<([^>]*)>|(\S+))')
@@ -84,37 +95,192 @@ TABLE_SEPARATOR = re.compile(r'^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$')
 CELL_SPLIT = re.compile(r'(?<!\\)\|')
 
 
+@dataclass
+class _Container:
+    kind: str  # 'quote' | 'list'
+    width: int = 0
+    marker: str = ''
+    awaiting_first: bool = False
+
+
 def read(path: Path) -> str:
     return path.read_text(encoding='utf-8-sig')
 
 
+def _match_fence_open(rest: str) -> str | None:
+    """Return opening fence marker, or None if invalid (backtick info with backticks)."""
+    match = _FENCE_OPEN.match(rest)
+    if not match:
+        return None
+    marker, info = match.groups()
+    if marker[0] == '`' and '`' in info:
+        return None
+    return marker
+
+
+def _is_fence_close(rest: str, fence: str) -> bool:
+    """Return whether ``rest`` closes ``fence`` within 0–3 leading spaces."""
+    match = _FENCE_CLOSE.match(rest)
+    return bool(match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence))
+
+
+def _match_list_marker(
+    rest: str,
+    *,
+    interrupting_paragraph: bool,
+    sibling_marker: str | None = None,
+) -> tuple[_Container, str] | None:
+    """Parse a bullet/ordered list marker and compute its continuation width (§5.2)."""
+    if _THEMATIC_BREAK.match(rest):
+        return None
+    bullet = _LIST_BULLET.match(rest)
+    if bullet:
+        lead, mark, spaces, content = bullet.groups()
+        marker_len = len(mark)
+        marker_family = mark
+        is_ordered_one = True
+    else:
+        ordered = _LIST_ORDERED.match(rest)
+        if not ordered:
+            return None
+        lead, digits, delim, spaces, content = ordered.groups()
+        marker_len = len(digits) + len(delim)
+        marker_family = delim
+        is_ordered_one = int(digits) == 1
+    is_sibling = sibling_marker is not None and marker_family == sibling_marker
+    if interrupting_paragraph and not is_sibling:
+        if content is None or not is_ordered_one:
+            return None
+    base = len(lead) + marker_len
+    if content is None:
+        return _Container('list', width=base + 1, marker=marker_family, awaiting_first=True), ''
+    spaces_after = len(spaces)
+    if spaces_after >= 5:
+        remainder = ' ' * (spaces_after - 1) + content
+        return _Container('list', width=base + 1, marker=marker_family), remainder
+    return _Container('list', width=base + spaces_after, marker=marker_family), content
+
+
+def _match_containers(containers: list[_Container], expanded: str) -> tuple[int, str, bool]:
+    """Match active blockquote/list containers from outer to inner on tab-expanded ``expanded``."""
+    rest = expanded
+    matched = 0
+    for container in containers:
+        if container.kind == 'quote':
+            quote = _BLOCKQUOTE.match(rest)
+            if not quote:
+                break
+            rest = rest[quote.end():]
+            matched += 1
+        else:
+            if not rest.strip():
+                if container.awaiting_first:
+                    break
+                rest = ''
+                matched += 1
+            else:
+                leading = len(rest) - len(rest.lstrip(' '))
+                if leading < container.width:
+                    break
+                container.awaiting_first = False
+                rest = rest[container.width:]
+                matched += 1
+    return matched, rest, not rest.strip()
+
+
 def all_lines(text: str):
     """Yield (line number, line, inside a fenced code block). Fence lines count as inside."""
-    fence = None
+    containers: list[_Container] = []
+    fence: str | None = None
+    in_paragraph = False
     in_comment = False
     for number, line in enumerate(text.splitlines(), 1):
-        match = FENCE.match(line)
-        if fence is None:
-            rest = line
-            if in_comment:
-                end = line.find('-->')
-                if end == -1:
-                    yield number, line, False
-                    continue
-                rest, in_comment = line[end + 3:], False
-            elif match:
-                fence = match.group(1)
+        expanded = line.expandtabs(4)
+        matched, rest, is_blank = _match_containers(containers, expanded)
+        if fence is not None:
+            if matched == len(containers):
+                if not is_blank and _is_fence_close(rest, fence):
+                    fence = None
+                    in_paragraph = False
                 yield number, line, True
                 continue
-            # An opener inside inline code is not an HTML comment.
-            rest = INLINE_CODE.sub('', rest)
-            in_comment = '<!--' in HTML_COMMENT.sub('', rest)
+            # CommonMark forbids lazy continuation into fenced code blocks: close implicitly first.
+            containers = containers[:matched]
+            fence = None
+            in_paragraph = False
+        if in_comment:
+            if matched < len(containers):
+                containers = containers[:matched]
+                in_comment = False
+                in_paragraph = False
+            else:
+                end = line.find('-->')
+                if end != -1:
+                    tail = INLINE_CODE.sub('', line[end + 3:])
+                    in_comment = '<!--' in HTML_COMMENT.sub('', tail)
+                in_paragraph = False
+                yield number, line, False
+                continue
+        if is_blank:
+            containers = containers[:matched]
+            in_paragraph = False
             yield number, line, False
-        else:
-            if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence) \
-                    and not line.strip()[len(match.group(1)):].strip():
-                fence = None
+            continue
+        if matched < len(containers):
+            sibling = containers[matched].marker if containers[matched].kind == 'list' else None
+            can_lazy = (
+                in_paragraph
+                and not _BLOCKQUOTE.match(rest)
+                and not _THEMATIC_BREAK.match(rest)
+                and not _ATX_HEADING.match(rest)
+                and not _HTML_COMMENT_START.match(rest)
+                and _match_fence_open(rest) is None
+                and _match_list_marker(rest, interrupting_paragraph=True, sibling_marker=sibling) is None
+            )
+            if can_lazy:
+                in_comment = '<!--' in HTML_COMMENT.sub('', INLINE_CODE.sub('', line))
+                if in_comment:
+                    in_paragraph = False
+                yield number, line, False
+                continue
+            containers = containers[:matched]
+            in_paragraph = False
+        while True:
+            quote = _BLOCKQUOTE.match(rest)
+            if quote:
+                containers.append(_Container('quote'))
+                rest = rest[quote.end():]
+                in_paragraph = False
+                continue
+            item = _match_list_marker(rest, interrupting_paragraph=in_paragraph)
+            if item:
+                container, rest = item
+                containers.append(container)
+                in_paragraph = False
+                continue
+            break
+        opened = _match_fence_open(rest)
+        if opened is not None:
+            fence = opened
+            in_paragraph = False
             yield number, line, True
+            continue
+        stripped = rest.strip()
+        if (
+            not stripped
+            or _THEMATIC_BREAK.match(rest)
+            or _ATX_HEADING.match(rest)
+            or (in_paragraph and _SETEXT_UNDERLINE.match(rest))
+            or (not in_paragraph and rest.startswith('    '))
+            or _HTML_COMMENT_START.match(rest)
+        ):
+            in_paragraph = False
+        else:
+            in_paragraph = True
+        in_comment = '<!--' in HTML_COMMENT.sub('', INLINE_CODE.sub('', line))
+        if in_comment:
+            in_paragraph = False
+        yield number, line, False
 
 
 def prose_lines(text: str):

@@ -504,6 +504,327 @@ class CheckDocsTests(unittest.TestCase):
         ])
         self.assertIn('defined_by_table=0', err)
 
+    def test_fenced_code_nested_in_bullet_and_ordered_lists(self):
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+
+                - ```
+                  [a](../a.md)
+                  R99
+                  ```
+                + ~~~
+                  R98
+                  ~~~
+                * ```
+                  R97
+                  ```
+                1. ```
+                   R96
+                   ```
+                10) ```
+                    R95
+                    ```
+                01. ```
+                    R94
+                    ```
+                - x
+                  ```md
+
+                  R93
+                  ```
+                10. x
+                    ```md
+                    R92
+                    ```
+                1. Paso uno
+                2. ```md
+                   R91
+                   ```
+                - a
+                -
+                  ```md
+
+                  R90
+                  ```
+                -\t```
+                \tR89
+                \t```
+                - a
+                  - b
+                    ```
+                    R88
+                    ```
+                - item
+                  ```
+                  R87
+                  ```
+                  ```
+                  R86
+                  ```
+                   ```
+                   R85
+                   ```
+                '''),
+            'docs/a.md': '# Orphan case 59\n',
+        }, ['docs/a.md:1: ORPHAN: not reachable from README.md, AGENTS.md or docs/agent/*.md'])
+
+    def test_fenced_code_nested_in_blockquotes_and_mixed_containers(self):
+        err = self.assertClean({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                [Target](../target.md)
+
+                > ```
+                > [ghost](../ghost.md)
+                > R99
+                > > ```
+                > R98
+                > ```
+
+                >```
+                >R97
+                >```
+
+                >    ```
+                >    R96
+                >    ```
+
+                >\t```
+                >\tR95
+                >\t```
+
+                > > ```
+                > > R94
+                > > ```
+
+                >> ```
+                >> R93
+                >> ```
+
+                > - x
+                >
+                >   ```
+                >   R92
+                >   ```
+
+                - x
+                  > ```
+                  > R91
+                  > ```
+
+                - ~~~foo`bar~~~
+                  R90
+                  ~~~
+
+                > ~~~`info`
+                > R89
+                > ~~~
+                '''),
+            'docs/target.md': '# Real target\n',
+        })
+        self.assertIn('reachable_docs=3', err)
+        self.assertIn('ids_mentioned=2', err)
+
+    def test_backtick_info_string_and_overindented_fences_remain_prose(self):
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                ```foo`bar
+                R81
+
+                - ```foo```
+                  R82
+
+                > ```x`y
+                > R83
+
+                    ```
+                    R84
+                    ```
+
+                \t```
+                \tR85
+                \t```
+
+                -     ```
+                      R86
+                      ```
+
+                >     ```
+                >     R87
+                >     ```
+
+                -
+                \t\t```
+                \t\tR88
+                \t\t```
+
+                - - -
+
+                - a
+                  - b
+                    - c
+                - ```
+                      ```
+                  R89
+                  ```
+
+                -
+                \t
+                    ```
+                    R90
+                    ```
+
+                Párrafo activo
+                2. ```
+                   R91
+                   ```
+                '''),
+        }, [
+            'docs/agent/CONTEXT.md:3: UNDEFINED_ID: R81 has no recognised definition',
+            'docs/agent/CONTEXT.md:6: UNDEFINED_ID: R82 has no recognised definition',
+            'docs/agent/CONTEXT.md:9: UNDEFINED_ID: R83 has no recognised definition',
+            'docs/agent/CONTEXT.md:12: UNDEFINED_ID: R84 has no recognised definition',
+            'docs/agent/CONTEXT.md:16: UNDEFINED_ID: R85 has no recognised definition',
+            'docs/agent/CONTEXT.md:20: UNDEFINED_ID: R86 has no recognised definition',
+            'docs/agent/CONTEXT.md:24: UNDEFINED_ID: R87 has no recognised definition',
+            'docs/agent/CONTEXT.md:29: UNDEFINED_ID: R88 has no recognised definition',
+            'docs/agent/CONTEXT.md:45: UNDEFINED_ID: R90 has no recognised definition',
+            'docs/agent/CONTEXT.md:50: UNDEFINED_ID: R91 has no recognised definition',
+        ])
+
+    def test_nested_fence_closes_implicitly_when_leaving_container(self):
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                > ```
+                > R99
+                R71
+
+                > ```
+                > R98
+
+                R72
+
+                > > ```
+                > > R97
+                > R73
+
+                - item
+                  ```
+                  R96
+                R74
+
+                - item
+                  ```
+                  R95
+
+                R75
+
+                - item
+                  ```
+                  R94
+                - R76
+
+                - item
+                  ```
+                  R93
+                - ```
+                  R92
+                  ```
+
+                - item
+                  ```
+                  R91
+                ```
+                R90
+                ```
+                '''),
+        }, [
+            'docs/agent/CONTEXT.md:4: UNDEFINED_ID: R71 has no recognised definition',
+            'docs/agent/CONTEXT.md:9: UNDEFINED_ID: R72 has no recognised definition',
+            'docs/agent/CONTEXT.md:13: UNDEFINED_ID: R73 has no recognised definition',
+            'docs/agent/CONTEXT.md:18: UNDEFINED_ID: R74 has no recognised definition',
+            'docs/agent/CONTEXT.md:24: UNDEFINED_ID: R75 has no recognised definition',
+            'docs/agent/CONTEXT.md:29: UNDEFINED_ID: R76 has no recognised definition',
+        ])
+
+    def test_nested_fences_interact_correctly_with_html_comments_and_tables(self):
+        err = self.assertClean({
+            'docs/agent/CONTEXT.md': textwrap.dedent('''\
+                [Roadmap](../specs/mcp-roadmap/README.md)
+                <!--
+                c1
+                --> <!-- c2 -->
+
+                ```md
+                R99
+                ```
+
+                > <!--
+                > comment
+
+                ```md
+                R98
+                ```
+
+                > <!--
+                > ```
+                > -->
+                [A](../a.md)
+
+                - <!--
+                  ```
+                  -->
+                [B](../b.md)
+
+                - ```
+                  <!--
+                  ```
+                R01
+                '''),
+            'docs/a.md': '# A\n',
+            'docs/b.md': '# B\n',
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                - ```md
+                  | Unidad | Estado |
+                  |---|---|
+                  | R97 | dentro de fence en lista |
+                  ```
+
+                | Unidad | Estado |
+                |---|---|
+                - ```a|b
+                  R96
+                  ```
+
+                > ```md
+                > unclosed fence in quote
+
+                | Unidad | Estado |
+                |---|---|
+                | R01 | tabla real tras cierre implícito |
+                '''),
+        })
+        self.assertIn('reachable_docs=4', err)
+        self.assertIn('defined_by_table=1', err)
+
+        self.assertFinds({
+            'docs/agent/CONTEXT.md': '[Roadmap](../specs/mcp-roadmap/README.md) R95\n',
+            'docs/specs/mcp-roadmap/README.md': textwrap.dedent('''\
+                | Unidad | Estado |
+                |---|---|
+                - ```a|b
+                  R96
+                  ```
+                | R95 | tabla ya cerrada por fence |
+                '''),
+        }, [
+            'docs/agent/CONTEXT.md:1: UNDEFINED_ID: R95 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:6: UNDEFINED_ID: R95 has no recognised definition',
+        ])
+
     def test_invalid_datos_json_exits_2(self):
         for payload in (b'{', b'\xff\xfe'):
             with self.subTest(payload=payload):
