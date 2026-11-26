@@ -149,16 +149,31 @@ def label_key(label: str) -> str:
     return ' '.join(label.split()).casefold()
 
 
-def destination(line: str, start: int) -> str | None:
-    """Parse an inline link's destination after ``](``; None unless the link closes with ``)``."""
+def _parse_destination(line: str, start: int) -> tuple[str, int] | None:
+    """Parse an inline link destination and optional title after ``](``.
+
+    Returns ``(raw_target, closing_paren_index)`` or ``None`` if unclosed/invalid.
+    """
     index = start
     while index < len(line) and line[index] in ' \t\n':
         index += 1
     if index < len(line) and line[index] == '<':
-        end = line.find('>', index + 1)
-        if end == -1:
+        index += 1
+        begin = index
+        while index < len(line):
+            char = line[index]
+            if char == '\\' and index + 1 < len(line):
+                index += 2
+                continue
+            if char in '<\n':
+                return None
+            if char == '>':
+                target = line[begin:index]
+                index += 1
+                break
+            index += 1
+        else:
             return None
-        target, index = line[index + 1:end], end + 1
     else:
         depth, begin = 0, index
         while index < len(line):
@@ -176,13 +191,19 @@ def destination(line: str, start: int) -> str | None:
                 depth -= 1
             index += 1
         target = line[begin:index]
+    ws_start = index
     while index < len(line) and line[index] in ' \t\n':
         index += 1
-    if index < len(line) and line[index] in TITLE_END:
+    if index > ws_start and index < len(line) and line[index] in TITLE_END:
         closing = TITLE_END[line[index]]
         index += 1
         while index < len(line) and line[index] != closing:
-            index += 2 if line[index] == '\\' else 1
+            if line[index] == '\\':
+                index += 2
+                continue
+            if closing == ')' and line[index] == '(':
+                return None
+            index += 1
         if index >= len(line):
             return None
         index += 1
@@ -190,7 +211,13 @@ def destination(line: str, start: int) -> str | None:
             index += 1
     if index >= len(line) or line[index] != ')':
         return None
-    return unescape(target) or None
+    return target, index
+
+
+def destination(line: str, start: int) -> str | None:
+    """Parse an inline link's destination after ``](``; None unless the link closes with ``)``."""
+    parsed = _parse_destination(line, start)
+    return (unescape(parsed[0]) or None) if parsed is not None else None
 
 
 class HTMLLinks(HTMLParser):
@@ -338,20 +365,45 @@ def json_ids(root: Path) -> set[str]:
     return found
 
 
+def _close_bracket(text: str, open_index: int) -> int | None:
+    """Return the matching ']' index for '[' at ``open_index``, respecting escapes and nesting."""
+    depth = 0
+    index = open_index
+    while index < len(text):
+        char = text[index]
+        if char == '\\' and index + 1 < len(text):
+            index += 2
+            continue
+        if char == '[':
+            depth += 1
+        elif char == ']':
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
 def _split_cell_items(cell: str) -> list[str]:
     """Split a table cell on ',' or '/' only outside '[text](url)' and balanced '()'."""
     items: list[str] = []
     start = 0
     bracket_depth = 0
     paren_depth = 0
-    escaped = False
-    for index, ch in enumerate(cell):
-        if escaped:
-            escaped = False
+    index = 0
+    while index < len(cell):
+        ch = cell[index]
+        if ch == '\\' and index + 1 < len(cell):
+            index += 2
             continue
-        if ch == '\\':
-            escaped = True
-            continue
+        if ch == '[' and bracket_depth == 0 and paren_depth == 0:
+            close_bracket = _close_bracket(cell, index)
+            if (close_bracket is not None and close_bracket + 1 < len(cell) and
+                    cell[close_bracket + 1] == '('):
+                parsed = _parse_destination(cell, close_bracket + 2)
+                if parsed is not None:
+                    index = parsed[1] + 1
+                    continue
         if ch == '[':
             bracket_depth += 1
         elif ch == ']' and bracket_depth > 0:
@@ -363,63 +415,39 @@ def _split_cell_items(cell: str) -> list[str]:
         elif ch in (',', '/') and bracket_depth == 0 and paren_depth == 0:
             items.append(cell[start:index])
             start = index + 1
+        index += 1
     items.append(cell[start:])
     return items
 
 
 def _unwrap_cell_link(item: str) -> str:
     """Return link text when ``item`` is a single '[text](dest)' link, else ``item``."""
-    if not (item.startswith('[') and item.endswith(')')):
+    if not item.startswith('['):
         return item
-    bracket_depth = 0
-    escaped = False
-    close_bracket = -1
-    for index, ch in enumerate(item):
-        if escaped:
-            escaped = False
-            continue
-        if ch == '\\':
-            escaped = True
-            continue
-        if ch == '[':
-            bracket_depth += 1
-        elif ch == ']':
-            bracket_depth -= 1
-            if bracket_depth == 0:
-                close_bracket = index
-                break
-    if close_bracket <= 0 or close_bracket + 1 >= len(item) or item[close_bracket + 1] != '(':
+    close_bracket = _close_bracket(item, 0)
+    if (close_bracket is None or close_bracket <= 1 or
+            close_bracket + 1 >= len(item) or item[close_bracket + 1] != '('):
         return item
-    paren_depth = 0
-    escaped = False
-    for index in range(close_bracket + 1, len(item)):
-        ch = item[index]
-        if escaped:
-            escaped = False
-            continue
-        if ch == '\\':
-            escaped = True
-            continue
-        if ch == '(':
-            paren_depth += 1
-        elif ch == ')':
-            paren_depth -= 1
-            if paren_depth == 0:
-                return item[1:close_bracket] if index == len(item) - 1 else item
+    parsed = _parse_destination(item, close_bracket + 2)
+    if parsed is not None and parsed[1] == len(item) - 1:
+        return item[1:close_bracket]
     return item
+
+
+def _strip_cell_emphasis(value: str) -> str:
+    """Trim surrounding whitespace (including tabs) and '*' / '`' emphasis markers."""
+    while True:
+        trimmed = value.strip().strip('*`')
+        if trimmed == value:
+            return value
+        value = trimmed
 
 
 def _parse_definition_cell(raw: str) -> set[str]:
     """Parse one or more delimited IDs from a definition cell (all-or-nothing)."""
-    text = raw.strip()
-    items = _split_cell_items(text)
-    if len(items) == 1:
-        unwrapped = text.strip('*` ')
-        if unwrapped != text:
-            items = _split_cell_items(unwrapped)
     parsed: set[str] = set()
-    for item in items:
-        candidate = _unwrap_cell_link(item.strip('*` ')).strip('*` ')
+    for item in _split_cell_items(raw.strip()):
+        candidate = _strip_cell_emphasis(_unwrap_cell_link(_strip_cell_emphasis(item)))
         if not ID.fullmatch(candidate):
             return set()
         parsed.add(candidate)

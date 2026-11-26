@@ -448,6 +448,62 @@ class CheckDocsTests(unittest.TestCase):
         ])
         self.assertIn('defined_by_table=1', err)
 
+    def test_definition_table_edge_cases_links_titles_and_tabs(self):
+        err = self.assertClean({
+            'docs/agent/CONTEXT.md': (
+                '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                'R84 R85 R86 R87 R88 R89 R90 R91 R92\n'
+            ),
+            'docs/specs/mcp-roadmap/README.md': (
+                '| Unidad | Estado |\n'
+                '|---|---|\n'
+                '| [R84](https://example.org/a[b), R85 | Destino con corchete |\n'
+                '| [R86](r86.md "phase (") | Título con paréntesis |\n'
+                '| [R87](r87.md "phase ("), R88 | Multi-ID con título |\n'
+                '| [R89](<r89.md>), R90 | Destino en ángulos |\n'
+                '| R91,\tR92 | Tab después de coma |\n'
+            ),
+            'docs/specs/mcp-roadmap/r86.md': '#\n',
+            'docs/specs/mcp-roadmap/r87.md': '#\n',
+            'docs/specs/mcp-roadmap/r89.md': '#\n',
+        })
+        self.assertIn('defined_by_table=9', err)
+
+        code, lines, err = self.run_guard({
+            'docs/agent/CONTEXT.md': (
+                '[Roadmap](../specs/mcp-roadmap/README.md)\n'
+                'R93 R94 R95 R96 R97 R98 R99\n'
+            ),
+            'docs/specs/mcp-roadmap/README.md': (
+                '| Unidad | Estado |\n'
+                '|---|---|\n'
+                '| R93,\t, R94 | Ítem vacío con tab interior |\n'
+                '| R95,\t* | Ítem vacío con tab y énfasis |\n'
+                '| [R96](https://example.org/x "unclosed) | Título sin cerrar |\n'
+                '| [R97](https://example.org/x (phase (1)) | Paréntesis sin escapar en título |\n'
+                '| [R98](https://example.org/x) extra | Texto extra tras enlace |\n'
+                '| [R99](<https://example.org/x>"title") | Título sin espacio tras destino |\n'
+            ),
+        })
+        self.assertEqual(code, 1, err)
+        self.assertEqual(lines, [
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R93 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R94 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R95 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R96 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R97 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R98 has no recognised definition',
+            'docs/agent/CONTEXT.md:2: UNDEFINED_ID: R99 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:3: UNDEFINED_ID: R93 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:3: UNDEFINED_ID: R94 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:4: UNDEFINED_ID: R95 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:5: UNDEFINED_ID: R96 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:6: UNDEFINED_ID: R97 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:7: UNDEFINED_ID: R98 has no recognised definition',
+            'docs/specs/mcp-roadmap/README.md:8: UNDEFINED_ID: R99 has no recognised definition',
+        ])
+        self.assertIn('defined_by_table=0', err)
+
     def test_invalid_datos_json_exits_2(self):
         for payload in (b'{', b'\xff\xfe'):
             with self.subTest(payload=payload):
